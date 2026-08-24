@@ -1,0 +1,130 @@
+'use client';
+
+// Pantalla METAS — protagonista: el progreso de la meta de ahorro compartida, con la misma
+// metáfora semilla→árbol-con-frutos del Hero de la landing (dispositivo ownable reutilizado,
+// no reinventado — FICHA-ARTE.md). Acción primaria: aportar a la meta.
+
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { animate } from 'motion/react';
+import { useEffect } from 'react';
+import { Sprout, TreeDeciduous, Apple, Plus, CalendarDays } from 'lucide-react';
+import { META_AHORRO, formatoCOP } from '@/lib/seed-datos';
+
+function useCountUp(target: number): number {
+  const reducido = useReducedMotion();
+  const [valor, setValor] = useState(reducido ? target : 0);
+  useEffect(() => {
+    if (reducido) return;
+    const controls = animate(0, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(Math.round(v)) });
+    return () => controls.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- corre una vez al montar
+  }, []);
+  return valor;
+}
+
+function fechaLarga(iso: string): string {
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} de ${meses[m - 1]} de ${y}`;
+}
+
+export default function MetasPage() {
+  const reducido = useReducedMotion();
+  const [montoActual, setMontoActual] = useState(META_AHORRO.montoActual);
+  const [celebrar, setCelebrar] = useState(false);
+  const montoMostrado = useCountUp(montoActual);
+  const pct = Math.min(100, Math.round((montoActual / META_AHORRO.montoObjetivo) * 100));
+
+  const aportar = () => {
+    setMontoActual((m) => Math.min(META_AHORRO.montoObjetivo, m + 100000));
+    setCelebrar(true);
+    setTimeout(() => setCelebrar(false), 900);
+  };
+
+  const nodos = [
+    { icono: Sprout, activo: pct >= 0 },
+    { icono: TreeDeciduous, activo: pct >= 33 },
+    { icono: TreeDeciduous, activo: pct >= 66 },
+    { icono: Apple, activo: pct >= 100 },
+  ];
+
+  return (
+    <div className="flex flex-col gap-5">
+      <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+
+      <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-1)]">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{META_AHORRO.nombre}</h2>
+          <motion.span
+            key={celebrar ? 'on' : 'off'}
+            animate={celebrar ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="text-[15px] font-bold tabular-nums text-[var(--accent)]"
+          >
+            {pct}%
+          </motion.span>
+        </div>
+
+        <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-tertiary)]">
+          <CalendarDays size={13} strokeWidth={2} aria-hidden="true" />
+          Meta para el {fechaLarga(META_AHORRO.fechaObjetivo)}
+        </p>
+
+        <p className="mt-4 text-[30px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+          {formatoCOP(montoMostrado)}
+          <span className="text-[15px] font-medium text-[var(--text-tertiary)]"> / {formatoCOP(META_AHORRO.montoObjetivo)}</span>
+        </p>
+
+        {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
+            metáfora del Hero de la landing, ahora con más espacio y detalle. */}
+        <div className="relative mt-6 flex h-9 items-center justify-between">
+          <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]" />
+          <motion.div
+            className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--accent)]"
+            initial={{ width: reducido ? `${pct}%` : 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          />
+          {nodos.map((n, i) => (
+            <span
+              key={i}
+              className={`relative z-10 flex size-9 items-center justify-center rounded-full ${
+                n.activo
+                  ? i === nodos.length - 1
+                    ? 'bg-[var(--accent-2)]'
+                    : 'bg-[var(--accent)]'
+                  : 'border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] bg-[var(--surface)] opacity-60'
+              }`}
+            >
+              <n.icono size={17} strokeWidth={2.2} color={n.activo ? 'var(--bg)' : 'var(--text-tertiary)'} aria-hidden="true" />
+            </span>
+          ))}
+        </div>
+        <div className="mt-1.5 flex justify-between text-[12px] text-[var(--text-tertiary)]">
+          <span>Hoy siembran</span>
+          <span>Su meta, cumplida</span>
+        </div>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.98 }}
+          onClick={aportar}
+          disabled={pct >= 100}
+          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+        >
+          <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+          {pct >= 100 ? 'Meta cumplida' : 'Aportar $100.000'}
+        </motion.button>
+      </div>
+
+      <button
+        type="button"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] text-[14px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+      >
+        <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+        Nueva meta juntos
+      </button>
+    </div>
+  );
+}

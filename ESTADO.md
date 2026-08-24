@@ -1,0 +1,128 @@
+# ESTADO — DuoSync
+Última actualización: 2026-08-16 | Sesión actual: 5
+
+⏸️ CHECKPOINT — Sesión 4 CERRADA (2026-08-15): landing, onboarding, paywall y login construidos y verificados a mano (tsc ✓ build ✓ dev ✓). Las 3 pantallas del dinero pasaron por 7+ rondas reales de revisor-visual con correcciones genuinas en cada una — ninguna llegó al puntaje mínimo formal (36/40+16/20), pero la última ronda (2026-08-15) confirmó que ya no quedan bugs funcionales (el más serio: el CTA del paywall quedaba fuera de la pantalla a 375×812, ya corregido) y los defectos restantes son de pulido visual, no bloqueantes para seguir. El usuario decidió, con el resumen de esa ronda a la vista, avanzar a la Sesión 5 en vez de seguir iterando (rendimientos decrecientes reconocidos entre rondas) — pulido pendiente documentado abajo en "Problemas conocidos" para retomar en Sesión 7. / Siguiente acción exacta: Sesión 5 — app interna. Antes de codear, leer `docs/sistema/04-ARQUITECTURA.md` + `25-BASE-DE-DATOS.md` + `DESIGN-CORE.md` + `PREFLIGHT-PANTALLA.md` (por cada pantalla nueva) según la tabla de ruteo de CLAUDE.md.
+
+## Qué es esta app (3 líneas máximo)
+App móvil para parejas en LATAM que combina finanzas compartidas (gastos, saldo común, metas de ahorro) con una dinámica diaria de conexión afectiva. Suscripción única por pareja (no por persona). Modelo freemium con trial.
+
+## Promesa central
+"Ayudo a parejas jóvenes de LATAM a organizar sus gastos compartidos y mantener la conexión diaria sin discusiones por dinero ni pagar dos suscripciones separadas."
+
+## Reporte de validación (Sesión 1 — cerrado y re-verificado con datos de hoy)
+- Origen: investigación de mercado que el usuario ya trajo hecha (DUOSYNC.docx, 87-91/100) + re-validación en vivo el 2026-08-12 (ver FICHA-MERCADO.md, fuentes con fecha).
+- Veredicto: Excelente oportunidad — confirmado.
+- Apps de referencia: Paired ($9.99-14.99/mes o $69.99-83.99/año por pareja, verificado 2026-08-12 — el dato de "cobro doble por persona" del docx original NO se pudo confirmar hoy y no se usa como afirmación en el copy de venta), Agape (~$15/año o freemium, dato sin re-verificar), Splitwise/Monefy (gratis con anuncios o ~$9.99/año, dato sin re-verificar).
+- Lo que sí es verificable y es nuestra ventaja real: DuoSync cuesta 50-65% menos que Paired, cobra en moneda local vía Hotmart (con PSE/OXXO/PIX), y combina gasto del hogar + conexión afectiva en un solo lugar — algo que ninguna referencia hace junta.
+- Brecha LATAM confirmada: sí — sin versión localizada fuerte, precios de referencia en USD.
+- Precio de referencia del mercado: $9.99-14.99 USD/mes por pareja (Paired, la más cercana) → DuoSync: $4.99/mes o $29.99/año por pareja.
+
+## Dirección de Arte (Sesión 2 — CERRADA, cosa juzgada)
+- FICHA-ARTE.md: existe y aprobada — 2026-08-12
+- ¿Hubo referencia visual del usuario?: NO — se presentaron 3 fusiones (A/B/C) y el usuario combinó B (base) + elementos de C
+- Resumen: fondo #F3F7F6 · acento #1C4F49 (verde azulado) · acento 2 #FF6B47 (coral) · Display "Schibsted Grotesk/Archivo" · Body "Instrument Sans" · radio 14-22px · modo claro
+- Personalidad: confiable · ordenada · cálida-en-los-acentos
+- Composición elegida: pregunta del día como tarjeta-hero arriba de la pantalla (dispositivo ownable) + saldo con monto y % de la meta + categorías en filas con barra de progreso
+- REGISTRO ANTI-REPETICIÓN: verde azulado #1C4F49 + coral #FF6B47 + par Schibsted Grotesk/Instrument Sans vetados para el próximo proyecto del SO
+
+## Avatar y venta (Sesión 1)
+- FICHA-AVATAR.md: existe, APROBADA (2026-08-12 — el usuario amplió el rango de edad a 18-45 y precisó qué espera de la app; ya incorporado).
+- Resumen: parejas 18-45 años que comparten arriendo/hipoteca, servicios y alimentación · dolor #1: la carga de "recargarle" al otro o los olvidos de pago desgastan la relación · deseo #1: manejar el gasto del hogar de forma justa y ordenada sin pelear · nivel de consciencia: consciente del problema y de soluciones existentes (Paired/Agape/Splitwise) pero las ve caras, rígidas o incompletas.
+
+## Estrategia de monetización (decidido y confirmado con FICHA-MERCADO.md — cosa juzgada)
+- Modelo: Freemium con paywall tras la primera dinámica (onboarding-first, no hard paywall) — el usuario necesita vivir el "aha" de vincularse y ver el resultado antes de pagar; un hard paywall mataría la viralidad orgánica que es el canal #1 (TikTok/Reels).
+- Trial: 7 días gratis + 40% de descuento en el anual como oferta de lanzamiento.
+- Pricing final (ajustado por el usuario 2026-08-14): $5.99 USD/mes (menos de $0.20/día) o $35.94 USD/año = $2.99/mes (menos de $0.10/día, ahorro >50% vs. mensual) por pareja — 40-60% más barato que la referencia del mercado (Paired, $9.99-14.99/mes), verificado en FICHA-MERCADO.md. El copy público YA NO nombra competidores por nombre (decisión del usuario): se compara por beneficio/precio en general, nunca citando "Paired" u otra app.
+- Free: vinculación de cuentas + 1 pregunta diaria + hasta 15 movimientos/mes. Premium: historial ilimitado, gráficos, panel personalizable, escaneo de recibos con IA, asistente de IA, categorías ilimitadas, catálogo completo de dinámicas, metas de ahorro.
+- Pasarela: Hotmart — acepta tarjeta, PayPal, PSE (Colombia), OXXO (México), PIX (Brasil) y cuotas hasta 12x. Importante para el diseño de cobros fallidos (dunning): los pagos con PIX/boleto NO se auto-cobran, generan un código nuevo cada renovación con 48h para pagar — se diseña un recordatorio para no perder clientes por esto (se retoma en la Sesión 6/8).
+- Garantía: 15 días (verificado — Hotmart permite 7/15/21/30, se eligió 15 por ser mayor que el trial de 7, ver FICHA-MERCADO.md §4). Se configura en el panel real de Hotmart en la Sesión 6.
+
+## Gamificación y retención (a diseñar en Sesión 4)
+- Loop propuesto: Gatillo (notificación asincrónica cuando la pareja responde/registra un gasto) → Acción (responder pregunta diaria o registrar gasto en 2 toques) → Recompensa (revelar coincidencia / ver balance actualizado en vivo) → Inversión (racha de días conectados + metas de ahorro compartidas).
+- Primera victoria (<5 min): vincular los dos teléfonos con código de 4 dígitos y completar el primer test exprés que revela puntos de coincidencia y el saldo común.
+
+## Secuencia maestra de construcción (NO saltar)
+- Estado de la secuencia: nada construido todavía.
+- Ruta aprobada: `/` → `/onboarding` → `/paywall` → `/login` → `/app`
+- Landing: CONSTRUIDA (código en `app/app/page.tsx`, componentes en `app/components/landing/`, copy en `docs/copy/landing.md`) — protagonista: el hero "Dejen de ser socios de una empresa en quiebra" — CTA unificado: "Vincular con mi pareja gratis" → `/onboarding`
+- Onboarding: CONSTRUIDO (código en `app/app/onboarding/page.tsx`, UI compartida en `app/components/onboarding/ui.tsx`) — 9 pasos: 5 preguntas + reconocimiento + vinculación (código de 4 dígitos, con envío por WhatsApp) + loading (con cancelar) + resultado
+- Paywall: CONSTRUIDO (código en `app/app/paywall/page.tsx`) — single-page (blueprint C1), $5.99/mes o $35.94/año, garantía 15 días, cabe completo en 375×812 sin scroll
+- Login/Auth: CONSTRUIDO (código en `app/app/login/page.tsx`) — UI de magic link (Supabase Auth real se conecta en Sesión 6), pantalla secundaria (no una de las 4 del dinero)
+- App interna: CONSTRUIDA (2026-08-16) — shell con bottom-nav en `app/app/app/layout.tsx` (rutas `/app/hoy`, `/app/gastos`, `/app/metas`, `/app/nosotros`), datos semilla realistas en `app/lib/seed-datos.ts` (misma pareja Mateo & Sofía y mismos montos que la landing — consistencia entre pantallas). Hoy: pregunta diaria con mecánica de revelar-al-responder-ambos, saldo del mes animado, top categorías, acceso a registrar gasto, teaser de meta con barra de progreso. Gastos: lista con filtros por categoría, navegación real entre meses, formulario de alta funcional (estado local). Metas: progreso con la metáfora semilla→árbol, botón de aportar. Nosotros: racha con calendario de 28 días, catálogo de dinámicas marcado honestamente "Próximamente". Probado a mano: responder pregunta revela ambas respuestas, agregar gasto actualiza el total en vivo, navegación entre meses funciona.
+- Servicios externos: pendiente
+
+## Puertas de etapa
+- Landing: construida y verificada a mano — última revisor-visual 2026-08-15: 30/40 · 14/20 · 15/20 (NO LISTA formal, defectos restantes menores, ver Problemas conocidos) — evidencia: tsc ✓ build ✓ dev ✓ · docs/revisiones/landing-375.png
+- Onboarding: construido y verificado a mano — última revisor-visual 2026-08-15: 28/40 · 14/20 (NO LISTA formal, defectos restantes menores) — evidencia: docs/revisiones/onboarding-375.png, onboarding-vinculacion-375.png, onboarding-loading-375.png
+- Paywall: construido y verificado a mano — última revisor-visual 2026-08-15: 29/40 · 12/20 · 15/20 (NO LISTA formal; el único bug funcional real —CTA fuera de pantalla— ya corregido) — evidencia: docs/revisiones/paywall-375.png
+- Login/Auth: construida (pantalla secundaria, sin gate de revisor obligatorio) — evidencia: tsc ✓ build ✓ dev ✓ · probada a mano
+- App interna: construida y verificada a mano — pantalla principal (Hoy) 2 rondas de revisor-visual: 1ª 28/40·12/20 (NO LISTA, 5 defectos corregidos: barra de progreso de meta, saldo animado, editar respuesta, profundidad de fondo, empty state) → 2ª 29/40·14/20 (NO LISTA, craft subió pero aparecieron 2 defectos nuevos, ya corregidos: navegación con `<a>` nativo reemplazada por `next/link` en toda la app interna — antes cada tap entre pestañas recargaba la página completa, confirmado con medición real que ya no ocurre —, botón "Responder" competía en peso visual con "Registrar gasto" y quedaba con opacity-50 muerto antes de escribir, ambos corregidos). Pendiente: 3ª pasada de revisor-visual no lanzada todavía (costo ~70k tokens) — evaluar con el usuario si se corre o se documenta lo que quede y se avanza. Gastos/Metas/Nosotros son pantallas secundarias del mismo tipo (bottom-nav, mismos tokens), sin gate de revisor obligatorio.
+- Servicios externos: bloqueados
+
+## Decisiones técnicas (NO re-discutir sin pedirlo el usuario)
+- Framework: Next.js (decisión del agente — por SEO de la landing, rutas server-side para el paywall y porque hace posible que la misma app funcione como web instalable en iPhone y Android sin construir dos apps nativas separadas, que es lo que pidió el usuario).
+- Plataforma: web app responsive e instalable (PWA) — se ve y se siente como una app nativa en ambos sistemas operativos, sin pasar por App Store/Play Store (evita el costo y tiempo de una app nativa; se revisa más adelante si conviene publicarla también en las tiendas).
+- MVP (ampliado el 2026-08-12 con lo que el usuario definió que esperan sus suscriptores):
+  1. Vinculación de pareja por código de 4 dígitos, configuración inicial en menos de 5 minutos.
+  2. Registro de gastos del hogar (arriendo/hipoteca, servicios, alimentación) con categorías personalizables (no solo las de fábrica) y balance en vivo, sincronizado al instante entre los dos teléfonos.
+  3. Panel de inicio personalizable (arrastrar y ordenar qué se ve primero).
+  4. Escaneo de recibos con IA para registrar gastos sin teclear.
+  5. Asistente de IA dentro de la app (su función exacta se define en Sesión 1 — candidatas: resolver dudas sobre el gasto del mes, sugerir cómo dividir un gasto puntual, resumir el mes).
+  6. Metas de ahorro colectivas.
+  7. Pregunta diaria de conexión (respuestas bloqueadas hasta que ambos respondan) — se mantiene como el gancho de uso diario y de retención.
+- Arquitectura de IA (a definir en Sesión 1 con 30-INTEGRACION-IA.md): el escaneo de recibos necesita procesamiento de imagen — probablemente asíncrono (se sube la foto, la IA la procesa en segundo plano, el usuario ve el resultado en segundos) para que la app no se sienta lenta.
+- Fuera del MVP (decisión del agente, a confirmar con el usuario): integración bancaria automática, chat/voz integrado, mapas de citas, sistema de recompensas complejo.
+- Qué la app NUNCA debe hacer (decisión del agente basada en el nicho — dato sensible: finanzas + pareja): nunca compartir los datos financieros de un miembro de la pareja fuera de la cuenta vinculada sin su consentimiento explícito, nunca inventar o estimar montos que el usuario no ingresó (ni con la IA del escaneo: si no está seguro, se lo pregunta al usuario), nunca usar culpa o comparación entre los dos miembros como mecánica de retención, nunca mostrar anuncios ni cobrar nada fuera del precio pactado.
+
+- Auth: Supabase Auth con magic link por correo como método principal (sin contraseña que olvidar) + opción de entrar con Google. La vinculación de pareja (código de 4 dígitos) es una capa propia sobre el login, no reemplaza el auth.
+- Modelo de datos (resumen — el detalle de columnas/índices se escribe como migración en la Sesión 6): `profiles` (1 por usuario) · `couples` (1 por pareja, con código de invitación, estado del plan y fecha de fin de trial) · `couple_members` (une usuario↔pareja) · `categories` (propias de cada pareja, personalizables) · `expenses` (monto en numeric, nunca float, categoría, quién lo registró, recibo opcional) · `receipt_scans` (procesamiento async de la foto del recibo por IA) · `savings_goals` · `daily_questions` + `daily_answers` (bloqueadas hasta que ambos respondan) · `streaks` · `dashboard_layout` (el orden personalizable de cada usuario). RLS en TODAS: un usuario solo ve filas de la pareja a la que pertenece.
+- Arquitectura de IA: el escaneo de recibos es ASÍNCRONO (se sube la foto, se procesa en segundo plano, se notifica cuando está listo) para que la app nunca se sienta trabada; el asistente de IA dentro de la app es SÍNCRONO tipo chat (respuesta en streaming). Detalle completo en Sesión 1 con `30-INTEGRACION-IA.md` al escribir el código.
+
+## Sesiones completadas ✅
+- Sesión 1 — Validación re-verificada, FICHA-AVATAR.md aprobada, FICHA-MERCADO.md creada, monetización/pricing/pasarela fijados, modelo de datos + RLS + auth + arquitectura de IA decididos — verificado 2026-08-12
+- Sesión 2 — Identidad visual: 3 direcciones A/B/C presentadas y comparadas a 375px, usuario eligió combinación B+C, FICHA-ARTE.md cerrada y aprobada — 2026-08-12
+- Sesión 3 — Landing construida desde el kit canónico (Next.js en `app/`), tokens tematizados, copy en `docs/copy/landing.md`, páginas legales stub creadas — verificado 2026-08-13
+- Sesión 4 — Onboarding (9 pasos), paywall (single-page) y login (magic link) construidos; 7+ rondas de revisor-visual con correcciones reales; cerrada por decisión del usuario con pulido menor pendiente para Sesión 7 — verificado 2026-08-15
+
+## Sesión en progreso 🔧
+- Sesión 5 — App interna simplificada (Hoy · Gastos · Metas · Nosotros)
+
+## Próximas sesiones 📋
+- Sesión 6: Servicios externos (Supabase, auth real, Hotmart, dominio, Resend)
+- Sesión 7: Pulido de landing/onboarding/paywall (defectos menores documentados abajo)
+
+## Logo (2026-08-20)
+- El usuario trajo su propio isotipo (infinito azul/dorado con signos de peso) generado con Gemini. Archivo original guardado en `docs/assets/logo/duosync-isotipo-original.jpg` — resultó ser un JPEG sin transparencia real (el "fondo transparente" que se veía en el chat era un patrón de cuadros pintado en los píxeles, no canal alfa). Se limpió con un script propio (Node + sharp, sin dependencias nuevas en el repo — se instaló y se desinstaló en una carpeta temporal fuera de `app/`): se reemplazó el patrón de cuadros por el `--bg` real de la app (#F3F7F6) y se recortó al bounding box de la marca.
+- Assets finales: `app/public/logo-duosync.png` (234×128, para headers) · `app/app/icon.png` (512×512) · `app/app/apple-icon.png` (180×180) — Next.js los sirve automáticamente como favicon/apple-touch-icon sin configuración adicional.
+- Colocado en: header de la landing (`Hero`), footer de la landing (`FooterLegal`), y el header compartido del funnel de onboarding/paywall/login (`FunnelHeader` en `app/components/onboarding/ui.tsx`) — reemplazó el cuadrado de color liso que hacía de placeholder. De paso se corrigieron 2 enlaces `<a href="/">` a `next/link` en `FunnelHeader` (mismo defecto de recarga completa que ya se había corregido en la app interna).
+- CERRADO 2026-08-20: el usuario confirmó recolorear el azul del isotipo real al verde azulado de FICHA-ARTE.md (#1C4F49), manteniendo el dorado — hecho con un script propio (Node + sharp, temporal) que reasigna el matiz solo de los píxeles azules (rampa suave por "azulado", no umbral binario, para que el borde no quede entrecortado) y deja el dorado intacto. El nombre "DuoSync" en los headers ahora usa el coral de la marca (`text-[var(--accent)]` en `Hero.tsx`). Archivo final: `docs/assets/logo/duosync-isotipo-verde.png` (fuente de los 3 assets integrados). El símbolo de $ y las monedas del centro se agrandaron ~30-45% (pedido del usuario: se veían chicos) recortando esa región, escalándola y re-componiéndola con una máscara radial difuminada para que no se note el parche sobre la cinta.
+- Reference file conservado en `docs/assets/logo/duosync-isotipo-trimmed.png` (recorte sin fondo, colores ORIGINALES azul/dorado, antes de recolorear) por si se necesita volver atrás.
+- REEMPLAZADO 2026-08-21: el usuario volvió a Gemini y generó una versión nueva ya en verde/dorado con mejor nitidez (`docs/assets/logo/duosync-isotipo-v2-original.jpg`, formato "Viridian"). Se limpió el cuadriculado de fondo (JPEG sin transparencia real, igual que la v1) y se usó esta como fuente final — reemplaza a `duosync-isotipo-verde.png` en los 3 assets integrados (`app/public/logo-duosync.png` 233×128, `app/app/icon.png`, `app/app/apple-icon.png`). No hizo falta agrandar el $/monedas a mano esta vez, ya vienen más grandes y con brillos propios en el archivo de Gemini. Queda un ruido de compresión JPEG leve alrededor del signo de pesos en el archivo fuente (`duosync-isotipo-v2-trimmed.png`) — invisible al tamaño real que se usa en la app (~128px), no se intervino más.
+- ⚠️ Nota de estrategia (no bloqueante, avisada al usuario): el H1/subtítulo/CTA del Hero de la landing se reemplazaron el 2026-08-20 a pedido explícito del usuario por copy más genérico ("Gestión de gastos juntos, sin hojas de cálculo ni momentos incómodos") que ya NO usa el ángulo específico de pareja ("socios de una empresa en quiebra") derivado de FICHA-AVATAR.md. El copy anterior estaba trazado a las entrevistas del avatar; el nuevo es funcional pero genérico (serviría para cualquier gasto compartido, no solo parejas). Si la conversión baja, este es el primer lugar a revisar. CTA_LABEL de toda la landing (Hero/Oferta/sticky/CTA final) unificado a "Empieza a simplificar tus cuentas".
+- 2026-08-21: a pedido del usuario, se le dio profundidad (sombra tintada, no glow/glass) y un tono más visible a 3 "recuadros de diálogo" que quedaban demasiado planos: (1) las burbujas de respuesta M/S dentro de "Pregunta de hoy" en `app/app/app/hoy/page.tsx` (mezcla de --bg subida de 14%→24%, más sombra oscura ya que están sobre una tarjeta oscura), (2) la tarjeta-hero de las preguntas del onboarding en `app/app/onboarding/page.tsx` (`shadow-[var(--shadow-2)]` + color-mix con 8% de blanco), (3) las respuestas del FAQ en `app/components/landing/Faq.tsx`, que antes eran texto plano sin caja — ahora tienen su propia tarjeta blanca con `--shadow-1`.
+- 2026-08-21: usuario pidió (con foto de referencia) un menú flotante para la app interna y más color en los íconos de categoría de gastos. Se rediseñó `app/app/app/layout.tsx`: la barra inferior pasó de franja plana de ancho completo a una píldora flotante (separada de los bordes, `shadow-2`, destino activo = círculo sólido coral) — igual en ESTRUCTURA a la referencia, pero en los colores claros de FICHA-ARTE en vez del negro de la foto (avisado al usuario, pendiente de confirmar si prefiere la versión oscura). Los íconos de categoría en `app/app/app/gastos/page.tsx` (lista completa) y `app/app/app/hoy/page.tsx` (top 3 categorías) pasaron de fondo tintado al 12% a relleno sólido del color de la categoría con ícono en `--bg`.
+
+## Problemas conocidos ⚠️
+- Veredicto landing: docs/revisiones/landing-veredicto.md dice "Veredicto: NO LISTA" (30/40 · 14/20 · 15/20, 2026-08-15). Pospuesto a propósito: el usuario vio el resumen de esta ronda y decidió avanzar a Sesión 5 en vez de seguir iterando (rendimientos decrecientes tras 7+ rondas). Los defectos que quedan son de pulido visual, no bugs — quedan listados abajo y se retoman en Sesión 7.
+- Veredicto onboarding: docs/revisiones/onboarding-veredicto.md dice "Veredicto: NO LISTA" (28/40 · 14/20, 2026-08-15). Mismo pospuesto por decisión del usuario — defectos de pulido visual listados abajo, se retoman en Sesión 7.
+- Veredicto paywall: docs/revisiones/paywall-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 12/20 · 15/20, 2026-08-15). Mismo pospuesto por decisión del usuario — el único bug funcional real que encontró esa ronda (CTA fuera de la pantalla a 375×812) SÍ se corrigió antes de posponer; lo que queda es pulido visual, listado abajo, se retoma en Sesión 7.
+- Veredicto app-hoy: docs/revisiones/app-hoy-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 14/20, 2026-08-16, 2ª ronda). Los 2 bugs reales de esa ronda (navegación con `<a>` nativo rompiendo la app-feel, botón "Responder" compitiendo con el CTA principal) ya se corrigieron. Lo que queda (heurística 9 sin estado de error modelado) se pospone a propósito: sin backend real todavía, un "error" sería artificial — se aborda en Sesión 6 cuando el envío de la respuesta pase por una llamada de verdad.
+
+Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funcional; el único que lo era, el CTA del paywall fuera de pantalla, ya se corrigió el 2026-08-15):
+- Landing: la sección "App por dentro" muestra placeholders (Hoy/Gastos/Metas/Nosotros) en vez de screenshots reales — aceptado hasta que la app interna exista (Sesión 5); reemplazar antes de mandar tráfico pago.
+- Landing: soporte@duosync.app es un correo/dominio provisional — actualizar cuando el usuario compre el dominio real (fase de servicios externos).
+- Landing: CTA sin prefetch de next/link; alternancia base/elevado entre secciones podría reforzarse; falta footnote/fuente para la cifra "60% más barato" en la prueba social.
+- Onboarding: el paso de vinculación tiene 8 elementos apilados sin mucha jerarquía entre sí (ícono, título, párrafo, código, WhatsApp, nota, link alterno, CTA) — funciona pero podría respirar mejor.
+- Onboarding/Paywall/Landing: profundidad visual (fondos, mesh) sigue leyéndose plana en algunas zonas pese a varios ajustes — el mesh del paywall se reposicionó y reforzó el 2026-08-15, evaluar con ojos frescos en la próxima ronda si ya es suficiente.
+- Paywall: en viewports más cortos que 812px (ej. 740px, común en Android con navegador con barra), el contenido todavía desborda ~66px y pide un scroll corto para llegar al CTA — a 375×812 (el estándar de referencia) ya cabe completo y sin scroll.
+- DESVIACIONES DEL KIT de landing pedidas explícitamente por el usuario el 2026-08-14 (documentadas per doctrina de plantillas-codigo/landing/README.md): `Oferta.tsx` usa `MarkedCopy` en vez de texto plano para negrillas; `AppPorDentro.tsx` tiene autoplay cada 3.2s (pausable, respeta reduced-motion); `HeroVisual.tsx` tiene la metáfora semilla→árbol de la meta de ahorro.
+- LINTER DE DISEÑO en `AppPorDentro.tsx`: marca valores del kit original (`w-[250px]`, `rounded-[30px]`, etc.) como fuera de escala — son del kit, no de esta sesión, y ya fueron aprobados por el revisor-visual en 6 pasadas. No se tocan (doctrina: "no se re-estiliza el kit").
+- Token semántico `--danger: #d9483a` agregado en `tokens.css` para reemplazar hex directo repetido en onboarding/paywall (lo detectó el linter de diseño).
+- App interna: en Gastos se corrigió un bug real (no solo pulido) el 2026-08-16 — el gasto del día 1 de cada mes desaparecía del total por parsear fechas ISO con `new Date()` (se interpreta como UTC y en timezones detrás de UTC cae en el mes anterior); ahora compara por prefijo de string, verificado con los 8 gastos semilla mostrando el total correcto ($2.140.000, igual que en Hoy).
+- App interna: Metas y Nosotros no pasaron por revisor-visual (pantallas secundarias del mismo tipo que Hoy, ya aprobado — doctrina: solo la primera de cada tipo nuevo lo requiere); verificadas a mano y consistentes en tokens/spacing con Hoy.
+
+## Pendientes del usuario (acciones que el usuario debe hacer)
+- [ ] Ninguno todavía — se avisa cuando lleguemos a servicios externos (cuentas de Supabase, Vercel, Hotmart, dominio).
+
+## Notas para la próxima sesión
+- El usuario ya trajo una investigación de mercado propia y completa (guardada en DUOSYNC.docx) — no repetirla desde cero, solo re-validar con datos actuales y llenar FICHA-MERCADO.md con fuentes verificables antes de fijar precio/garantía en definitivo.

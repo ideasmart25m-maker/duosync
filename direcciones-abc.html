@@ -1,0 +1,455 @@
+<meta charset="utf-8">
+<title>DuoSync — 3 direcciones de diseño</title>
+<style>
+  :root{
+    --page-bg:#EFEAE2;
+    --page-text:#2A2622;
+    --page-text-dim:#7A7266;
+    --card-border: rgba(0,0,0,0.08);
+    --ff-ui: -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --page-bg:#17140F; --page-text:#EDE7DC; --page-text-dim:#9C9284; --card-border: rgba(255,255,255,0.1); }
+  }
+  :root[data-theme="dark"]{ --page-bg:#17140F; --page-text:#EDE7DC; --page-text-dim:#9C9284; --card-border: rgba(255,255,255,0.1); }
+  :root[data-theme="light"]{ --page-bg:#EFEAE2; --page-text:#2A2622; --page-text-dim:#7A7266; --card-border: rgba(0,0,0,0.08); }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--page-bg); color:var(--page-text);
+    font-family: var(--ff-ui);
+    padding: 28px 20px 60px;
+  }
+  .intro{ max-width:920px; margin:0 auto 32px; }
+  .intro .eyebrow{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--page-text-dim); margin:0 0 10px; }
+  .intro h1{ font-size:clamp(24px,4vw,32px); margin:0 0 10px; text-wrap:balance; letter-spacing:-0.01em; }
+  .intro p{ font-size:15px; line-height:1.6; color:var(--page-text-dim); max-width:640px; margin:0; }
+
+  .rail{
+    display:flex; gap:22px; overflow-x:auto; padding: 4px 4px 20px;
+    scroll-snap-type: x proximity;
+  }
+  .col{
+    flex: 0 0 auto; width: 375px; scroll-snap-align:start;
+  }
+  .col-head{ padding: 0 4px 14px; }
+  .col-head .tag{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--page-text-dim); }
+  .col-head h2{ font-size:19px; margin:4px 0 6px; letter-spacing:-0.01em; }
+  .col-head p{ font-size:13px; line-height:1.5; color:var(--page-text-dim); margin:0 0 10px; }
+  .swatches{ display:flex; gap:6px; }
+  .sw{ width:20px; height:20px; border-radius:5px; border:1px solid var(--card-border); }
+
+  /* ===== phone frame ===== */
+  .phone{
+    width:375px; border-radius:28px; overflow:hidden;
+    box-shadow: 0 24px 48px -20px rgba(0,0,0,0.35), 0 0 0 1px var(--card-border);
+  }
+  .screen{ min-height:700px; padding: 22px 18px 90px; position:relative; }
+
+  /* generic building blocks reused per direction via CSS vars */
+  .app-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .avatars{ display:flex; align-items:center; gap:8px; }
+  .avatar-pair{ display:flex; }
+  .av{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; border:2px solid var(--surface,#fff); }
+  .av + .av{ margin-left:-10px; }
+  .names{ font-size:13px; font-weight:600; }
+  .streak{ display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:6px 10px; border-radius:999px; }
+
+  .cat-chip{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; font-size:12.5px; font-weight:600; white-space:nowrap; }
+  .bottom-nav{ position:absolute; left:14px; right:14px; bottom:16px; display:flex; justify-content:space-around; align-items:center; padding:12px 8px; border-radius:20px; }
+  .nav-item{ font-size:10.5px; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:4px; opacity:.55; }
+  .nav-item.active{ opacity:1; }
+  .nav-dot{ width:6px; height:6px; border-radius:50%; }
+  .nums{ font-variant-numeric: tabular-nums; }
+
+  /* ============ DIRECCIÓN A — Hogar en Calma ============ */
+  .dir-a{
+    --bg:#FAF6EF; --surface:#FFFFFF; --text:#2B2621; --dim:#8C8071;
+    --accent:#5C7A63; --accent-2:#C1642E; --line:rgba(43,38,33,0.08);
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: var(--ff-ui);
+  }
+  .dir-a .screen{ background:var(--bg); color:var(--text); font-family:var(--font-body); }
+  .dir-a .names{ color:var(--text); }
+  .dir-a .av{ background:var(--accent); color:#fff; font-family:var(--font-display); }
+  .dir-a .av:nth-child(2){ background:var(--accent-2); }
+  .dir-a .streak{ background: color-mix(in srgb, var(--accent-2) 16%, var(--surface)); color: var(--accent-2); }
+  .dir-a .balance-card{
+    background:var(--surface); border-radius:22px; padding:22px 20px; margin-bottom:18px;
+    border:1px solid var(--line);
+  }
+  .dir-a .balance-label{ font-size:12px; color:var(--dim); margin-bottom:6px; }
+  .dir-a .balance-amount{ font-family:var(--font-display); font-size:34px; letter-spacing:-0.01em; margin-bottom:14px; }
+  .dir-a .balance-split{ display:flex; gap:18px; font-size:12.5px; color:var(--dim); }
+  .dir-a .balance-split b{ color:var(--text); display:block; font-size:14px; margin-bottom:2px; }
+  .dir-a .section-title{ font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); margin: 6px 0 10px; }
+  .dir-a .cats{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .dir-a .cat-chip{ background:var(--surface); border:1px solid var(--line); color:var(--text); }
+  .dir-a .cat-chip.new{ background:color-mix(in srgb, var(--accent) 14%, var(--surface)); color:var(--accent); border-color:transparent; }
+  .dir-a .question-card{
+    background: color-mix(in srgb, var(--accent-2) 10%, var(--surface));
+    border-radius:20px; padding:20px; border:1px solid color-mix(in srgb, var(--accent-2) 25%, transparent);
+  }
+  .dir-a .question-eyebrow{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--accent-2); margin-bottom:8px; }
+  .dir-a .question-text{ font-family:var(--font-display); font-size:18px; line-height:1.4; margin-bottom:12px; }
+  .dir-a .question-cta{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--accent-2); }
+  .dir-a .bottom-nav{ background:var(--surface); border:1px solid var(--line); }
+  .dir-a .nav-item{ color:var(--dim); }
+  .dir-a .nav-item.active{ color:var(--accent); }
+  .dir-a .nav-dot{ background:var(--accent); }
+
+  /* ============ DIRECCIÓN B — Equipo con Control ============ */
+  .dir-b{
+    --bg:#F3F7F6; --surface:#FFFFFF; --text:#152A27; --dim:#6C8480;
+    --accent:#1C4F49; --accent-2:#FF6B47; --line:rgba(21,42,39,0.09);
+    --font-display: "Century Gothic", "Futura", "Trebuchet MS", var(--ff-ui);
+    --font-body: var(--ff-ui);
+  }
+  .dir-b .screen{ background:var(--bg); color:var(--text); font-family:var(--font-body); }
+  .dir-b .av{ background:var(--accent); color:#fff; font-family:var(--font-display); font-weight:700; }
+  .dir-b .av:nth-child(2){ background:var(--accent-2); }
+  .dir-b .streak{ background:var(--accent); color:#fff; }
+  .dir-b .stat-row{ display:grid; grid-template-columns: 1.3fr 1fr 1fr; gap:10px; margin-bottom:18px; }
+  .dir-b .stat{ background:var(--surface); border-radius:16px; padding:14px 12px; border:1px solid var(--line); }
+  .dir-b .stat.primary{ background:var(--accent); color:#fff; border-color:transparent; }
+  .dir-b .stat-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; opacity:.7; margin-bottom:6px; }
+  .dir-b .stat-value{ font-family:var(--font-display); font-weight:700; font-size:19px; }
+  .dir-b .section-title{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin: 6px 0 10px; display:flex; justify-content:space-between; }
+  .dir-b .cat-row{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px; }
+  .dir-b .cat-row-top{ display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:8px; }
+  .dir-b .bar-track{ height:5px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .dir-b .bar-fill{ height:100%; background:var(--accent); border-radius:3px; }
+  .dir-b .cat-row.tight .bar-fill{ background:var(--accent-2); }
+  .dir-b .question-card{ background:var(--surface); border:1px dashed var(--line); border-radius:14px; padding:14px 16px; margin-top:16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .dir-b .question-text{ font-size:12.5px; color:var(--dim); }
+  .dir-b .question-cta{ font-size:11.5px; font-weight:700; color:#fff; background:var(--accent-2); padding:8px 12px; border-radius:10px; white-space:nowrap; }
+  .dir-b .bottom-nav{ background:var(--surface); border:1px solid var(--line); }
+  .dir-b .nav-item{ color:var(--dim); }
+  .dir-b .nav-item.active{ color:var(--accent); }
+  .dir-b .nav-dot{ background:var(--accent-2); }
+
+  /* ============ DIRECCIÓN C — Complicidad Cálida ============ */
+  .dir-c{
+    --bg:#FBF1EA; --surface:#FFFDFB; --text:#432A3C; --dim:#9A7A8C;
+    --accent:#6B3F5E; --accent-2:#F2A25C; --line:rgba(67,42,60,0.1);
+    --font-display: Georgia, "Iowan Old Style", serif;
+    --font-body: var(--ff-ui);
+  }
+  .dir-c .screen{ background: radial-gradient(120% 90% at 15% -10%, color-mix(in srgb, var(--accent-2) 22%, var(--bg)) 0%, var(--bg) 55%); color:var(--text); font-family:var(--font-body); }
+  .dir-c .av{ background:var(--accent); color:#fff; font-family:var(--font-display); font-style:italic; }
+  .dir-c .av:nth-child(2){ background:var(--accent-2); color:var(--text); }
+  .dir-c .streak{ background:color-mix(in srgb, var(--accent) 14%, var(--surface)); color:var(--accent); }
+  .dir-c .question-hero{ background:var(--accent); color:#fff; border-radius:26px; padding:24px 22px; margin-bottom:16px; position:relative; overflow:hidden; }
+  .dir-c .question-hero::after{ content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:color-mix(in srgb, var(--accent-2) 55%, transparent); }
+  .dir-c .question-eyebrow{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; opacity:.75; margin-bottom:10px; position:relative; }
+  .dir-c .question-text{ font-family:var(--font-display); font-style:italic; font-size:22px; line-height:1.35; margin-bottom:16px; position:relative; text-wrap:balance; }
+  .dir-c .question-cta{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; background:rgba(255,255,255,0.16); padding:9px 14px; border-radius:999px; position:relative; }
+  .dir-c .balance-strip{ display:flex; justify-content:space-between; align-items:baseline; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:16px; }
+  .dir-c .balance-strip .amount{ font-family:var(--font-display); font-style:italic; font-size:22px; }
+  .dir-c .cats{ display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:16px; }
+  .dir-c .cat-chip{ background:var(--surface); border:1px solid var(--line); color:var(--text); }
+  .dir-c .cat-chip.new{ background:var(--accent-2); color:var(--text); border-color:transparent; font-weight:700; }
+  .dir-c .section-title{ font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--dim); margin: 4px 0 10px; }
+  .dir-c .bottom-nav{ background:var(--surface); border:1px solid var(--line); }
+  .dir-c .nav-item{ color:var(--dim); }
+  .dir-c .nav-item.active{ color:var(--accent); }
+  .dir-c .nav-dot{ background:var(--accent-2); }
+
+  .note{ max-width:920px; margin:36px auto 0; font-size:13px; line-height:1.6; color:var(--page-text-dim); border-top:1px solid var(--card-border); padding-top:18px; }
+
+  /* ============ DIRECCIÓN FINAL — combinación aprobada ============ */
+  .final-wrap{ max-width:920px; margin: 44px auto 0; padding-top:36px; border-top:2px solid var(--card-border); }
+  .final-wrap .eyebrow{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--page-text-dim); margin:0 0 10px; }
+  .final-wrap h2{ font-size:24px; margin:0 0 10px; letter-spacing:-0.01em; }
+  .final-wrap p{ font-size:14.5px; line-height:1.6; color:var(--page-text-dim); max-width:640px; margin:0 0 22px; }
+  .final-layout{ display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .final-swatches{ display:flex; gap:8px; margin-bottom:4px; }
+  .final-sw{ display:flex; flex-direction:column; align-items:center; gap:6px; font-size:10.5px; color:var(--page-text-dim); }
+  .final-sw i{ width:34px; height:34px; border-radius:9px; display:block; border:1px solid var(--card-border); }
+
+  .dir-final{ --bg:#F3F7F6; --surface:#FFFFFF; --text:#152A27; --dim:#6C8480;
+    --accent:#1C4F49; --accent-2:#FF6B47; --line:rgba(21,42,39,0.09);
+    --font-display: "Century Gothic", "Futura", "Trebuchet MS", var(--ff-ui);
+    --font-body: var(--ff-ui);
+  }
+  .dir-final .screen{ background:var(--bg); color:var(--text); font-family:var(--font-body); }
+  .dir-final .av{ background:var(--accent); color:#fff; font-family:var(--font-display); font-weight:700; }
+  .dir-final .av:nth-child(2){ background:var(--accent-2); }
+  .dir-final .streak{ background:var(--accent); color:#fff; }
+  .dir-final .question-hero{ background:var(--accent); color:#fff; border-radius:22px; padding:20px 20px; margin-bottom:16px; position:relative; overflow:hidden; }
+  .dir-final .question-hero::after{ content:""; position:absolute; right:-26px; top:-26px; width:100px; height:100px; border-radius:50%; background:color-mix(in srgb, var(--accent-2) 55%, transparent); }
+  .dir-final .question-eyebrow{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; opacity:.8; margin-bottom:8px; position:relative; }
+  .dir-final .question-text{ font-family:var(--font-display); font-weight:700; font-size:18px; line-height:1.35; margin-bottom:14px; position:relative; text-wrap:balance; }
+  .dir-final .question-cta{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; background:var(--accent-2); padding:9px 14px; border-radius:10px; position:relative; }
+  .dir-final .balance-strip{ display:flex; justify-content:space-between; align-items:baseline; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:16px; }
+  .dir-final .balance-strip .amount{ font-family:var(--font-display); font-weight:700; font-size:22px; }
+  .dir-final .goal-pct{ font-size:12px; font-weight:700; color:var(--accent); }
+  .dir-final .section-title{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin: 6px 0 10px; display:flex; justify-content:space-between; }
+  .dir-final .cat-row{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px; }
+  .dir-final .cat-row-top{ display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:8px; }
+  .dir-final .bar-track{ height:5px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .dir-final .bar-fill{ height:100%; background:var(--accent); border-radius:3px; }
+  .dir-final .cat-row.tight .bar-fill{ background:var(--accent-2); }
+  .dir-final .bottom-nav{ background:var(--surface); border:1px solid var(--line); }
+  .dir-final .nav-item{ color:var(--dim); }
+  .dir-final .nav-item.active{ color:var(--accent); }
+  .dir-final .nav-dot{ background:var(--accent-2); }
+</style>
+
+<div class="intro">
+  <p class="eyebrow">DuoSync — Sesión 2, dirección de arte</p>
+  <h1>3 direcciones para la pantalla "Hoy"</h1>
+  <p>Misma pantalla, mismo contenido — cambia la personalidad. Las tres nacen de tu cliente ideal: una pareja que administra el gasto del hogar sin que eso les cueste la calma. Desliza para ver las tres y dime cuál se siente más "tú" — puedes elegir una completa, pedirme que combine partes de dos, o ajustar un detalle puntual.</p>
+</div>
+
+<div class="rail">
+
+  <!-- DIRECCIÓN A -->
+  <div class="col">
+    <div class="col-head">
+      <div class="tag">Dirección A</div>
+      <h2>Hogar en Calma</h2>
+      <p>Cálida y editorial, como una libreta de cuentas bien llevada. Verde salvia para lo que se ahorra, terracota para el detalle humano. Pensada para que abrir la app se sienta como sentarse a la mesa, no como entrar a un banco.</p>
+      <div class="swatches">
+        <div class="sw" style="background:#FAF6EF;border-color:#ccc"></div>
+        <div class="sw" style="background:#5C7A63"></div>
+        <div class="sw" style="background:#C1642E"></div>
+        <div class="sw" style="background:#2B2621"></div>
+      </div>
+    </div>
+    <div class="phone dir-a">
+      <div class="screen">
+        <div class="app-header">
+          <div class="avatars">
+            <div class="avatar-pair"><div class="av">M</div><div class="av">S</div></div>
+            <div class="names">Mateo &amp; Sofía</div>
+          </div>
+          <div class="streak">🔥 12 días</div>
+        </div>
+
+        <div class="balance-card">
+          <div class="balance-label">Este mes llevan</div>
+          <div class="balance-amount nums">$2.140.000</div>
+          <div class="balance-split">
+            <div><b class="nums">$1.450.000</b>Arriendo y servicios</div>
+            <div><b class="nums">$690.000</b>Mercado y variables</div>
+          </div>
+        </div>
+
+        <div class="section-title">Sus categorías</div>
+        <div class="cats">
+          <span class="cat-chip">🏠 Arriendo</span>
+          <span class="cat-chip">💡 Servicios</span>
+          <span class="cat-chip">🛒 Mercado</span>
+          <span class="cat-chip new">+ Viaje a Cartagena</span>
+        </div>
+
+        <div class="question-card">
+          <div class="question-eyebrow">Pregunta de hoy</div>
+          <div class="question-text">¿Qué gasto del mes pasado volverían a hacer sin dudarlo?</div>
+          <div class="question-cta">Responder →</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-dot"></div>Hoy</div>
+        <div class="nav-item">Gastos</div>
+        <div class="nav-item">Metas</div>
+        <div class="nav-item">Nosotros</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIRECCIÓN B -->
+  <div class="col">
+    <div class="col-head">
+      <div class="tag">Dirección B</div>
+      <h2>Equipo con Control</h2>
+      <p>Verde azulado profundo + coral de acción. Más estructurada y con datos a la vista — para la pareja que quiere sentir que "llevan las cuentas claras", con el balance como protagonista y cada categoría con su barra de avance.</p>
+      <div class="swatches">
+        <div class="sw" style="background:#F3F7F6;border-color:#ccc"></div>
+        <div class="sw" style="background:#1C4F49"></div>
+        <div class="sw" style="background:#FF6B47"></div>
+        <div class="sw" style="background:#152A27"></div>
+      </div>
+    </div>
+    <div class="phone dir-b">
+      <div class="screen">
+        <div class="app-header">
+          <div class="avatars">
+            <div class="avatar-pair"><div class="av">M</div><div class="av">S</div></div>
+            <div class="names">Mateo &amp; Sofía</div>
+          </div>
+          <div class="streak">🔥 12</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat primary">
+            <div class="stat-label">Disponible</div>
+            <div class="stat-value nums">$860k</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Gastado</div>
+            <div class="stat-value nums">$2,14M</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Meta</div>
+            <div class="stat-value nums">64%</div>
+          </div>
+        </div>
+
+        <div class="section-title">Categorías <span>ver todas</span></div>
+        <div class="cat-row">
+          <div class="cat-row-top"><span>🏠 Arriendo</span><span class="nums">$1.200.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="cat-row tight">
+          <div class="cat-row-top"><span>🛒 Mercado</span><span class="nums">$690.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-row-top"><span>+ Viaje a Cartagena</span><span class="nums">$250.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:31%"></div></div>
+        </div>
+
+        <div class="question-card">
+          <div class="question-text">Pregunta de hoy: ¿qué gasto repetirían?</div>
+          <div class="question-cta">Responder</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-dot"></div>Hoy</div>
+        <div class="nav-item">Gastos</div>
+        <div class="nav-item">Metas</div>
+        <div class="nav-item">Nosotros</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIRECCIÓN C -->
+  <div class="col">
+    <div class="col-head">
+      <div class="tag">Dirección C</div>
+      <h2>Complicidad Cálida</h2>
+      <p>Ciruela + durazno sobre un fondo rosado cálido. Aquí la protagonista es la conexión diaria, no el número — el balance acompaña, no manda. Para la pareja a la que le pesa más lo afectivo que la hoja de cálculo.</p>
+      <div class="swatches">
+        <div class="sw" style="background:#FBF1EA;border-color:#ccc"></div>
+        <div class="sw" style="background:#6B3F5E"></div>
+        <div class="sw" style="background:#F2A25C"></div>
+        <div class="sw" style="background:#432A3C"></div>
+      </div>
+    </div>
+    <div class="phone dir-c">
+      <div class="screen">
+        <div class="app-header">
+          <div class="avatars">
+            <div class="avatar-pair"><div class="av">M</div><div class="av">S</div></div>
+            <div class="names">Mateo &amp; Sofía</div>
+          </div>
+          <div class="streak">🔥 12 días</div>
+        </div>
+
+        <div class="question-hero">
+          <div class="question-eyebrow">Pregunta de hoy</div>
+          <div class="question-text">¿Qué gasto del mes pasado volverían a hacer sin dudarlo?</div>
+          <div class="question-cta">Responder juntos →</div>
+        </div>
+
+        <div class="balance-strip">
+          <div>
+            <div style="font-size:11px;color:var(--dim)">Este mes</div>
+            <div class="amount nums">$2.140.000</div>
+          </div>
+          <div style="font-size:12px;color:var(--dim)">64% de la meta</div>
+        </div>
+
+        <div class="section-title">Sus categorías</div>
+        <div class="cats">
+          <span class="cat-chip">🏠 Arriendo</span>
+          <span class="cat-chip">💡 Servicios</span>
+          <span class="cat-chip">🛒 Mercado</span>
+          <span class="cat-chip new">+ Viaje</span>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-dot"></div>Hoy</div>
+        <div class="nav-item">Gastos</div>
+        <div class="nav-item">Metas</div>
+        <div class="nav-item">Nosotros</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  Las tres respetan lo que ya decidimos (cero anuncios, categorías propias, saldo en vivo) y solo cambian de personalidad. Las tipografías mostradas aquí son una aproximación rápida para que compares composición y color; al construir la app de verdad se cargan las fuentes finales ya elegidas para cada dirección.
+</div>
+
+<div class="final-wrap">
+  <p class="eyebrow">Dirección elegida — combinación aprobada</p>
+  <h2>Equipo con Control, con la pregunta y el saldo arriba</h2>
+  <p>Base de la Dirección B (paleta, tipografía, categorías con barra de avance) + la pregunta del día como hero arriba (como en C) + el saldo mostrado como monto + % de la meta (como en C). Esta es la que queda guardada en FICHA-ARTE.md.</p>
+  <div class="final-layout">
+    <div class="phone dir-final">
+      <div class="screen">
+        <div class="app-header">
+          <div class="avatars">
+            <div class="avatar-pair"><div class="av">M</div><div class="av">S</div></div>
+            <div class="names">Mateo &amp; Sofía</div>
+          </div>
+          <div class="streak">🔥 12 días</div>
+        </div>
+
+        <div class="question-hero">
+          <div class="question-eyebrow">Pregunta de hoy</div>
+          <div class="question-text">¿Qué gasto del mes pasado volverían a hacer sin dudarlo?</div>
+          <div class="question-cta">Responder →</div>
+        </div>
+
+        <div class="balance-strip">
+          <div>
+            <div style="font-size:11px;color:var(--dim)">Este mes</div>
+            <div class="amount nums">$2.140.000</div>
+          </div>
+          <div class="goal-pct">64% de la meta</div>
+        </div>
+
+        <div class="section-title">Categorías <span>ver todas</span></div>
+        <div class="cat-row">
+          <div class="cat-row-top"><span>🏠 Arriendo</span><span class="nums">$1.200.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="cat-row tight">
+          <div class="cat-row-top"><span>🛒 Mercado</span><span class="nums">$690.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
+        </div>
+        <div class="cat-row">
+          <div class="cat-row-top"><span>+ Viaje a Cartagena</span><span class="nums">$250.000</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:31%"></div></div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-dot"></div>Hoy</div>
+        <div class="nav-item">Gastos</div>
+        <div class="nav-item">Metas</div>
+        <div class="nav-item">Nosotros</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="final-swatches">
+        <div class="final-sw"><i style="background:#F3F7F6;border-color:#ccc"></i>Fondo</div>
+        <div class="final-sw"><i style="background:#1C4F49"></i>Acento</div>
+        <div class="final-sw"><i style="background:#FF6B47"></i>Acento 2</div>
+        <div class="final-sw"><i style="background:#152A27"></i>Texto</div>
+      </div>
+      <p style="font-size:13px;line-height:1.7;max-width:340px;">
+        <b>Display:</b> grotesk confiable (clase Schibsted Grotesk / Century Gothic) para números y titulares.<br>
+        <b>Body:</b> texto de sistema, legible y neutro.<br>
+        <b>Radio:</b> 14-22px según el bloque · <b>Modo:</b> claro.<br>
+        <b>Mood:</b> confiable, ordenado, cálido en los acentos.
+      </p>
+    </div>
+  </div>
+</div>

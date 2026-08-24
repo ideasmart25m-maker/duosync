@@ -1,0 +1,17 @@
+# Next.js (el propio app/.gitignore ya cubre node_modules, .next, etc. dentro de app/)
+app/node_modules
+app/.next/
+app/.vercel
+
+# Variables de entorno — NUNCA se versionan
+.env
+.env.*
+!.env.example
+
+# Carpetas de trabajo temporal (procesamiento de imágenes, capturas de Playwright)
+.imgtmp*/
+.playwright-mcp/
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db

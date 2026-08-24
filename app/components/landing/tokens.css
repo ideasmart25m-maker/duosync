@@ -1,0 +1,108 @@
+/* ============================================================================
+   KIT DE LANDING — tokens.css
+   EL ÚNICO ARCHIVO QUE SE TEMATIZA. Los componentes del kit consumen SOLO estas
+   variables: cambias estos valores con la FICHA-ARTE.md del proyecto y toda la
+   landing cambia de piel sin tocar un .tsx.
+
+   Cómo se usa (orden de "EL KIT PRIMERO" en 55-DISENO-DE-LANDING.md):
+   1. FICHA-ARTE.md aprobada (16 PASO 0 — jamás inventar hex aquí).
+   2. Reemplazar TODOS los valores marcados "← reemplazar con FICHA-ARTE".
+   3. Importar este archivo en app/globals.css DESPUÉS de @import "tailwindcss".
+   4. Verificar contraste AA (≥4.5:1 texto / ≥3:1 UI) con los valores finales.
+
+   Reglas que NO cambian al tematizar:
+   - Ni #000 ni #FFF puros; casi-negro y casi-blanco CON tinte (DESIGN-CORE §2).
+   - El acento va SOLO en CTA y dato clave (60-30-10) — el kit ya lo aplica así.
+   - --chip-bg y los color-mix derivados se recalculan solos desde --accent.
+   ============================================================================ */
+
+:root {
+  /* ── SUPERFICIES (3 niveles: base / elevada / hundida) — FICHA-ARTE DuoSync ── */
+  --bg: #f3f7f6;
+  --surface: #ffffff;
+  --surface-2: #e8efee;
+
+  /* ── TEXTO (casi-negro CON tinte, familia única de neutros) ── */
+  --text-primary: #152a27;
+  --text-secondary: #45564f;
+  --text-tertiary: #5a716c;
+
+  /* ── MARCA ── */
+  /* El kit usa --accent como EL color de marca (CTA, badges, checks, kicker) y
+     --accent-2 solo como nota secundaria decorativa (mesh del hero). La FICHA-ARTE
+     de DuoSync asigna el coral a las llamadas a la acción — por eso aquí --accent
+     es el coral y --accent-2 el verde azulado estructural (se ve en el mesh del
+     hero y queda disponible si el proyecto necesita una 2ª nota más adelante). */
+  --accent: #c2492d;
+  --accent-2: #1c4f49;
+
+  /* ── SEMÁNTICO (solo su función: error de validación — nunca decorativo) ── */
+  --danger: #d9483a;
+
+  /* ── FORMA (radios del brand kit — UNO por rol, toda la página) ── */
+  --radius-card: 20px;
+  --radius-button: 14px;
+
+  /* ── TIPOGRAFÍA (2 familias de la ficha — jamás Inter/Roboto/system-ui de marca) ── */
+  --font-display: 'Schibsted Grotesk', 'Archivo', 'Helvetica Neue', sans-serif;
+  --font-body: 'Instrument Sans', 'Segoe UI', sans-serif;
+
+  /* ── SOMBRAS con el TINTE del neutro de marca (49 Parte 2c — nunca negro puro) ── */
+  --shadow-1: 0 1px 2px rgb(21 42 39 / 0.07);
+  --shadow-2: 0 12px 32px -12px rgb(21 42 39 / 0.18);
+  /* Elevación intermedia para elementos interactivos pequeños (chips, botones de opción)
+     que --shadow-1 deja casi imperceptible sobre --bg claro, y --shadow-2 es demasiado
+     pesada para su tamaño (defecto real detectado por el revisor-visual). */
+  --shadow-chip: 0 2px 8px rgb(21 42 39 / 0.12);
+
+  /* ── DERIVADOS (no se tocan: se recalculan solos desde --accent) ── */
+  --chip-bg: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
+/* ============================================================================
+   EJEMPLO LLENO (referencia de cómo queda tematizado — NO copiar estos hex a
+   una app real: fallan el test de intercambiabilidad de 16/DESIGN-CORE §4.
+   App ficticia de finanzas, modo oscuro DERIVADO, acento latón, display grotesk)
+
+:root {
+  --bg: #101216;
+  --surface: #171a21;
+  --surface-2: #12141a;
+  --text-primary: #e7e9ee;
+  --text-secondary: #9ca1ad;
+  --text-tertiary: #767c89;
+  --accent: #c9a24b;
+  --accent-2: #c9a24b;
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --font-display: 'Archivo', 'Helvetica Neue', sans-serif;
+  --font-body: 'Instrument Sans', 'Segoe UI', sans-serif;
+  --shadow-1: 0 1px 2px rgb(5 6 10 / 0.5);
+  --shadow-2: 0 12px 32px -12px rgb(5 6 10 / 0.6);
+  --chip-bg: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+============================================================================ */
+
+/* Base mínima que el kit asume (no tematizar) */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/* Foco de teclado con el acento de marca, visible en toda la app (landing, onboarding,
+   paywall, login) — sin esto la navegación por teclado depende del outline por defecto
+   del navegador, que a veces se pierde sobre fondos claros (defecto real detectado). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
