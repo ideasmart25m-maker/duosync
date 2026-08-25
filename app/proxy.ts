@@ -1,0 +1,33 @@
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+// Refresca la sesión de Supabase en cada request — sin esto, el token expira
+// mientras el usuario navega y queda "deslogueado" sin razón aparente. Patrón
+// oficial de @supabase/ssr para Next.js App Router.
+export async function proxy(request: NextRequest) {
+  let respuesta = NextResponse.next({ request });
+
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        respuesta = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => respuesta.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  // Refresca el token si hace falta — el resultado se descarta a propósito:
+  // esta llamada existe por su efecto secundario (renovar cookies), la
+  // autorización real de cada pantalla la decide RLS en el servidor.
+  await supabase.auth.getUser();
+
+  return respuesta;
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+};
