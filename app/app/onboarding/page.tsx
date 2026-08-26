@@ -163,7 +163,13 @@ export default function OnboardingPage() {
 
           {paso === 7 && <PasoLoading respuestas={r} onListo={avanzar} onCancelar={() => setPaso(6)} />}
 
-          {paso === 8 && <PasoResultado respuestas={r} />}
+          {paso === 8 && (
+            <PasoResultado
+              respuestas={r}
+              modo={tengoCodigo ? 'unirse' : 'crear'}
+              codigo={tengoCodigo ? codigoIngresado : codigo}
+            />
+          )}
         </PasoTransition>
       </AnimatePresence>
     </FunnelShell>
@@ -633,9 +639,22 @@ function PasoLoading({
 
 /* ── Resultado: recap del valor personalizado, "el Plan [meta]" ── */
 
-function PasoResultado({ respuestas }: { respuestas: Respuestas }) {
+function PasoResultado({
+  respuestas,
+  modo,
+  codigo,
+}: {
+  respuestas: Respuestas;
+  modo: 'crear' | 'unirse';
+  codigo: string;
+}) {
   const reducido = useReducedMotion();
   const nombreMeta = respuestas.meta ?? 'su meta juntos';
+  // El código y el modo (crear pareja / unirse con el código de alguien más) viajan
+  // por la URL hasta el login — recién ahí, con sesión real, se llama a la RPC que
+  // de verdad crea o une la pareja en la base de datos (antes esto era 100% estado
+  // local que se perdía al recargar — hallazgo crítico de la auditoría).
+  const siguiente = `/paywall?meta=${encodeURIComponent(nombreMeta)}&modo=${modo}&codigo=${codigo}`;
   return (
     <div className="flex flex-1 flex-col">
       {/* El bloque de recap se centra en el espacio disponible ARRIBA del CTA fijo — mismo
@@ -680,7 +699,7 @@ function PasoResultado({ respuestas }: { respuestas: Respuestas }) {
       </div>
 
       <div className="mt-auto pt-8">
-        <CtaFijo href={`/paywall?meta=${encodeURIComponent(nombreMeta)}`}>Ver el Plan {nombreMeta}</CtaFijo>
+        <CtaFijo href={siguiente}>Ver el Plan {nombreMeta}</CtaFijo>
       </div>
     </div>
   );

@@ -50,7 +50,10 @@ export default function MetasPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    // flex-1 + justify-center: con una sola meta activa, el contenido se centra en el
+    // espacio disponible en vez de dejar ~40% del viewport en blanco debajo del botón
+    // "Nueva meta juntos" (defecto real detectado en la auditoría).
+    <div className="flex flex-1 flex-col justify-center gap-5">
       <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
 
       <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-1)]">

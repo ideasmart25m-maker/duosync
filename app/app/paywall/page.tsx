@@ -46,6 +46,10 @@ function PaywallInner() {
   const router = useRouter();
   const params = useSearchParams();
   const meta = params.get('meta');
+  // El código y el modo de vinculación viajan desde el onboarding hasta el login,
+  // que es donde recién hay una sesión real para poder crear/unir la pareja de verdad.
+  const modo = params.get('modo') ?? 'crear';
+  const codigo = params.get('codigo') ?? '';
   const [plan, setPlan] = useState<'anual' | 'mensual'>('anual');
   const [cargando, setCargando] = useState(false);
   const [errorNav, setErrorNav] = useState(false);
@@ -54,6 +58,8 @@ function PaywallInner() {
 
   const nombrePlan = meta ? `Plan ${meta}` : 'plan';
   const fechaCobro = useMemo(() => fechaEnDias(7), []);
+  const siguienteLogin = (planElegido: string) =>
+    `/login?plan=${planElegido}&modo=${modo}&codigo=${encodeURIComponent(codigo)}`;
 
   // Mismo feedback de navegación que `elegir()` — antes "Cerrar"/"Ahora no" quedaban mudos
   // tras el tap mientras el CTA principal sí mostraba estado de carga (defecto real detectado
@@ -61,13 +67,13 @@ function PaywallInner() {
   const salir = () => {
     if (saliendo) return;
     setSaliendo(true);
-    router.push('/login?plan=free');
+    router.push(siguienteLogin('free'));
   };
   const elegir = () => {
     if (cargando) return;
     setErrorNav(false);
     setCargando(true);
-    router.push(`/login?plan=${plan}`);
+    router.push(siguienteLogin(plan));
     // Si la navegación no resolvió en 8s (conexión lenta/colgada), se lo decimos y
     // reactivamos el botón — nunca dejarlo muerto sin explicación (defecto real detectado).
     setTimeout(() => {

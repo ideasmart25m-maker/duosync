@@ -20,10 +20,18 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Refresca el token si hace falta — el resultado se descarta a propósito:
-  // esta llamada existe por su efecto secundario (renovar cookies), la
-  // autorización real de cada pantalla la decide RLS en el servidor.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // La app interna (Hoy/Gastos/Metas/Nosotros) exige sesión real — antes cualquiera
+  // podía entrar sin haberse registrado (hallazgo crítico de la auditoría: no había
+  // ninguna puerta real antes de estas pantallas). RLS ya protege los DATOS; esto
+  // protege la RUTA, para no mostrar ni un layout vacío a quien no inició sesión.
+  if (!user && request.nextUrl.pathname.startsWith('/app/')) {
+    const loginUrl = new URL('/login?plan=free', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
 
   return respuesta;
 }
