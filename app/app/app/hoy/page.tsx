@@ -143,6 +143,17 @@ function PreguntaDelDia() {
 export default function HoyPage() {
   const reducido = useReducedMotion();
   const saldoMostrado = useCountUp(SALDO_MES);
+  // El saludo depende de la hora LOCAL del navegador, pero este componente también
+  // se renderiza en el servidor (Next.js sigue haciendo SSR de 'use client') — el
+  // servidor y el navegador pueden estar en zonas horarias distintas y calcular un
+  // saludo diferente, lo que React ve como un error de hidratación (bug real
+  // detectado en producción: no aparecía en localhost porque ahí las dos "horas"
+  // coinciden). Se arranca con un saludo neutro igual en ambos lados y se calcula
+  // el real recién después de montar, solo en el cliente.
+  const [saludo, setSaludo] = useState('Hola');
+  useEffect(() => {
+    setSaludo(saludoDelDia());
+  }, []);
   const topCategorias = [...CATEGORIAS]
     .map((c) => ({ cat: c, total: GASTOS.filter((g) => g.categoriaId === c.id).reduce((a, g) => a + g.monto, 0) }))
     .filter((c) => c.total > 0)
@@ -161,7 +172,7 @@ export default function HoyPage() {
       <motion.div {...entrada(0)} className="flex items-center justify-between">
         <div>
           <p className="text-[13px] text-[var(--text-tertiary)]">
-            {saludoDelDia()}, {PAREJA.nombres.s}
+            {saludo}, {PAREJA.nombres.s}
           </p>
           <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">
             {PAREJA.nombres.m} &amp; {PAREJA.nombres.s}
