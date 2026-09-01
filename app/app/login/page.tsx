@@ -108,6 +108,12 @@ function LoginInner() {
               </div>
               {error && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
             </form>
+
+            <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-tertiary)]">
+              Al continuar, aceptan nuestros{' '}
+              <Link href="/terminos" className="underline">Términos</Link> y nuestra{' '}
+              <Link href="/privacidad" className="underline">Política de privacidad</Link>.
+            </p>
           </div>
 
           <div className="mt-auto pt-8">
