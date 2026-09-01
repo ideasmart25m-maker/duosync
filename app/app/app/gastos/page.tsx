@@ -166,7 +166,12 @@ function GastosInner() {
         if (cancelado) return;
         setCategorias(cats);
       } catch (e) {
-        if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
+        // eslint-disable-next-line no-console -- diagnóstico temporal mientras se prueba la conexión real
+        console.error('[gastos] error al cargar:', e);
+        if (!cancelado) {
+          const detalle = e instanceof Error ? e.message : JSON.stringify(e);
+          setError(`No pudimos cargar sus gastos. (${detalle})`);
+        }
       } finally {
         if (!cancelado) setCargando(false);
       }
