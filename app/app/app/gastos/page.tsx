@@ -83,6 +83,12 @@ function FormularioGasto({
           inputMode="numeric"
           value={monto}
           onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+          onKeyDown={(e) => {
+            // "Enter"/"Listo" del teclado numérico no debe enviar el formulario solo — si el
+            // usuario todavía no tocó una categoría, guardaría con la primera por defecto sin
+            // querer (defecto real detectado: 4 gastos seguidos cayeron en "Arriendo").
+            if (e.key === 'Enter') e.preventDefault();
+          }}
           placeholder="Monto"
           className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
