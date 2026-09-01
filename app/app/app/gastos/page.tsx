@@ -6,12 +6,21 @@
 // Conectada a datos reales de Supabase (Sesión 6, auditoría legal) — antes usaba una lista de
 // ejemplo fija en el código que se perdía al recargar la página.
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
-import { obtenerCoupleId, listarCategorias, listarGastosDelMes, crearGasto, type GastoDB } from '@/lib/gastos';
+import {
+  obtenerCoupleId,
+  listarCategorias,
+  listarGastosDelMes,
+  crearGasto,
+  iniciarEscaneoRecibo,
+  consultarEscaneoRecibo,
+  type GastoDB,
+} from '@/lib/gastos';
+import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, type CategoriaDB } from '@/lib/categorias';
 
 const MESES = [
@@ -31,16 +40,18 @@ function formatoFecha(iso: string): string {
 function FormularioGasto({
   categorias,
   guardando,
+  inicial,
   onGuardar,
   onCerrar,
 }: {
   categorias: CategoriaDB[];
   guardando: boolean;
+  inicial?: { categoriaId: string | null; monto: number };
   onGuardar: (g: { categoriaId: string; monto: number; nota?: string }) => void;
   onCerrar: () => void;
 }) {
-  const [categoriaId, setCategoriaId] = useState(categorias[0]?.id ?? '');
-  const [monto, setMonto] = useState('');
+  const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
+  const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState('');
 
   return (
@@ -58,6 +69,12 @@ function FormularioGasto({
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
+        {inicial && (
+          <p className="mb-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--accent)]">
+            <Sparkles size={13} strokeWidth={2.2} aria-hidden="true" />
+            Leído del recibo — revisen y corrijan si hace falta
+          </p>
+        )}
         <div className="mb-3 flex flex-wrap gap-2">
           {categorias.map((c) => {
             const Icono = iconoDeCategoria(c.icono);
@@ -137,6 +154,12 @@ function GastosInner() {
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
   const [formularioAbierto, setFormularioAbierto] = useState(params.get('nuevo') === '1');
 
+  const inputFotoRef = useRef<HTMLInputElement>(null);
+  const [escaneando, setEscaneando] = useState(false);
+  const [escaneoError, setEscaneoError] = useState<string | null>(null);
+  const [datosDelEscaneo, setDatosDelEscaneo] = useState<{ categoriaId: string | null; monto: number } | null>(null);
+  const [receiptScanId, setReceiptScanId] = useState<string | null>(null);
+
   const fechaBase = new Date();
   fechaBase.setDate(1);
   fechaBase.setMonth(fechaBase.getMonth() + mesOffset);
@@ -207,13 +230,52 @@ function GastosInner() {
     if (!coupleId) return;
     setGuardando(true);
     try {
-      const nuevo = await crearGasto(supabase, coupleId, g);
+      const nuevo = await crearGasto(supabase, coupleId, { ...g, receiptScanId: receiptScanId ?? undefined });
       setGastos((prev) => [nuevo, ...prev]);
       setFormularioAbierto(false);
+      setDatosDelEscaneo(null);
+      setReceiptScanId(null);
     } catch {
       setError('No pudimos guardar el gasto. Intenten de nuevo en un momento.');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  // Comprime la foto, la sube, avisa al servidor que la lea, y sondea el resultado cada 1.5s
+  // (hasta 20s) — la IA es un servicio externo lento y falible (30-INTEGRACION-IA.md): nunca se
+  // bloquea la pantalla esperando, y si tarda demasiado se le avisa al usuario en vez de colgarse.
+  const manejarFotoSeleccionada = async (archivo: File) => {
+    if (!coupleId) return;
+    setEscaneando(true);
+    setEscaneoError(null);
+    try {
+      const foto = await comprimirImagen(archivo);
+      const scanId = await iniciarEscaneoRecibo(supabase, coupleId, foto);
+
+      const esperaMs = 1500;
+      const maxIntentos = 14; // ~20s
+      for (let intento = 0; intento < maxIntentos; intento++) {
+        await new Promise((r) => setTimeout(r, esperaMs));
+        const scan = await consultarEscaneoRecibo(supabase, scanId);
+        if (scan.estado === 'listo') {
+          setReceiptScanId(scanId);
+          setDatosDelEscaneo({ categoriaId: scan.categoriaSugeridaId, monto: scan.montoDetectado ?? 0 });
+          setFormularioAbierto(true);
+          setEscaneando(false);
+          return;
+        }
+        if (scan.estado === 'error') {
+          setEscaneoError(scan.errorMensaje ?? 'No pudimos leer el recibo. Regístrenlo a mano.');
+          setEscaneando(false);
+          return;
+        }
+      }
+      setEscaneoError('Está tardando más de lo normal — inténtenlo de nuevo o regístrenlo a mano.');
+    } catch {
+      setEscaneoError('No pudimos leer el recibo. Regístrenlo a mano.');
+    } finally {
+      setEscaneando(false);
     }
   };
 
@@ -302,23 +364,61 @@ function GastosInner() {
       </div>
 
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
+      {escaneoError && <p className="text-[12px] font-medium text-[var(--danger)]">{escaneoError}</p>}
 
       <AnimatePresence initial={false}>
         {formularioAbierto && (
-          <FormularioGasto categorias={categorias} guardando={guardando} onGuardar={guardarGasto} onCerrar={() => setFormularioAbierto(false)} />
+          <FormularioGasto
+            categorias={categorias}
+            guardando={guardando}
+            inicial={datosDelEscaneo ?? undefined}
+            onGuardar={guardarGasto}
+            onCerrar={() => {
+              setFormularioAbierto(false);
+              setDatosDelEscaneo(null);
+              setReceiptScanId(null);
+            }}
+          />
         )}
       </AnimatePresence>
 
       {!formularioAbierto && (
-        <button
-          type="button"
-          onClick={() => setFormularioAbierto(true)}
-          disabled={categorias.length === 0}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[14px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
-        >
-          <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
-          Nuevo gasto
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setFormularioAbierto(true)}
+            disabled={categorias.length === 0}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[14px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+            Nuevo gasto
+          </button>
+          <button
+            type="button"
+            onClick={() => inputFotoRef.current?.click()}
+            disabled={categorias.length === 0 || escaneando}
+            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] px-4 text-[14px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            {escaneando ? (
+              <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Camera size={16} strokeWidth={2.4} aria-hidden="true" />
+            )}
+            {escaneando ? 'Leyendo…' : 'Escanear recibo'}
+          </button>
+          <input
+            ref={inputFotoRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const archivo = e.target.files?.[0];
+              e.target.value = '';
+              if (archivo) manejarFotoSeleccionada(archivo);
+            }}
+          />
+        </div>
       )}
 
       {gastosDelMes.length === 0 ? (

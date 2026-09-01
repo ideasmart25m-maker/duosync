@@ -54,10 +54,64 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
   }));
 }
 
+export interface ReciboScan {
+  id: string;
+  estado: 'pendiente' | 'procesando' | 'listo' | 'error';
+  montoDetectado: number | null;
+  categoriaSugeridaId: string | null;
+  errorMensaje: string | null;
+}
+
+// Sube la foto (ya comprimida por quien llama) al bucket privado `recibos`, crea la fila de
+// seguimiento, y le avisa al servidor que la procese. La ruta empieza por el couple_id — así
+// la política de Storage puede verificar pertenencia sin adivinar nada (ver migración).
+export async function iniciarEscaneoRecibo(supabase: SupabaseClient, coupleId: string, foto: Blob): Promise<string> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Sin sesión activa');
+
+  const nombreArchivo = `${coupleId}/${crypto.randomUUID()}.jpg`;
+  const { error: errorSubida } = await supabase.storage.from('recibos').upload(nombreArchivo, foto, { contentType: 'image/jpeg' });
+  if (errorSubida) throw errorSubida;
+
+  const { data: scan, error: errorInsert } = await supabase
+    .from('receipt_scans')
+    .insert({ couple_id: coupleId, subido_por: user.id, imagen_path: nombreArchivo })
+    .select('id')
+    .single();
+  if (errorInsert) throw errorInsert;
+
+  const respuesta = await fetch('/api/recibos/procesar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scanId: scan.id }),
+  });
+  if (!respuesta.ok) throw new Error('No pudimos empezar a leer el recibo.');
+
+  return scan.id;
+}
+
+export async function consultarEscaneoRecibo(supabase: SupabaseClient, scanId: string): Promise<ReciboScan> {
+  const { data, error } = await supabase
+    .from('receipt_scans')
+    .select('id, estado, monto_detectado, categoria_sugerida_id, error_mensaje')
+    .eq('id', scanId)
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    estado: data.estado,
+    montoDetectado: data.monto_detectado !== null ? Number(data.monto_detectado) : null,
+    categoriaSugeridaId: data.categoria_sugerida_id,
+    errorMensaje: data.error_mensaje,
+  };
+}
+
 export async function crearGasto(
   supabase: SupabaseClient,
   coupleId: string,
-  gasto: { categoriaId: string; monto: number; nota?: string }
+  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string }
 ): Promise<GastoDB> {
   const {
     data: { user },
@@ -72,6 +126,7 @@ export async function crearGasto(
       monto: gasto.monto,
       registrado_por: user.id,
       nota: gasto.nota || null,
+      receipt_scan_id: gasto.receiptScanId ?? null,
     })
     .select('id, category_id, monto, fecha, registrado_por, nota')
     .single();
