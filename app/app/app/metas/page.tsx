@@ -94,9 +94,11 @@ export default function MetasPage() {
           Meta para el {fechaLarga(META_AHORRO.fechaObjetivo)}
         </p>
 
-        <p className="mt-4 text-[30px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+        <p className="mt-4 text-[30px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
           {formatoMoneda(montoMostrado, pais)}
-          <span className="text-[15px] font-medium text-[var(--text-tertiary)]"> / {formatoMoneda(META_AHORRO.montoObjetivo, pais)}</span>
+        </p>
+        <p className="mt-0.5 text-[13px] text-[var(--text-tertiary)]">
+          de <span className="font-semibold tabular-nums">{formatoMoneda(META_AHORRO.montoObjetivo, pais)}</span> — su meta total
         </p>
 
         {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
