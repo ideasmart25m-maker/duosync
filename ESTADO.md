@@ -69,6 +69,12 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Ajustado a pedido del usuario (2026-09-02): (a) la pregunta ahora dice "¿En qué país van a usar la app?" con aclaración explícita de que NO es el país donde están en ese momento (ej. de viaje) — antes decía "¿Desde qué país nos escriben?", ambiguo para alguien viajando; (b) se puede CORREGIR el país después: `app/app/app/nosotros/page.tsx` ahora tiene una fila real "País y moneda" (el primer dato real de esa pantalla, el resto sigue en datos de ejemplo) que reabre el mismo `SelectorPais` con una X para cerrar sin obligar a elegir — antes, una vez elegido, no había forma de cambiarlo.
 - Verificado: tsc ✓ build ✓.
 
+## Metas: monto de aporte editable (2026-09-02) ✅
+- Reportado por el usuario: "Aportar" solo dejaba un monto fijo de $100.000, sin poder cambiarlo.
+- Corregido en `app/app/app/metas/page.tsx`: el botón ahora abre un campo para escribir el monto que quieran aportar (mismo patrón visual que el formulario de Gastos — cancelar/confirmar, Enter no envía solo).
+- Alcance deliberado (decisión del usuario): sigue en datos de ejemplo local, NO conectado a Supabase todavía — el aporte se ve y anima, pero se pierde al recargar. Conectar Metas a la base de datos real es la siguiente pieza natural, pendiente.
+- Verificado: tsc ✓ build ✓.
+
 ## Cambio de nombre: DuoSync → DuoSync Wallet (2026-09-02) ✅
 - Motivo: ya existe otra app llamada "DuoSync" (conflicto de nombre, decisión del usuario).
 - Cambiado en TODO el código visible al usuario (34 menciones en 11 archivos: landing, onboarding, paywall, login, las 4 páginas legales, título de la pestaña del navegador) + el correo de contacto: `soporte@duosync.app` → `soporte@duosyncwallet.app`, `legal@duosync.app` → `legal@duosyncwallet.app` (el dominio real `duosync.app` NUNCA se compró, así que no se pierde nada comprando `duosyncwallet.app` en su lugar cuando llegue el momento).

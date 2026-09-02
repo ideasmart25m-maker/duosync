@@ -5,7 +5,7 @@
 // no reinventado — FICHA-ARTE.md). Acción primaria: aportar a la meta.
 
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { useEffect } from 'react';
 import { Sprout, TreeDeciduous, Apple, Plus, CalendarDays } from 'lucide-react';
@@ -33,13 +33,19 @@ export default function MetasPage() {
   const reducido = useReducedMotion();
   const [montoActual, setMontoActual] = useState(META_AHORRO.montoActual);
   const [celebrar, setCelebrar] = useState(false);
+  const [aportando, setAportando] = useState(false);
+  const [montoAporte, setMontoAporte] = useState('');
   const montoMostrado = useCountUp(montoActual);
   const pct = Math.min(100, Math.round((montoActual / META_AHORRO.montoObjetivo) * 100));
 
-  const aportar = () => {
-    setMontoActual((m) => Math.min(META_AHORRO.montoObjetivo, m + 100000));
+  const confirmarAporte = () => {
+    const valor = Number(montoAporte);
+    if (!valor || valor <= 0) return;
+    setMontoActual((m) => Math.min(META_AHORRO.montoObjetivo, m + valor));
     setCelebrar(true);
     setTimeout(() => setCelebrar(false), 900);
+    setMontoAporte('');
+    setAportando(false);
   };
 
   const nodos = [
@@ -109,16 +115,66 @@ export default function MetasPage() {
           <span>Su meta, cumplida</span>
         </div>
 
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.98 }}
-          onClick={aportar}
-          disabled={pct >= 100}
-          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
-        >
-          <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
-          {pct >= 100 ? 'Meta cumplida' : 'Aportar $100.000'}
-        </motion.button>
+        <AnimatePresence initial={false} mode="wait">
+          {aportando ? (
+            <motion.form
+              key="form"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-5 overflow-hidden"
+              onSubmit={(e) => {
+                e.preventDefault();
+                confirmarAporte();
+              }}
+            >
+              <input
+                autoFocus
+                inputMode="numeric"
+                value={montoAporte}
+                onChange={(e) => setMontoAporte(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
+                placeholder="¿Cuánto van a aportar?"
+                className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAportando(false);
+                    setMontoAporte('');
+                  }}
+                  className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!montoAporte}
+                  className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                >
+                  <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+                  Confirmar aporte
+                </button>
+              </div>
+            </motion.form>
+          ) : (
+            <motion.button
+              key="boton"
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setAportando(true)}
+              disabled={pct >= 100}
+              className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            >
+              <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+              {pct >= 100 ? 'Meta cumplida' : 'Aportar a la meta'}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       <button

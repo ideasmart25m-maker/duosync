@@ -10,7 +10,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
 import { Flame, Sparkles, Plus, ArrowRight, Pencil } from 'lucide-react';
-import { CATEGORIAS, GASTOS, SALDO_MES, META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA, formatoCOP } from '@/lib/seed-datos';
+import { CATEGORIAS, GASTOS, SALDO_MES, META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA } from '@/lib/seed-datos';
+import { crearClienteNavegador } from '@/lib/supabase/client';
+import { formatoMoneda } from '@/lib/paises';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
 // en cada tap (flash blanco, se pierde el estado de la app) — defecto real detectado por el
@@ -151,8 +153,18 @@ export default function HoyPage() {
   // coinciden). Se arranca con un saludo neutro igual en ambos lados y se calcula
   // el real recién después de montar, solo en el cliente.
   const [saludo, setSaludo] = useState('Hola');
+  const [pais, setPais] = useState<string | null>(null);
   useEffect(() => {
     setSaludo(saludoDelDia());
+    // El único dato real de esta pantalla por ahora (el resto sigue en datos de ejemplo,
+    // ver ESTADO.md) — para no mostrar pesos colombianos a una pareja que ya eligió otro país.
+    (async () => {
+      const supabase = crearClienteNavegador();
+      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
+      if (!membresia) return;
+      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
+      setPais(pareja?.pais ?? null);
+    })();
   }, []);
   const topCategorias = [...CATEGORIAS]
     .map((c) => ({ cat: c, total: GASTOS.filter((g) => g.categoriaId === c.id).reduce((a, g) => a + g.monto, 0) }))
@@ -204,7 +216,7 @@ export default function HoyPage() {
           </Link>
         </div>
         <p className="mt-1 text-[28px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoCOP(saldoMostrado)}
+          {formatoMoneda(saldoMostrado, pais)}
         </p>
         {topCategorias.length === 0 ? (
           <p className="mt-3 text-[13px] text-[var(--text-tertiary)]">Aún no registran gastos este mes.</p>
@@ -220,7 +232,7 @@ export default function HoyPage() {
                   <cat.icono size={14} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
                 </span>
                 <span className="flex-1 text-[var(--text-primary)]">{cat.nombre}</span>
-                <span className="tabular-nums font-semibold text-[var(--text-primary)]">{formatoCOP(total)}</span>
+                <span className="tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(total, pais)}</span>
               </div>
             ))}
           </div>
