@@ -441,7 +441,9 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en DuoSync Wallet. Este es nuestro código de pareja: ${codigo}`
+              `Vamos a organizar nuestras cuentas juntos en DuoSync Wallet (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí: ${
+                typeof window !== 'undefined' ? window.location.origin : ''
+              }`
             )}`}
             target="_blank"
             rel="noopener noreferrer"
