@@ -4,9 +4,13 @@
 // retención, ESTADO.md) + vista previa honesta del catálogo de dinámicas. Los ítems sin
 // función real llevan "Próximamente" (regla UX 11: nada tapable sin acción, o se marca así).
 
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock } from 'lucide-react';
+import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, Globe2, ChevronRight } from 'lucide-react';
 import { PAREJA, RACHA } from '@/lib/seed-datos';
+import { crearClienteNavegador } from '@/lib/supabase/client';
+import { paisPorCodigo } from '@/lib/paises';
+import { SelectorPais } from '@/components/app/SelectorPais';
 
 const DIAS_SEMANA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -21,6 +25,38 @@ export default function NosotrosPage() {
   for (let i = 0; i < 4; i++) {
     semanas.push(RACHA.historial.slice(i * 7, i * 7 + 7));
   }
+
+  // País/moneda de la pareja (SelectorPais) — el único dato real de esta pantalla por ahora;
+  // el resto sigue en datos de ejemplo (racha/dinámicas, ver ESTADO.md). Se puede reabrir aquí
+  // para corregirlo si se eligió mal la primera vez (pedido real del usuario).
+  const [pais, setPais] = useState<string | null>(null);
+  const [cambiandoPais, setCambiandoPais] = useState(false);
+  const [guardandoPais, setGuardandoPais] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      const supabase = crearClienteNavegador();
+      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
+      if (!membresia || cancelado) return;
+      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
+      if (!cancelado) setPais(pareja?.pais ?? null);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const cambiarPais = async (codigo: string) => {
+    setGuardandoPais(true);
+    const supabase = crearClienteNavegador();
+    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
+    setGuardandoPais(false);
+    if (!error) {
+      setPais(codigo);
+      setCambiandoPais(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -86,6 +122,25 @@ export default function NosotrosPage() {
           ))}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setCambiandoPais(true)}
+        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 [touch-action:manipulation]"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]">
+          <Globe2 size={16} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+        </span>
+        <span className="flex-1 text-left">
+          <span className="block text-[14px] font-medium text-[var(--text-primary)]">País y moneda</span>
+          <span className="block text-[12px] text-[var(--text-tertiary)]">{paisPorCodigo(pais)?.nombre ?? 'Sin elegir todavía'}</span>
+        </span>
+        <ChevronRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+      </button>
+
+      {cambiandoPais && (
+        <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />
+      )}
     </div>
   );
 }

@@ -6,10 +6,20 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, Globe2 } from 'lucide-react';
+import { Search, Globe2, X } from 'lucide-react';
 import { PAISES } from '@/lib/paises';
 
-export function SelectorPais({ guardando, onElegir }: { guardando: boolean; onElegir: (codigo: string) => void }) {
+export function SelectorPais({
+  guardando,
+  onElegir,
+  onCerrar,
+}: {
+  guardando: boolean;
+  onElegir: (codigo: string) => void;
+  /** Si se pasa, aparece una X para cerrar sin elegir (uso: cambiar un país ya elegido).
+   *  Sin esta prop, es obligatorio elegir uno (primera vez, desde el shell de la app). */
+  onCerrar?: () => void;
+}) {
   const [busqueda, setBusqueda] = useState('');
 
   const paisesFiltrados = useMemo(() => {
@@ -26,12 +36,26 @@ export function SelectorPais({ guardando, onElegir }: { guardando: boolean; onEl
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-t-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-2)] sm:rounded-[var(--radius-card)]"
       >
-        <span className="mb-3 flex size-11 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
-          <Globe2 size={20} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
-        </span>
-        <h2 className="text-[20px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">¿Desde qué país nos escriben?</h2>
+        <div className="mb-3 flex items-start justify-between">
+          <span className="flex size-11 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
+            <Globe2 size={20} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+          </span>
+          {onCerrar && (
+            <button
+              type="button"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+              className="flex size-9 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+            >
+              <X size={18} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <h2 className="text-[20px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">¿En qué país van a usar la app?</h2>
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-secondary)]">
-          Así les mostramos sus montos en su propia moneda. Solo se pregunta una vez.
+          No el país donde están ahora mismo (por ejemplo, de viaje) — el de siempre, donde manejan su
+          dinero. Así les mostramos los montos en su moneda. Pueden cambiarlo cuando quieran desde
+          Nosotros.
         </p>
 
         <div className="mt-4 flex h-12 items-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4">

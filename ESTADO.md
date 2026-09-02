@@ -66,6 +66,8 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Gastos (la única pantalla con datos reales por ahora) ya muestra los montos en la moneda elegida — antes usaba `$${n.toLocaleString('es-CO')}` fijo.
 - Verificado: tsc ✓ build ✓ · probada la función de formato con México/Argentina/Colombia/Brasil, cada uno con su símbolo y separador correctos.
 - Alcance deliberado: Hoy y Metas siguen en datos de ejemplo (no conectados todavía) — cuando se conecten, usan la misma `formatoMoneda` ya lista.
+- Ajustado a pedido del usuario (2026-09-02): (a) la pregunta ahora dice "¿En qué país van a usar la app?" con aclaración explícita de que NO es el país donde están en ese momento (ej. de viaje) — antes decía "¿Desde qué país nos escriben?", ambiguo para alguien viajando; (b) se puede CORREGIR el país después: `app/app/app/nosotros/page.tsx` ahora tiene una fila real "País y moneda" (el primer dato real de esa pantalla, el resto sigue en datos de ejemplo) que reabre el mismo `SelectorPais` con una X para cerrar sin obligar a elegir — antes, una vez elegido, no había forma de cambiarlo.
+- Verificado: tsc ✓ build ✓.
 
 ## Cambio de nombre: DuoSync → DuoSync Wallet (2026-09-02) ✅
 - Motivo: ya existe otra app llamada "DuoSync" (conflicto de nombre, decisión del usuario).
