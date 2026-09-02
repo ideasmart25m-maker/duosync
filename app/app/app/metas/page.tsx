@@ -9,7 +9,9 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { useEffect } from 'react';
 import { Sprout, TreeDeciduous, Apple, Plus, CalendarDays } from 'lucide-react';
-import { META_AHORRO, formatoCOP } from '@/lib/seed-datos';
+import { META_AHORRO } from '@/lib/seed-datos';
+import { crearClienteNavegador } from '@/lib/supabase/client';
+import { formatoMoneda } from '@/lib/paises';
 
 function useCountUp(target: number): number {
   const reducido = useReducedMotion();
@@ -35,7 +37,19 @@ export default function MetasPage() {
   const [celebrar, setCelebrar] = useState(false);
   const [aportando, setAportando] = useState(false);
   const [montoAporte, setMontoAporte] = useState('');
+  const [pais, setPais] = useState<string | null>(null);
   const montoMostrado = useCountUp(montoActual);
+
+  useEffect(() => {
+    // Mismo dato real que Hoy — el resto de esta pantalla sigue en datos de ejemplo (ver ESTADO.md).
+    (async () => {
+      const supabase = crearClienteNavegador();
+      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
+      if (!membresia) return;
+      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
+      setPais(pareja?.pais ?? null);
+    })();
+  }, []);
   const pct = Math.min(100, Math.round((montoActual / META_AHORRO.montoObjetivo) * 100));
 
   const confirmarAporte = () => {
@@ -81,8 +95,8 @@ export default function MetasPage() {
         </p>
 
         <p className="mt-4 text-[30px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoCOP(montoMostrado)}
-          <span className="text-[15px] font-medium text-[var(--text-tertiary)]"> / {formatoCOP(META_AHORRO.montoObjetivo)}</span>
+          {formatoMoneda(montoMostrado, pais)}
+          <span className="text-[15px] font-medium text-[var(--text-tertiary)]"> / {formatoMoneda(META_AHORRO.montoObjetivo, pais)}</span>
         </p>
 
         {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
