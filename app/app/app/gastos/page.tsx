@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles } fro
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
+  obtenerPaisPareja,
   listarCategorias,
   listarGastosDelMes,
   crearGasto,
@@ -22,15 +23,12 @@ import {
 } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, type CategoriaDB } from '@/lib/categorias';
+import { formatoMoneda } from '@/lib/paises';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
-
-function formatoCOP(n: number): string {
-  return `$${n.toLocaleString('es-CO')}`;
-}
 
 function formatoFecha(iso: string): string {
   const [, m, d] = iso.split('-');
@@ -146,6 +144,7 @@ function GastosInner() {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [coupleId, setCoupleId] = useState<string | null>(null);
+  const [pais, setPais] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
@@ -191,9 +190,14 @@ function GastosInner() {
         if (cancelado) return;
         setCoupleId(cid);
 
-        const [cats] = await Promise.all([listarCategorias(supabase, cid), cargarGastos(cid, prefijoMes)]);
+        const [cats, paisPareja] = await Promise.all([
+          listarCategorias(supabase, cid),
+          obtenerPaisPareja(supabase, cid),
+          cargarGastos(cid, prefijoMes),
+        ]);
         if (cancelado) return;
         setCategorias(cats);
+        setPais(paisPareja);
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
       } finally {
@@ -359,7 +363,7 @@ function GastosInner() {
       <div className="flex items-center justify-between rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
         <span className="text-[13px] text-[var(--text-secondary)]">Total del mes</span>
         <span className="text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoCOP(totalMes)}
+          {formatoMoneda(totalMes, pais)}
         </span>
       </div>
 
@@ -454,7 +458,7 @@ function GastosInner() {
                   </span>
                 </span>
                 <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
-                  {formatoCOP(g.monto)}
+                  {formatoMoneda(g.monto, pais)}
                 </span>
               </li>
             );

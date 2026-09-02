@@ -1,6 +1,6 @@
 'use client';
 
-// Landing de DuoSync — compuesta desde el kit canónico (plantillas-codigo/landing).
+// Landing de DuoSync Wallet — compuesta desde el kit canónico (plantillas-codigo/landing).
 // Copy marcado en docs/copy/landing.md, trazado a FICHA-AVATAR.md.
 // Modelo onboarding-first (02C, decidido en Sesión 1): el CTA lleva a /onboarding.
 
@@ -33,11 +33,11 @@ export default function DuoSyncLanding() {
       </a>
       {/* 1. HERO */}
       <Hero
-        appName="DuoSync"
+        appName="DuoSync Wallet"
         logo={<Image src="/logo-duosync.png" alt="" width={233} height={128} priority className="h-7 w-auto" />}
         loginHref="/login"
         h1Marked="Gestión de gastos juntos, sin hojas de cálculo ni [acento]momentos incómodos[/acento]"
-        subtitleMarked="Duosync automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
+        subtitleMarked="DuoSync Wallet automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         socialProof={<span>Un pago cubre a los dos — hasta 60% más barato que otras apps para parejas</span>}
@@ -176,7 +176,7 @@ export default function DuoSyncLanding() {
           },
           {
             pregunta: '¿Qué pasa si quiero cancelar?',
-            respuestaMarked: 'Cancelan cuando quieran desde su cuenta, sin llamadas ni trámites.',
+            respuestaMarked: 'Cancelan cuando quieran desde el área de miembros de Hotmart, sin llamadas ni trámites.',
           },
         ]}
       />
@@ -188,14 +188,14 @@ export default function DuoSyncLanding() {
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         recap="7 días gratis · Un solo pago para los dos"
-        psMarked="PS: DuoSync une el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin pelear."
+        psMarked="PS: DuoSync Wallet une el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin pelear."
       />
 
       {/* 10. FOOTER LEGAL */}
       <FooterLegal
-        appName="DuoSync"
+        appName="DuoSync Wallet"
         logo={<Image src="/logo-duosync.png" alt="" width={233} height={128} className="h-5 w-auto opacity-80" />}
-        soporteEmail="soporte@duosync.app"
+        soporteEmail="soporte@duosyncwallet.app"
         enlaces={[
           { label: 'Privacidad', href: '/privacidad' },
           { label: 'Términos y Condiciones', href: '/terminos' },

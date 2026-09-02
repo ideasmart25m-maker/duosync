@@ -18,6 +18,14 @@ export async function obtenerCoupleId(supabase: SupabaseClient): Promise<string 
   return data?.couple_id ?? null;
 }
 
+// País elegido por la pareja (SelectorPais) — null si todavía no lo eligieron; quien llama
+// decide el valor por defecto (formatoMoneda ya cae a Colombia si recibe null).
+export async function obtenerPaisPareja(supabase: SupabaseClient, coupleId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('couples').select('pais').eq('id', coupleId).maybeSingle();
+  if (error) throw error;
+  return data?.pais ?? null;
+}
+
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
   const { data, error } = await supabase
     .from('categories')

@@ -1,6 +1,6 @@
 'use client';
 
-// Onboarding de DuoSync — 8 pasos de alto rendimiento (categoría "consumo personalizado/
+// Onboarding de DuoSync Wallet — 8 pasos de alto rendimiento (categoría "consumo personalizado/
 // finanzas del hogar" de 02B: 4-8 pasos). Cada pregunta traza a un dolor/deseo de
 // FICHA-AVATAR.md (ver docs/copy/onboarding.md). Modelo onboarding-first (02C): el registro
 // llega DESPUÉS de la primera victoria (vincular con el código de pareja), nunca antes.
@@ -441,7 +441,7 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en DuoSync. Este es nuestro código de pareja: ${codigo}`
+              `Vamos a organizar nuestras cuentas juntos en DuoSync Wallet. Este es nuestro código de pareja: ${codigo}`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

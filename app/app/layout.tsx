@@ -15,9 +15,9 @@ const fontBody = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "DuoSync — Cuentas claras, sin pelear",
+  title: "DuoSync Wallet — Cuentas claras, sin pelear",
   description:
-    "DuoSync ordena el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos.",
+    "DuoSync Wallet ordena el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

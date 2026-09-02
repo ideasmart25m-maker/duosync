@@ -17,7 +17,7 @@
    ============================================================================ */
 
 :root {
-  /* ── SUPERFICIES (3 niveles: base / elevada / hundida) — FICHA-ARTE DuoSync ── */
+  /* ── SUPERFICIES (3 niveles: base / elevada / hundida) — FICHA-ARTE DuoSync Wallet ── */
   --bg: #f3f7f6;
   --surface: #ffffff;
   --surface-2: #e8efee;
@@ -30,7 +30,7 @@
   /* ── MARCA ── */
   /* El kit usa --accent como EL color de marca (CTA, badges, checks, kicker) y
      --accent-2 solo como nota secundaria decorativa (mesh del hero). La FICHA-ARTE
-     de DuoSync asigna el coral a las llamadas a la acción — por eso aquí --accent
+     de DuoSync Wallet asigna el coral a las llamadas a la acción — por eso aquí --accent
      es el coral y --accent-2 el verde azulado estructural (se ve en el mesh del
      hero y queda disponible si el proyecto necesita una 2ª nota más adelante). */
   --accent: #c2492d;

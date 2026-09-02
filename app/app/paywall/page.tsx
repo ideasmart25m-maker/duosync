@@ -1,6 +1,6 @@
 'use client';
 
-// Paywall de DuoSync — blueprint C1 de 50-DISENO-ONBOARDING-PAYWALL.md (single-page, el
+// Paywall de DuoSync Wallet — blueprint C1 de 50-DISENO-ONBOARDING-PAYWALL.md (single-page, el
 // default corto y escaneable). Copy derivado de FICHA-AVATAR.md (57 §9): headline = deseo
 // tangible #1, subtítulo ancla el dolor #1 ("equipo, no administradores" — mismo eco que la
 // landing), CTA = identidad aspiracional en 1ª persona PLURAL (es un plan de a dos, no de uno).

@@ -1,6 +1,6 @@
 'use client';
 
-// Login de DuoSync — magic link real (Supabase Auth), decidido en Sesión 1: sin contraseña
+// Login de DuoSync Wallet — magic link real (Supabase Auth), decidido en Sesión 1: sin contraseña
 // que olvidar. Conectado de verdad en la auditoría de Sesión 6 (antes simulaba el envío con
 // estado local — hallazgo crítico: nada persistía). El plan, el modo de vinculación (crear
 // pareja / unirse con código) y el código mismo viajan por la URL desde el onboarding y el
@@ -54,7 +54,7 @@ function LoginInner() {
       <div className="flex h-11 items-center">
         <Link href="/" className="flex items-center gap-2 text-[16px] font-semibold text-[var(--accent)]">
           <Image src="/logo-duosync.png" alt="" width={233} height={128} className="h-6 w-auto" />
-          DuoSync
+          DuoSync Wallet
         </Link>
       </div>
 

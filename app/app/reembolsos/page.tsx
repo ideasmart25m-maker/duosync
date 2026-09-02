@@ -23,8 +23,8 @@ export default function ReembolsosPage() {
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
         ¿Dudas ahora mismo? Escríbannos a{' '}
-        <a href="mailto:legal@duosync.app" className="underline">
-          legal@duosync.app
+        <a href="mailto:legal@duosyncwallet.app" className="underline">
+          legal@duosyncwallet.app
         </a>
         .
       </p>

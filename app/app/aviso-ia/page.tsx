@@ -7,7 +7,7 @@ export default function AvisoIaPage() {
       <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        El plan Premium de DuoSync incluirá dos funciones con inteligencia artificial: lectura
+        El plan Premium de DuoSync Wallet incluirá dos funciones con inteligencia artificial: lectura
         automática de recibos (para sugerir el monto y la categoría del gasto a partir de una foto)
         y un asistente dentro de la app para resolver dudas sobre sus gastos.
       </p>
@@ -31,8 +31,8 @@ export default function AvisoIaPage() {
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
         ¿Dudas ahora mismo? Escríbannos a{' '}
-        <a href="mailto:legal@duosync.app" className="underline">
-          legal@duosync.app
+        <a href="mailto:legal@duosyncwallet.app" className="underline">
+          legal@duosyncwallet.app
         </a>
         .
       </p>

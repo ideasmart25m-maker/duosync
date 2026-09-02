@@ -4,12 +4,14 @@
 // con 1 protagonista (SECUENCIA-MAESTRA-CONSTRUCCION §Paso 5). Bottom-nav fijo con safe-area,
 // altura dinámica de viewport + flex-col (DESIGN-CORE §2: "nav al fondo, cero vacío muerto").
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Sun, Receipt, Target, Heart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { crearClienteNavegador } from '@/lib/supabase/client';
+import { SelectorPais } from '@/components/app/SelectorPais';
 
 const DESTINOS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/app/hoy', label: 'Hoy', icon: Sun },
@@ -20,6 +22,33 @@ const DESTINOS: { href: string; label: string; icon: LucideIcon }[] = [
 
 export default function AppInternaLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [preguntarPais, setPreguntarPais] = useState(false);
+  const [guardandoPais, setGuardandoPais] = useState(false);
+
+  // Se pregunta el país UNA vez, fuera del onboarding/paywall ya aprobados — apenas la pareja
+  // ya tiene sesión real y todavía no eligió (couples.pais es null). No bloquea nada si falla
+  // la consulta: mejor mostrar la app en pesos colombianos por defecto que romper la pantalla.
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      const supabase = crearClienteNavegador();
+      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
+      if (!membresia || cancelado) return;
+      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
+      if (!cancelado && pareja && pareja.pais === null) setPreguntarPais(true);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const elegirPais = async (codigo: string) => {
+    setGuardandoPais(true);
+    const supabase = crearClienteNavegador();
+    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
+    setGuardandoPais(false);
+    if (!error) setPreguntarPais(false);
+  };
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--bg)] [font-family:var(--font-body)]">
@@ -65,6 +94,8 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
           );
         })}
       </nav>
+
+      {preguntarPais && <SelectorPais guardando={guardandoPais} onElegir={elegirPais} />}
     </div>
   );
 }

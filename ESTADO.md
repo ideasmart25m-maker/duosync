@@ -1,4 +1,4 @@
-# ESTADO — DuoSync
+# ESTADO — DuoSync Wallet
 Última actualización: 2026-08-27 | Sesión actual: 6
 
 ⏸️ CHECKPOINT — Sesión 5 CERRADA: app interna construida (Hoy/Gastos/Metas/Nosotros), pulida con varias rondas de ajustes de diseño a pedido del usuario (logo real integrado, menú flotante, colores de categoría, profundidad de tarjetas) — detalle completo en las secciones de abajo. Sesión 6 EN CURSO — servicios externos, siguiendo `docs/sistema/62-PUBLICACION-SEGURA-Y-CONTINUA.md` (protocolo P0-P9) + `SECUENCIA-MAESTRA-CONSTRUCCION.md` §Paso 6 (orden: Git/GitHub → Supabase → IA real → Vercel → Resend → dominio → Hotmart).
@@ -48,8 +48,26 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Permisos nuevos: bucket `recibos` (creado por el usuario, privado) con políticas de Storage couple-scoped (`20260901223000_storage_recibos_rls.sql`), usando la misma función `mi_couple_id()` del fix de recursión para evitar el mismo problema.
 - La categoría que sugiere la IA es SIEMPRE una de la lista real de categorías de la pareja (enum forzado en el esquema de la tool) — nunca puede inventar una categoría que no existe.
 - Verificado: tsc ✓ build ✓ · llamada real a la API de Anthropic probada de punta a punta (confirmó correctamente que una imagen que no es un recibo no lo es) · costo real por escaneo: variables de entorno `ANTHROPIC_API_KEY`/`AI_MODEL=claude-haiku-4-5` configuradas, muy por debajo del 20% del precio de suscripción que exige la doctrina.
-- Pendiente: que el usuario pruebe con una foto de un recibo real (más allá de la prueba técnica que hice yo con una imagen que no es un recibo).
+- ✅ VERIFICADO END-TO-END con una foto real del usuario (2026-09-02): leyó el recibo en ~3s, sugirió $39.520 en la categoría correcta (Mercado), el usuario confirmó y guardó desde el formulario pre-llenado.
+- 🐛 Detalle real encontrado y corregido en el camino: `SUPABASE_SECRET_KEY` se había configurado solo en `.env.local` (desarrollo) pero nunca en las Environment Variables de Vercel — el endpoint fallaba en producción antes de tocar la fila (quedaba en estado "pendiente" para siempre). Agregada en Vercel (Production+Preview) + redeploy. Lección: cada variable de servidor nueva se agrega en AMBOS lugares desde el principio, no solo en local.
 - ⚠️ BLOQUEADOR EN CURSO (2026-08-27): el límite de envíos del correo por defecto de Supabase (ya anticipado en la Sesión 6) impidió seguir probando el login. Se conectó Resend por SMTP personalizado en Supabase (Authentication → SMTP Settings, cuenta de Resend registrada con `ideasmart.25m@gmail.com`, remitente de prueba `onboarding@resend.dev`) — pero el enlace mágico SIGUE sin llegar tras la reconexión. Diagnóstico en curso: revisando los logs de envío de Resend para saber si Supabase siquiera intentó mandar el correo por ahí, o si el problema es la configuración SMTP en Supabase. Sin resolver esto no se puede seguir probando "Nuevo gasto" en Gastos ni avanzar al escaneo de recibos.
+
+## País y moneda por pareja (2026-09-02) ✅
+- Motivo: la app apunta a Colombia/México/Argentina (y el resto de LATAM), pero todo estaba hardcodeado a pesos colombianos. Se agrega selección de país FUERA del embudo de venta (onboarding/paywall son pantallas ya aprobadas, "cosa juzgada" — no se tocan).
+- `couples.pais` (nuevo, nullable) + RPC `actualizar_pais_pareja(p_pais)` (`20260902150000_pais_pareja.sql`) — valida el código contra la lista fija de 19 países LATAM y que quien llama pertenece a esa pareja, mismo patrón que `crear_pareja`/`unirse_con_codigo`.
+- `app/lib/paises.ts`: los 19 países con su moneda real y su locale de formato (México/Argentina/Colombia con su propio separador decimal, Brasil con `pt-BR`/R$, Ecuador/El Salvador/Panamá en USD porque es su moneda oficial real).
+- `app/components/app/SelectorPais.tsx`: aparece UNA vez, apenas la pareja entra a la app y `couples.pais` sigue en null (se pregunta desde `app/app/app/layout.tsx`, visible en las 4 pestañas) — nunca vuelve a preguntar una vez elegido.
+- Gastos (la única pantalla con datos reales por ahora) ya muestra los montos en la moneda elegida — antes usaba `$${n.toLocaleString('es-CO')}` fijo.
+- Verificado: tsc ✓ build ✓ · probada la función de formato con México/Argentina/Colombia/Brasil, cada uno con su símbolo y separador correctos.
+- Alcance deliberado: Hoy y Metas siguen en datos de ejemplo (no conectados todavía) — cuando se conecten, usan la misma `formatoMoneda` ya lista.
+
+## Cambio de nombre: DuoSync → DuoSync Wallet (2026-09-02) ✅
+- Motivo: ya existe otra app llamada "DuoSync" (conflicto de nombre, decisión del usuario).
+- Cambiado en TODO el código visible al usuario (34 menciones en 11 archivos: landing, onboarding, paywall, login, las 4 páginas legales, título de la pestaña del navegador) + el correo de contacto: `soporte@duosync.app` → `soporte@duosyncwallet.app`, `legal@duosync.app` → `legal@duosyncwallet.app` (el dominio real `duosync.app` NUNCA se compró, así que no se pierde nada comprando `duosyncwallet.app` en su lugar cuando llegue el momento).
+- De paso corregido: la pregunta frecuente de la landing "¿Qué pasa si quiero cancelar?" también decía "desde su cuenta" (mismo error que ya se había corregido en Términos) — ahora dice correctamente "desde el área de miembros de Hotmart".
+- NO se tocó: el nombre interno de las funciones/componentes en el código (`DuoSyncLanding`, etc. — son identificadores técnicos, no texto visible), el repositorio de GitHub (`duosync`), ni el proyecto de Vercel (`duosync-jfr5`) — renombrar esos tiene riesgo real de romper el despliegue automático y no aporta nada al usuario final; se puede hacer más adelante si el usuario lo pide explícitamente.
+- ⚠️ Pendiente (acción del usuario, no código): actualizar el "Sender name" en la configuración SMTP de Supabase (Authentication → SMTP Settings) de "Duosync" a "DuoSync Wallet", para que el nombre del remitente en los correos también sea coherente.
+- Verificado: tsc ✓ build ✓ · revisado a 375px en el navegador (header de landing y login no se rompen con el nombre más largo).
 
 ## Auditoría legal (2026-08-27) ✅
 - Responsable: Gloria Alvarado, persona natural, Colombia. Correo legal: `legal@duosync.app` (⚠️ pendiente que el usuario confirme que esa bandeja ya recibe correo real — el dominio `duosync.app` mismo sigue pendiente de compra, ver "Problemas conocidos").

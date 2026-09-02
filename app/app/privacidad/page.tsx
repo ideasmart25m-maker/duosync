@@ -7,7 +7,7 @@ export default function PrivacidadPage() {
       <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-        DuoSync es operada por Gloria Alvarado, persona natural, desde Colombia. Esta página
+        DuoSync Wallet es operada por Gloria Alvarado, persona natural, desde Colombia. Esta página
         explica qué datos guardamos de ustedes, para qué los usamos y qué pueden pedirnos en
         cualquier momento.
       </p>
@@ -47,7 +47,7 @@ export default function PrivacidadPage() {
       <h2 className="text-lg font-semibold mb-2">Cómo pedir que borremos sus datos</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
         Escríbannos a{' '}
-        <a href="mailto:legal@duosync.app" className="underline">legal@duosync.app</a> pidiendo el
+        <a href="mailto:legal@duosyncwallet.app" className="underline">legal@duosyncwallet.app</a> pidiendo el
         borrado de su cuenta. Eliminamos su perfil, sus gastos, sus respuestas y la vinculación con
         su pareja en un plazo máximo de 15 días hábiles, y les confirmamos por correo cuando esté
         hecho. Si más adelante activamos un botón de borrado dentro de la app, esta página se
@@ -56,7 +56,7 @@ export default function PrivacidadPage() {
 
       <h2 className="text-lg font-semibold mb-2">Edad mínima</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        DuoSync es para personas mayores de 18 años (la suscripción requiere un medio de pago
+        DuoSync Wallet es para personas mayores de 18 años (la suscripción requiere un medio de pago
         propio). No está dirigida a menores de edad y no recopilamos datos a sabiendas de menores.
       </p>
 
@@ -75,8 +75,8 @@ export default function PrivacidadPage() {
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
         ¿Dudas ahora mismo? Escríbannos a{' '}
-        <a href="mailto:legal@duosync.app" className="underline">
-          legal@duosync.app
+        <a href="mailto:legal@duosyncwallet.app" className="underline">
+          legal@duosyncwallet.app
         </a>
         .
       </p>
