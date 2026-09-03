@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -24,6 +24,7 @@ import {
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
+import { AsistenteChat } from '@/components/app/AsistenteChat';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -148,6 +149,8 @@ function GastosInner() {
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
+
+  const [asistenteAbierto, setAsistenteAbierto] = useState(false);
 
   const [mesOffset, setMesOffset] = useState(0);
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
@@ -465,6 +468,19 @@ function GastosInner() {
           })}
         </ul>
       )}
+
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setAsistenteAbierto(true)}
+        aria-label="Preguntar al asistente"
+        className="fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--accent-2)] text-[var(--bg)] shadow-[var(--shadow-2)] [touch-action:manipulation]"
+        style={{ bottom: 'max(84px, calc(env(safe-area-inset-bottom) + 76px))' }}
+      >
+        <Bot size={22} strokeWidth={2.2} aria-hidden="true" />
+      </motion.button>
+
+      {asistenteAbierto && <AsistenteChat onCerrar={() => setAsistenteAbierto(false)} />}
     </div>
   );
 }
