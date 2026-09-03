@@ -20,20 +20,40 @@ con esos datos, dilo con honestidad. Respondes en español, corto y claro, trata
 de "ustedes". No das consejos financieros profesionales — si preguntan algo así, aclaras que
 eres una ayuda para organizar el registro, no un asesor financiero.`;
 
-function construirContexto(gastos: GastoParaAsistente[], mesLabel: string): string {
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+// Agrupa por mes ("2026-09" → "septiembre de 2026") para que la IA pueda distinguir "este mes"
+// de "el mes pasado" sin ambigüedad — antes solo se le pasaba el mes actual y no podía
+// responder sobre meses anteriores (pedido real del usuario).
+function construirContexto(gastos: GastoParaAsistente[]): string {
   if (gastos.length === 0) {
-    return `Gastos de ${mesLabel}: todavía no han registrado ningún gasto este mes.`;
+    return 'Todavía no han registrado ningún gasto.';
   }
-  const lineas = gastos.map((g) => `- ${g.categoria}: ${g.monto} el ${g.fecha}${g.nota ? ` (${g.nota})` : ''}`);
-  const total = gastos.reduce((a, g) => a + g.monto, 0);
-  return `Gastos de ${mesLabel} (montos en la moneda de la pareja, sin símbolo):\n${lineas.join('\n')}\n\nTotal del mes: ${total}`;
+  const porMes = new Map<string, GastoParaAsistente[]>();
+  for (const g of gastos) {
+    const [anio, mes] = g.fecha.split('-').map(Number);
+    const clave = `${MESES[mes - 1]} de ${anio}`;
+    if (!porMes.has(clave)) porMes.set(clave, []);
+    porMes.get(clave)!.push(g);
+  }
+
+  const bloques = [...porMes.entries()].map(([mesLabel, delMes]) => {
+    const lineas = delMes.map((g) => `  - ${g.categoria}: ${g.monto} el ${g.fecha}${g.nota ? ` (${g.nota})` : ''}`);
+    const total = delMes.reduce((a, g) => a + g.monto, 0);
+    return `${mesLabel} (total: ${total}):\n${lineas.join('\n')}`;
+  });
+
+  return `Historial de gastos (montos en la moneda de la pareja, sin símbolo), del más reciente al más antiguo:\n\n${bloques.join('\n\n')}`;
 }
 
 // Streaming (30-INTEGRACION-IA.md: texto corto/medio SIEMPRE con streaming — la mejora de UX
 // percibida más grande). Devuelve el stream crudo de Anthropic; el Route Handler lo convierte
 // a un ReadableStream de la Web API para la respuesta HTTP.
-export function streamRespuestaAsistente(pregunta: string, historial: MensajeChat[], gastos: GastoParaAsistente[], mesLabel: string) {
-  const contexto = construirContexto(gastos, mesLabel);
+export function streamRespuestaAsistente(pregunta: string, historial: MensajeChat[], gastos: GastoParaAsistente[]) {
+  const contexto = construirContexto(gastos);
   const messages: Anthropic.MessageParam[] = [
     ...historial.map((m) => ({ role: m.rol, content: m.texto }) as Anthropic.MessageParam),
     { role: 'user', content: pregunta },
