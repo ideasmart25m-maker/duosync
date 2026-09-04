@@ -4,7 +4,7 @@
 // metáfora semilla→árbol-con-frutos del Hero de la landing (dispositivo ownable reutilizado,
 // no reinventado — FICHA-ARTE.md). Acción primaria: aportar a la meta.
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { useEffect } from 'react';
@@ -13,15 +13,25 @@ import { META_AHORRO } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { formatoMoneda } from '@/lib/paises';
 
+// Anima CADA VEZ que cambia `target` (desde el último valor mostrado, no siempre desde 0) —
+// antes solo corría una vez al montar (`useEffect(..., [])`), así que un aporte nuevo cambiaba
+// el % y la barra pero el número grande se quedaba congelado en el valor original (defecto
+// real reportado por el usuario: aportó $700.000 y el número en negrilla nunca se movió).
 function useCountUp(target: number): number {
   const reducido = useReducedMotion();
   const [valor, setValor] = useState(reducido ? target : 0);
+  const anterior = useRef(reducido ? target : 0);
   useEffect(() => {
-    if (reducido) return;
-    const controls = animate(0, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(Math.round(v)) });
+    if (reducido) {
+      setValor(target);
+      anterior.current = target;
+      return;
+    }
+    const desde = anterior.current;
+    const controls = animate(desde, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(Math.round(v)) });
+    anterior.current = target;
     return () => controls.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- corre una vez al montar
-  }, []);
+  }, [target, reducido]);
   return valor;
 }
 
