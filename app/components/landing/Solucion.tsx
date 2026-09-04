@@ -16,6 +16,10 @@ export interface PasoMecanismo {
   titulo: string;
   /** UNA línea (warn a las 14 palabras). */
   detalle: string;
+  /** Color propio opcional (var(--cat-*) u otro token) — pedido real del usuario: los 3
+   *  pasos se veían planos con el chip neutro por defecto. Sin esta prop, cae al chip
+   *  de acento original (compatibilidad con cualquier otro uso del kit). */
+  color?: string;
 }
 
 export interface SolucionProps {
@@ -85,10 +89,32 @@ export function Solucion({
         {/* 3 pasos: filas apiladas en mobile, 3 columnas en desktop */}
         <ol className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {pasos.map((p, i) => (
-            <motion.li key={i} variants={item} className="flex items-start gap-4 md:flex-col">
+            <motion.li
+              key={i}
+              variants={item}
+              className="flex items-start gap-4 rounded-[var(--radius-card)] p-4 md:flex-col"
+              style={
+                p.color
+                  ? {
+                      backgroundColor: `color-mix(in oklab, ${p.color} 8%, var(--bg))`,
+                      border: `1px solid color-mix(in oklab, ${p.color} 22%, transparent)`,
+                      boxShadow: `0 6px 18px -8px color-mix(in oklab, ${p.color} 40%, transparent)`,
+                    }
+                  : undefined
+              }
+            >
               <span
                 aria-hidden="true"
-                className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--accent)_22%,transparent)] bg-[var(--chip-bg)] text-[17px] font-bold tabular-nums text-[var(--accent)]"
+                className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-button)] text-[17px] font-bold tabular-nums"
+                style={
+                  p.color
+                    ? { backgroundColor: p.color, color: 'var(--bg)' }
+                    : {
+                        border: '1px solid color-mix(in oklab, var(--accent) 22%, transparent)',
+                        backgroundColor: 'var(--chip-bg)',
+                        color: 'var(--accent)',
+                      }
+                }
               >
                 {String(i + 1).padStart(2, '0')}
               </span>

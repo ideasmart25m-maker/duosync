@@ -49,6 +49,12 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Corregido: ahora anima cada vez que cambia el monto, desde el último valor mostrado hasta el nuevo — conserva la animación de entrada (0 → monto inicial al abrir la pantalla) y además reacciona a cada aporte nuevo.
 - Verificado: tsc ✓ build ✓.
 
+## Landing: sección "El Mecanismo" con profundidad y copy actualizado (2026-09-04) — a pedido del usuario
+- Título: "Cuentas claras sin pelear" → "Cuentas claras sin discusiones".
+- Copy: "No falta amor" → "No falta organización".
+- Los 3 pasos (01/02/03) se veían planos — mismo tratamiento que "¿Les suena?": `app/components/landing/Solucion.tsx` (kit compartido) ahora acepta un `color` opcional por paso, sin tocar el comportamiento por defecto (compatibilidad con cualquier otro uso). Con color: chip numerado sólido en ese color + tarjeta con fondo/borde/sombra tintados (nunca negro, nunca glow — anti-slop). En `app/app/page.tsx` los 3 pasos usan `--cat-blue/amber/teal` (mismos tokens ya creados para categorías y "¿Les suena?").
+- Verificado: tsc ✓ build ✓ · captura real a 375px del título y de los 3 pasos con color.
+
 ## Editor de categorías movido de Nosotros a Gastos (2026-09-04) — a pedido del usuario
 - El usuario no encontró el editor en Nosotros y, al ubicarlo, pidió que quedara más cerca de donde se usan las categorías de verdad — regla de proximidad del propio sistema (12: "las acciones se ubican en el contexto de lo que afectan").
 - `EditorCategorias` ya no vive en Nosotros (se quitó de ahí junto con la carga de categorías que solo servía para eso) — ahora es un enlace pequeño "Editar reparto y recurrencia" debajo de los filtros de categoría, en Gastos, reutilizando el `categorias` que esa pantalla ya tenía cargado.
