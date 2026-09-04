@@ -8,6 +8,7 @@ export interface GastoDB {
   fecha: string; // ISO yyyy-mm-dd
   registradoPor: string; // user id — la pantalla decide cómo mostrarlo (inicial, nombre, etc.)
   nota: string | null;
+  splitPercent: number | null; // override puntual del % de la categoría; null = usa el de la categoría
 }
 
 // Toda pantalla conectada necesita saber a qué pareja pertenece el usuario antes de
@@ -26,14 +27,32 @@ export async function obtenerPaisPareja(supabase: SupabaseClient, coupleId: stri
   return data?.pais ?? null;
 }
 
+function mapCategoria(c: {
+  id: string;
+  nombre: string;
+  icono: string;
+  color: string;
+  split_percent: number;
+  es_recurrente: boolean;
+  dia_vencimiento: number | null;
+}): CategoriaDB {
+  return {
+    id: c.id,
+    nombre: c.nombre,
+    icono: c.icono,
+    color: c.color as CategoriaDB['color'],
+    splitPercent: c.split_percent,
+    esRecurrente: c.es_recurrente,
+    diaVencimiento: c.dia_vencimiento,
+  };
+}
+
+const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dia_vencimiento';
+
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, nombre, icono, color')
-    .eq('couple_id', coupleId)
-    .order('created_at', { ascending: true });
+  const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono, color: c.color as CategoriaDB['color'] }));
+  return (data ?? []).map(mapCategoria);
 }
 
 const PALETA_CATEGORIAS: CategoriaDB['color'][] = ['teal', 'coral', 'amber', 'rose', 'blue', 'violet', 'gray'];
@@ -45,10 +64,27 @@ export async function crearCategoria(supabase: SupabaseClient, coupleId: string,
   const { data, error } = await supabase
     .from('categories')
     .insert({ couple_id: coupleId, nombre: nombre.trim(), icono: 'circle', color })
-    .select('id, nombre, icono, color')
+    .select(COLUMNAS_CATEGORIA)
     .single();
   if (error) throw error;
-  return { id: data.id, nombre: data.nombre, icono: data.icono, color: data.color as CategoriaDB['color'] };
+  return mapCategoria(data);
+}
+
+// Edita el reparto y/o la recurrencia de una categoría YA creada — la política de UPDATE de
+// `categories` ya permite esto (ver migración inicial), solo faltaba el código para llamarla.
+export async function actualizarCategoria(
+  supabase: SupabaseClient,
+  categoriaId: string,
+  cambios: { splitPercent?: number; esRecurrente?: boolean; diaVencimiento?: number | null }
+): Promise<CategoriaDB> {
+  const patch: Record<string, unknown> = {};
+  if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
+  if (cambios.esRecurrente !== undefined) patch.es_recurrente = cambios.esRecurrente;
+  if (cambios.diaVencimiento !== undefined) patch.dia_vencimiento = cambios.diaVencimiento;
+
+  const { data, error } = await supabase.from('categories').update(patch).eq('id', categoriaId).select(COLUMNAS_CATEGORIA).single();
+  if (error) throw error;
+  return mapCategoria(data);
 }
 
 // `prefijoMes` en formato "YYYY-MM" — se resuelve a un rango de fechas real para el filtro,
@@ -61,7 +97,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
 
   const { data, error } = await supabase
     .from('expenses')
-    .select('id, category_id, monto, fecha, registrado_por, nota')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent')
     .eq('couple_id', coupleId)
     .gte('fecha', desde)
     .lt('fecha', hasta)
@@ -74,6 +110,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
     fecha: g.fecha,
     registradoPor: g.registrado_por,
     nota: g.nota,
+    splitPercent: g.split_percent,
   }));
 }
 
@@ -134,7 +171,7 @@ export async function consultarEscaneoRecibo(supabase: SupabaseClient, scanId: s
 export async function crearGasto(
   supabase: SupabaseClient,
   coupleId: string,
-  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string }
+  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string; splitPercent?: number }
 ): Promise<GastoDB> {
   const {
     data: { user },
@@ -150,8 +187,9 @@ export async function crearGasto(
       registrado_por: user.id,
       nota: gasto.nota || null,
       receipt_scan_id: gasto.receiptScanId ?? null,
+      split_percent: gasto.splitPercent ?? null,
     })
-    .select('id, category_id, monto, fecha, registrado_por, nota')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent')
     .single();
   if (error) throw error;
   return {
@@ -161,5 +199,27 @@ export async function crearGasto(
     fecha: data.fecha,
     registradoPor: data.registrado_por,
     nota: data.nota,
+    splitPercent: data.split_percent,
   };
+}
+
+// Saldo pendiente entre la pareja desde la última liquidación (RPC — lo calcula el servidor,
+// nunca sumando en el cliente, para que la cuenta oficial sea siempre la misma para los dos).
+// Positivo = "tu pareja te debe"; negativo = "le debes a tu pareja" — ya resuelto desde el
+// punto de vista del usuario que llama (ver comentario en la migración sobre member_a/b).
+export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('calcular_saldo_pareja', { p_couple_id: coupleId });
+  if (error) throw error;
+  const { data: membresias } = await supabase.from('couple_members').select('user_id').eq('couple_id', coupleId);
+  const ids = (membresias ?? []).map((m) => m.user_id as string);
+  if (ids.length < 2) return 0;
+  const memberA = ids.sort()[0]; // mismo criterio que la función SQL: el menor por orden de texto de UUID
+  const saldoDesdeA = Number(data);
+  // La función devuelve el saldo desde la perspectiva de member_a (positivo = member_b le debe a A).
+  return miUserId === memberA ? saldoDesdeA : -saldoDesdeA;
+}
+
+export async function liquidarSaldo(supabase: SupabaseClient): Promise<void> {
+  const { error } = await supabase.rpc('liquidar_saldo');
+  if (error) throw error;
 }

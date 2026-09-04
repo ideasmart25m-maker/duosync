@@ -4,13 +4,16 @@
 // retención, ESTADO.md) + vista previa honesta del catálogo de dinámicas. Los ítems sin
 // función real llevan "Próximamente" (regla UX 11: nada tapable sin acción, o se marca así).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, Globe2, ChevronRight } from 'lucide-react';
+import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, Globe2, ChevronRight, Tag } from 'lucide-react';
 import { PAREJA, RACHA } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
+import { EditorCategorias } from '@/components/app/EditorCategorias';
+import { obtenerCoupleId, listarCategorias } from '@/lib/gastos';
+import type { CategoriaDB } from '@/lib/categorias';
 
 const DIAS_SEMANA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -33,19 +36,28 @@ export default function NosotrosPage() {
   const [cambiandoPais, setCambiandoPais] = useState(false);
   const [guardandoPais, setGuardandoPais] = useState(false);
 
+  // Categorías reales — para el editor de reparto/recurrencia (el resto de la pantalla
+  // sigue en datos de ejemplo, ver ESTADO.md).
+  const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
+  const [editandoCategorias, setEditandoCategorias] = useState(false);
+  const supabase = useMemo(() => crearClienteNavegador(), []);
+
   useEffect(() => {
     let cancelado = false;
     (async () => {
-      const supabase = crearClienteNavegador();
       const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
       if (!membresia || cancelado) return;
       const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
       if (!cancelado) setPais(pareja?.pais ?? null);
+      const cid = await obtenerCoupleId(supabase);
+      if (!cid || cancelado) return;
+      const cats = await listarCategorias(supabase, cid);
+      if (!cancelado) setCategorias(cats);
     })();
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [supabase]);
 
   const cambiarPais = async (codigo: string) => {
     setGuardandoPais(true);
@@ -138,8 +150,33 @@ export default function NosotrosPage() {
         <ChevronRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
       </button>
 
+      <button
+        type="button"
+        onClick={() => setEditandoCategorias(true)}
+        disabled={categorias.length === 0}
+        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 disabled:opacity-50 [touch-action:manipulation]"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]">
+          <Tag size={16} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+        </span>
+        <span className="flex-1 text-left">
+          <span className="block text-[14px] font-medium text-[var(--text-primary)]">Categorías</span>
+          <span className="block text-[12px] text-[var(--text-tertiary)]">Reparto y pagos recurrentes</span>
+        </span>
+        <ChevronRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+      </button>
+
       {cambiandoPais && (
         <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />
+      )}
+
+      {editandoCategorias && (
+        <EditorCategorias
+          categorias={categorias}
+          supabase={supabase}
+          onActualizada={(actualizada) => setCategorias((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)))}
+          onCerrar={() => setEditandoCategorias(false)}
+        />
       )}
     </div>
   );

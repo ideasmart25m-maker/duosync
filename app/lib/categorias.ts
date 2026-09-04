@@ -13,6 +13,9 @@ export interface CategoriaDB {
   nombre: string;
   icono: string;
   color: ColorCategoria;
+  splitPercent: number; // % del gasto que le corresponde a quien lo REGISTRA (el resto, a su pareja)
+  esRecurrente: boolean;
+  diaVencimiento: number | null; // 1-31, solo si esRecurrente
 }
 
 const ICONOS: Record<string, LucideIcon> = {

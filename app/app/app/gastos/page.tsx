@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -20,6 +20,8 @@ import {
   crearCategoria,
   iniciarEscaneoRecibo,
   consultarEscaneoRecibo,
+  obtenerSaldoPareja,
+  liquidarSaldo,
   type GastoDB,
 } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
@@ -50,7 +52,7 @@ function FormularioGasto({
   guardando: boolean;
   inicial?: { categoriaId: string | null; monto: number };
   creandoCategoria: boolean;
-  onGuardar: (g: { categoriaId: string; monto: number; nota?: string }) => void;
+  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => void;
   onCerrar: () => void;
   onCrearCategoria: (nombre: string) => void;
 }) {
@@ -58,6 +60,20 @@ function FormularioGasto({
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState('');
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
+  const categoriaActual = categorias.find((c) => c.id === categoriaId);
+  const [reparto, setReparto] = useState(categoriaActual?.splitPercent ?? 50);
+  const [ajustandoReparto, setAjustandoReparto] = useState(false);
+
+  // Si cambian de categoría, el % vuelve al de la categoría nueva (a menos que ya lo hayan
+  // tocado a mano en este mismo formulario — evita pisar un ajuste puntual sin querer).
+  const [repartoTocado, setRepartoTocado] = useState(false);
+  const cambiarCategoria = (id: string) => {
+    setCategoriaId(id);
+    if (!repartoTocado) {
+      const cat = categorias.find((c) => c.id === id);
+      setReparto(cat?.splitPercent ?? 50);
+    }
+  };
 
   return (
     <motion.form
@@ -70,7 +86,7 @@ function FormularioGasto({
         e.preventDefault();
         const valor = Number(monto);
         if (!valor || valor <= 0 || !categoriaId || guardando) return;
-        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined });
+        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto });
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
@@ -89,7 +105,7 @@ function FormularioGasto({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setCategoriaId(c.id)}
+                onClick={() => cambiarCategoria(c.id)}
                 className={`flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] border-2 p-3 text-center [touch-action:manipulation] ${
                   seleccionada ? '' : 'border-transparent'
                 }`}
@@ -159,6 +175,53 @@ function FormularioGasto({
           placeholder="Nota (opcional)"
           className="mt-2 h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
+        {!ajustandoReparto ? (
+          <button
+            type="button"
+            onClick={() => setAjustandoReparto(true)}
+            className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--text-secondary)] [touch-action:manipulation]"
+          >
+            <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
+            Reparto: {reparto}% tú · {100 - reparto}% tu pareja — ajustar
+          </button>
+        ) : (
+          <div className="mt-3 rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
+            <p className="text-[12px] text-[var(--text-secondary)]">
+              Tú: <span className="font-semibold text-[var(--text-primary)]">{reparto}%</span> · Tu pareja:{' '}
+              <span className="font-semibold text-[var(--text-primary)]">{100 - reparto}%</span>
+            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                disabled={reparto <= 0}
+                onClick={() => {
+                  setReparto((r) => Math.max(0, r - 10));
+                  setRepartoTocado(true);
+                }}
+                aria-label="Menos para mí"
+                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface)] disabled:opacity-40 [touch-action:manipulation]"
+              >
+                <Minus size={14} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)]">
+                <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${reparto}%` }} />
+              </div>
+              <button
+                type="button"
+                disabled={reparto >= 100}
+                onClick={() => {
+                  setReparto((r) => Math.min(100, r + 10));
+                  setRepartoTocado(true);
+                }}
+                aria-label="Más para mí"
+                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface)] disabled:opacity-40 [touch-action:manipulation]"
+              >
+                <Plus size={14} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -195,6 +258,8 @@ function GastosInner() {
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
+  const [saldo, setSaldo] = useState<number | null>(null);
+  const [liquidando, setLiquidando] = useState(false);
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
 
@@ -239,14 +304,16 @@ function GastosInner() {
         if (cancelado) return;
         setCoupleId(cid);
 
-        const [cats, paisPareja] = await Promise.all([
+        const [cats, paisPareja, saldoActual] = await Promise.all([
           listarCategorias(supabase, cid),
           obtenerPaisPareja(supabase, cid),
+          obtenerSaldoPareja(supabase, cid, user.id),
           cargarGastos(cid, prefijoMes),
         ]);
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
+        setSaldo(saldoActual);
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
       } finally {
@@ -279,8 +346,8 @@ function GastosInner() {
 
   const categoriaPorId = useCallback((id: string) => categorias.find((c) => c.id === id), [categorias]);
 
-  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string }) => {
-    if (!coupleId) return;
+  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => {
+    if (!coupleId || !userId) return;
     setGuardando(true);
     try {
       const nuevo = await crearGasto(supabase, coupleId, { ...g, receiptScanId: receiptScanId ?? undefined });
@@ -288,10 +355,25 @@ function GastosInner() {
       setFormularioAbierto(false);
       setDatosDelEscaneo(null);
       setReceiptScanId(null);
+      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldo).catch(() => {});
     } catch {
       setError('No pudimos guardar el gasto. Intenten de nuevo en un momento.');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const liquidar = async () => {
+    if (!coupleId || !userId) return;
+    setLiquidando(true);
+    try {
+      await liquidarSaldo(supabase);
+      const nuevoSaldo = await obtenerSaldoPareja(supabase, coupleId, userId);
+      setSaldo(nuevoSaldo);
+    } catch {
+      setError('No pudimos liquidar el saldo. Intenten de nuevo en un momento.');
+    } finally {
+      setLiquidando(false);
     }
   };
 
@@ -431,6 +513,36 @@ function GastosInner() {
           {formatoMoneda(totalMes, pais)}
         </span>
       </div>
+
+      {saldo !== null && (
+        <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
+          <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
+            <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
+            Cuentas entre ustedes
+          </p>
+          {Math.round(Math.abs(saldo)) === 0 ? (
+            <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
+          ) : (
+            <>
+              <p className="mt-1.5 text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                {formatoMoneda(Math.abs(saldo), pais)}
+              </p>
+              <p className="text-[13px] text-[var(--text-secondary)]">
+                {saldo > 0 ? 'Tu pareja te debe esto' : 'Le debes esto a tu pareja'}
+              </p>
+              <button
+                type="button"
+                onClick={liquidar}
+                disabled={liquidando}
+                className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[13px] font-semibold text-[var(--text-primary)] disabled:opacity-50 [touch-action:manipulation]"
+              >
+                {liquidando && <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                {liquidando ? 'Liquidando…' : 'Ya nos pusimos al día'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
       {escaneoError && <p className="text-[12px] font-medium text-[var(--danger)]">{escaneoError}</p>}
