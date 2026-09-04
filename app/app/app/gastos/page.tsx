@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus, Tag } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -28,6 +28,7 @@ import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
+import { EditorCategorias } from '@/components/app/EditorCategorias';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -259,9 +260,11 @@ function GastosInner() {
   const [guardando, setGuardando] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [saldo, setSaldo] = useState<number | null>(null);
+  const [saldoCargado, setSaldoCargado] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
+  const [editandoCategorias, setEditandoCategorias] = useState(false);
 
   const [mesOffset, setMesOffset] = useState(0);
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
@@ -314,6 +317,7 @@ function GastosInner() {
         setCategorias(cats);
         setPais(paisPareja);
         setSaldo(saldoActual);
+        setSaldoCargado(true);
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
       } finally {
@@ -507,6 +511,16 @@ function GastosInner() {
         })}
       </div>
 
+      <button
+        type="button"
+        onClick={() => setEditandoCategorias(true)}
+        disabled={categorias.length === 0}
+        className="flex items-center gap-1.5 self-end text-[12px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+      >
+        <Tag size={13} strokeWidth={2.2} aria-hidden="true" />
+        Editar reparto y recurrencia
+      </button>
+
       <div className="flex items-center justify-between rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
         <span className="text-[13px] text-[var(--text-secondary)]">Total del mes</span>
         <span className="text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
@@ -514,13 +528,17 @@ function GastosInner() {
         </span>
       </div>
 
-      {saldo !== null && (
+      {saldoCargado && (
         <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
           <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
             <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
             Cuentas entre ustedes
           </p>
-          {Math.round(Math.abs(saldo)) === 0 ? (
+          {saldo === null ? (
+            <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">
+              Cuando tu pareja se una con el código de invitación, aquí van a ver cuánto le corresponde a cada uno.
+            </p>
+          ) : Math.round(Math.abs(saldo)) === 0 ? (
             <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
           ) : (
             <>
@@ -656,6 +674,15 @@ function GastosInner() {
       </motion.button>
 
       {asistenteAbierto && <AsistenteChat onCerrar={() => setAsistenteAbierto(false)} />}
+
+      {editandoCategorias && (
+        <EditorCategorias
+          categorias={categorias}
+          supabase={supabase}
+          onActualizada={(actualizada) => setCategorias((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)))}
+          onCerrar={() => setEditandoCategorias(false)}
+        />
+      )}
     </div>
   );
 }

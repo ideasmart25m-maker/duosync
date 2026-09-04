@@ -207,12 +207,16 @@ export async function crearGasto(
 // nunca sumando en el cliente, para que la cuenta oficial sea siempre la misma para los dos).
 // Positivo = "tu pareja te debe"; negativo = "le debes a tu pareja" — ya resuelto desde el
 // punto de vista del usuario que llama (ver comentario en la migración sobre member_a/b).
-export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<number> {
-  const { data, error } = await supabase.rpc('calcular_saldo_pareja', { p_couple_id: coupleId });
-  if (error) throw error;
+// `null` = todavía no hay una SEGUNDA persona en la pareja (nadie con quien repartir) — se
+// distingue a propósito de un saldo real en $0 (defecto real detectado: antes devolvía 0 en
+// los dos casos y la pantalla decía "están al día" cuando en realidad nadie se había unido).
+export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<number | null> {
   const { data: membresias } = await supabase.from('couple_members').select('user_id').eq('couple_id', coupleId);
   const ids = (membresias ?? []).map((m) => m.user_id as string);
-  if (ids.length < 2) return 0;
+  if (ids.length < 2) return null;
+
+  const { data, error } = await supabase.rpc('calcular_saldo_pareja', { p_couple_id: coupleId });
+  if (error) throw error;
   const memberA = ids.sort()[0]; // mismo criterio que la función SQL: el menor por orden de texto de UUID
   const saldoDesdeA = Number(data);
   // La función devuelve el saldo desde la perspectiva de member_a (positivo = member_b le debe a A).
