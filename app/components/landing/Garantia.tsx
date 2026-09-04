@@ -22,10 +22,14 @@ export interface GarantiaProps {
   pisoLegal?: string;
   /** default ShieldCheck (Lucide) — siempre SVG. */
   icon?: LucideIcon;
+  /** Color propio opcional (var(--cat-*) u otro token) — pedido real del usuario: la tarjeta
+   *  se veía plana. Con color: chip sólido + tarjeta con fondo/borde/sombra tintados, en vez
+   *  del hairline neutro por defecto (compatibilidad con cualquier otro uso del kit). */
+  color?: string;
   id?: string;
 }
 
-export function Garantia({ nombre, condicionMarked, pisoLegal, icon: Icono = ShieldCheck, id }: GarantiaProps) {
+export function Garantia({ nombre, condicionMarked, pisoLegal, icon: Icono = ShieldCheck, color, id }: GarantiaProps) {
   warnCopy('Garantía → condición', condicionMarked, 30);
   const { contenedor, item } = useReveal();
 
@@ -39,29 +43,64 @@ export function Garantia({ nombre, condicionMarked, pisoLegal, icon: Icono = Shi
         className="mx-auto max-w-[560px]"
       >
         <motion.div variants={item}>
-          {/* La card de garantía: uno de los 1-3 usos de hairline permitidos por vista */}
-          <Hairline surface="surface" className="shadow-[var(--shadow-1)]">
-            <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
-              <span
-                aria-hidden="true"
-                className="flex size-15 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--accent)_22%,transparent)] bg-[var(--chip-bg)]"
-              >
-                <Icono size={32} strokeWidth={1.8} color="var(--accent)" aria-hidden="true" />
-              </span>
-              <h2 className="text-balance text-[22px] font-bold leading-tight [font-family:var(--font-display)]">
-                <Accent>{nombre}</Accent>
-              </h2>
-              <p className="max-w-[44ch] text-[15px] leading-[1.6] text-[var(--text-secondary)]">
-                <MarkedCopy text={condicionMarked} />
-              </p>
-              {pisoLegal && (
-                <p className="flex items-center gap-1.5 text-[13px] text-[var(--text-tertiary)]">
-                  <Lock size={14} aria-hidden="true" />
-                  {pisoLegal}
+          {color ? (
+            // Tarjeta flotante con color propio (pedido real del usuario) — fondo/borde/sombra
+            // tintados con el mismo color del chip, nunca negro ni glow (anti-slop).
+            <div
+              className="rounded-[var(--radius-card)]"
+              style={{
+                backgroundColor: `color-mix(in oklab, ${color} 8%, var(--surface))`,
+                border: `1px solid color-mix(in oklab, ${color} 25%, transparent)`,
+                boxShadow: `0 16px 40px -16px color-mix(in oklab, ${color} 45%, transparent)`,
+              }}
+            >
+              <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+                <span
+                  aria-hidden="true"
+                  className="flex size-15 items-center justify-center rounded-[var(--radius-button)]"
+                  style={{ backgroundColor: color }}
+                >
+                  <Icono size={32} strokeWidth={1.8} color="var(--bg)" aria-hidden="true" />
+                </span>
+                <h2 className="text-balance text-[22px] font-bold leading-tight [font-family:var(--font-display)]">
+                  <Accent>{nombre}</Accent>
+                </h2>
+                <p className="max-w-[44ch] text-[15px] leading-[1.6] text-[var(--text-secondary)]">
+                  <MarkedCopy text={condicionMarked} />
                 </p>
-              )}
+                {pisoLegal && (
+                  <p className="flex items-center gap-1.5 text-[13px] text-[var(--text-tertiary)]">
+                    <Lock size={14} aria-hidden="true" />
+                    {pisoLegal}
+                  </p>
+                )}
+              </div>
             </div>
-          </Hairline>
+          ) : (
+            // La card de garantía: uno de los 1-3 usos de hairline permitidos por vista
+            <Hairline surface="surface" className="shadow-[var(--shadow-1)]">
+              <div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+                <span
+                  aria-hidden="true"
+                  className="flex size-15 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--accent)_22%,transparent)] bg-[var(--chip-bg)]"
+                >
+                  <Icono size={32} strokeWidth={1.8} color="var(--accent)" aria-hidden="true" />
+                </span>
+                <h2 className="text-balance text-[22px] font-bold leading-tight [font-family:var(--font-display)]">
+                  <Accent>{nombre}</Accent>
+                </h2>
+                <p className="max-w-[44ch] text-[15px] leading-[1.6] text-[var(--text-secondary)]">
+                  <MarkedCopy text={condicionMarked} />
+                </p>
+                {pisoLegal && (
+                  <p className="flex items-center gap-1.5 text-[13px] text-[var(--text-tertiary)]">
+                    <Lock size={14} aria-hidden="true" />
+                    {pisoLegal}
+                  </p>
+                )}
+              </div>
+            </Hairline>
+          )}
         </motion.div>
       </motion.div>
     </SectionShell>

@@ -49,6 +49,11 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Corregido: ahora anima cada vez que cambia el monto, desde el último valor mostrado hasta el nuevo — conserva la animación de entrada (0 → monto inicial al abrir la pantalla) y además reacciona a cada aporte nuevo.
 - Verificado: tsc ✓ build ✓.
 
+## Landing: tarjeta de Garantía con profundidad y color (2026-09-04) — a pedido del usuario
+- `app/components/landing/Garantia.tsx` (kit compartido) ahora acepta un `color` opcional — sin tocar el comportamiento por defecto (hairline neutro, compatibilidad con cualquier otro uso). Con color: chip del escudo sólido en ese color + tarjeta con fondo/borde/sombra tintados, igual que "¿Les suena?" y "El Mecanismo".
+- `app/app/page.tsx`: la garantía usa `--cat-teal` (verde azulado — asociado a "confianza/fijo" desde la regla de color de categorías, encaja con el tono de una garantía).
+- Verificado: tsc ✓ build ✓ · captura real a 375px.
+
 ## Landing: sección "El Mecanismo" con profundidad y copy actualizado (2026-09-04) — a pedido del usuario
 - Título: "Cuentas claras sin pelear" → "Cuentas claras sin discusiones".
 - Copy: "No falta amor" → "No falta organización".

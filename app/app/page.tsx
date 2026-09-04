@@ -149,6 +149,7 @@ export default function DuoSyncLanding() {
         nombre="la Garantía de Cuentas Claras"
         condicionMarked="Prueban 7 días gratis. Si no les convence, [b]piden su dinero de vuelta en 15 días[/b] — sin trámites."
         pisoLegal="Respaldada por la garantía de reembolso de Hotmart"
+        color="var(--cat-teal)"
       />
 
       {/* 8. FAQ */}
