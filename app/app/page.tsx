@@ -49,10 +49,10 @@ export default function DuoSyncLanding() {
         id="problema"
         titulo="¿Les suena?"
         preguntas={[
-          { icon: Frown, textoMarked: '¿Sientes que eres el único que ordena las cuentas de la casa?' },
-          { icon: HandCoins, textoMarked: '¿Discuten por dinero con frecuencia?' },
-          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo?" },
-          { icon: CalendarClock, textoMarked: '¿Llegan a fin de mes sin saber en qué gastaron su dinero?' },
+          { icon: Frown, textoMarked: '¿Sientes que eres el único que ordena las cuentas de la casa?', color: 'var(--cat-rose)' },
+          { icon: HandCoins, textoMarked: '¿Discuten por dinero con frecuencia?', color: 'var(--cat-amber)' },
+          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo?", color: 'var(--cat-blue)' },
+          { icon: CalendarClock, textoMarked: '¿Llegan a fin de mes sin saber en qué gastaron su dinero?', color: 'var(--cat-violet)' },
         ]}
       />
 

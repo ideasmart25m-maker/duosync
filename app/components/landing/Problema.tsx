@@ -16,6 +16,10 @@ export interface PreguntaProblema {
   icon: LucideIcon;
   /** Copy MARCADO — pregunta directa al lector, máx 12 palabras. */
   textoMarked: string;
+  /** Color propio opcional (var(--cat-*) u otro token) — pedido real del usuario: la
+   *  lista se veía "plana" con el chip neutro por defecto. Sin esta prop, cae al tono
+   *  'muted' original (compatibilidad con cualquier otro uso del kit). */
+  color?: string;
 }
 
 export interface ProblemaProps {
@@ -53,9 +57,28 @@ export function Problema({ titulo, preguntas, id }: ProblemaProps) {
             <motion.li
               key={i}
               variants={item}
-              className="flex items-start gap-4 rounded-[var(--radius-card)] bg-[var(--bg)] p-4 shadow-[var(--shadow-1)]"
+              className="flex items-start gap-4 rounded-[var(--radius-card)] p-4"
+              style={
+                p.color
+                  ? {
+                      backgroundColor: `color-mix(in oklab, ${p.color} 10%, var(--bg))`,
+                      border: `1px solid color-mix(in oklab, ${p.color} 25%, transparent)`,
+                      boxShadow: `0 6px 18px -8px color-mix(in oklab, ${p.color} 45%, transparent)`,
+                    }
+                  : { backgroundColor: 'var(--bg)', boxShadow: 'var(--shadow-1)' }
+              }
             >
-              <IconChip icon={p.icon} tone="muted" />
+              {p.color ? (
+                <span
+                  aria-hidden="true"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
+                  style={{ backgroundColor: p.color }}
+                >
+                  <p.icon size={22} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+                </span>
+              ) : (
+                <IconChip icon={p.icon} tone="muted" />
+              )}
               <p className="pt-2 text-[17px] font-medium leading-snug text-[var(--text-primary)]">
                 <MarkedCopy text={p.textoMarked} />
               </p>
