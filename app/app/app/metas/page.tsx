@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { useEffect } from 'react';
-import { Sprout, TreeDeciduous, Apple, Plus, CalendarDays } from 'lucide-react';
+import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check } from 'lucide-react';
 import { META_AHORRO } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { formatoMoneda } from '@/lib/paises';
@@ -38,6 +38,9 @@ export default function MetasPage() {
   const [aportando, setAportando] = useState(false);
   const [montoAporte, setMontoAporte] = useState('');
   const [pais, setPais] = useState<string | null>(null);
+  const [nombreMeta, setNombreMeta] = useState(META_AHORRO.nombre);
+  const [editandoNombre, setEditandoNombre] = useState(false);
+  const [borradorNombre, setBorradorNombre] = useState(nombreMeta);
   const montoMostrado = useCountUp(montoActual);
 
   useEffect(() => {
@@ -62,10 +65,12 @@ export default function MetasPage() {
     setAportando(false);
   };
 
+  // 4 etapas visualmente DISTINTAS (defecto real reportado: el paso 2 y 3 usaban el mismo
+  // ícono, no se notaba el crecimiento) — semilla → árbol joven → árbol lleno → fruto.
   const nodos = [
     { icono: Sprout, activo: pct >= 0 },
     { icono: TreeDeciduous, activo: pct >= 33 },
-    { icono: TreeDeciduous, activo: pct >= 66 },
+    { icono: Trees, activo: pct >= 66 },
     { icono: Apple, activo: pct >= 100 },
   ];
 
@@ -77,8 +82,40 @@ export default function MetasPage() {
       <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
 
       <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-1)]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{META_AHORRO.nombre}</h2>
+        <div className="flex items-center justify-between gap-2">
+          {editandoNombre ? (
+            <form
+              className="flex flex-1 items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (borradorNombre.trim()) setNombreMeta(borradorNombre.trim());
+                setEditandoNombre(false);
+              }}
+            >
+              <input
+                autoFocus
+                value={borradorNombre}
+                onChange={(e) => setBorradorNombre(e.target.value)}
+                maxLength={40}
+                className="h-9 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-2 text-[15px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              />
+              <button type="submit" aria-label="Guardar nombre" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg)] [touch-action:manipulation]">
+                <Check size={14} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setBorradorNombre(nombreMeta);
+                setEditandoNombre(true);
+              }}
+              className="flex items-center gap-1.5 text-left [touch-action:manipulation]"
+            >
+              <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{nombreMeta}</h2>
+              <Pencil size={13} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+            </button>
+          )}
           <motion.span
             key={celebrar ? 'on' : 'off'}
             animate={celebrar ? { scale: [1, 1.15, 1] } : { scale: 1 }}

@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -17,12 +17,13 @@ import {
   listarCategorias,
   listarGastosDelMes,
   crearGasto,
+  crearCategoria,
   iniciarEscaneoRecibo,
   consultarEscaneoRecibo,
   type GastoDB,
 } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
-import { iconoDeCategoria, type CategoriaDB } from '@/lib/categorias';
+import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
 
@@ -40,18 +41,23 @@ function FormularioGasto({
   categorias,
   guardando,
   inicial,
+  creandoCategoria,
   onGuardar,
   onCerrar,
+  onCrearCategoria,
 }: {
   categorias: CategoriaDB[];
   guardando: boolean;
   inicial?: { categoriaId: string | null; monto: number };
+  creandoCategoria: boolean;
   onGuardar: (g: { categoriaId: string; monto: number; nota?: string }) => void;
   onCerrar: () => void;
+  onCrearCategoria: (nombre: string) => void;
 }) {
   const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState('');
+  const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
 
   return (
     <motion.form
@@ -74,26 +80,65 @@ function FormularioGasto({
             Leído del recibo — revisen y corrijan si hace falta
           </p>
         )}
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-4 grid grid-cols-3 gap-3">
           {categorias.map((c) => {
             const Icono = iconoDeCategoria(c.icono);
+            const color = colorDeCategoria(c.color);
+            const seleccionada = categoriaId === c.id;
             return (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setCategoriaId(c.id)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
-                  categoriaId === c.id
-                    ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-                    : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
+                className={`flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] border-2 p-3 text-center [touch-action:manipulation] ${
+                  seleccionada ? '' : 'border-transparent'
                 }`}
+                style={seleccionada ? { borderColor: color, backgroundColor: `color-mix(in oklab, ${color} 10%, transparent)` } : undefined}
               >
-                <Icono size={13} strokeWidth={2.2} aria-hidden="true" />
-                {c.nombre}
+                <span className="flex size-12 items-center justify-center rounded-full" style={{ backgroundColor: color }}>
+                  <Icono size={22} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+                </span>
+                <span className="text-[12px] font-medium leading-tight text-[var(--text-primary)]">{c.nombre}</span>
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setNuevaCategoria('')}
+            className="flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] border-2 border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] p-3 text-center [touch-action:manipulation]"
+          >
+            <span className="flex size-12 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)]">
+              <Plus size={22} strokeWidth={2.2} color="var(--text-secondary)" aria-hidden="true" />
+            </span>
+            <span className="text-[12px] font-medium leading-tight text-[var(--text-secondary)]">Otra</span>
+          </button>
         </div>
+
+        {nuevaCategoria !== null && (
+          <div className="mb-4 flex items-center gap-2">
+            <input
+              autoFocus
+              value={nuevaCategoria}
+              onChange={(e) => setNuevaCategoria(e.target.value)}
+              placeholder="Nombre de la categoría"
+              maxLength={40}
+              className="h-11 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            />
+            <button
+              type="button"
+              disabled={!nuevaCategoria.trim() || creandoCategoria}
+              onClick={() => {
+                onCrearCategoria(nuevaCategoria.trim());
+                setNuevaCategoria(null);
+              }}
+              aria-label="Agregar categoría"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            >
+              {creandoCategoria ? <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Check size={16} strokeWidth={2.4} aria-hidden="true" />}
+            </button>
+          </div>
+        )}
+
         <input
           autoFocus
           inputMode="numeric"
@@ -149,6 +194,7 @@ function GastosInner() {
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
+  const [creandoCategoria, setCreandoCategoria] = useState(false);
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
 
@@ -249,6 +295,19 @@ function GastosInner() {
     }
   };
 
+  const crearCategoriaPropia = async (nombre: string) => {
+    if (!coupleId || !nombre) return;
+    setCreandoCategoria(true);
+    try {
+      const nueva = await crearCategoria(supabase, coupleId, nombre, categorias);
+      setCategorias((prev) => [...prev, nueva]);
+    } catch {
+      setError('No pudimos crear la categoría. Intenten de nuevo en un momento.');
+    } finally {
+      setCreandoCategoria(false);
+    }
+  };
+
   // Comprime la foto, la sube, avisa al servidor que la lea, y sondea el resultado cada 1.5s
   // (hasta 20s) — la IA es un servicio externo lento y falible (30-INTEGRACION-IA.md): nunca se
   // bloquea la pantalla esperando, y si tarda demasiado se le avisa al usuario en vez de colgarse.
@@ -345,18 +404,21 @@ function GastosInner() {
         </button>
         {categorias.map((c) => {
           const Icono = iconoDeCategoria(c.icono);
+          const color = colorDeCategoria(c.color);
+          const activo = filtro === c.id;
           return (
             <button
               key={c.id}
               type="button"
               onClick={() => setFiltro(c.id)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
-                filtro === c.id
-                  ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-                  : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
-              }`}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation]"
+              style={
+                activo
+                  ? { borderColor: color, backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`, color }
+                  : { borderColor: 'color-mix(in oklab, var(--text-tertiary) 25%, transparent)', color: 'var(--text-secondary)' }
+              }
             >
-              <Icono size={13} strokeWidth={2.2} aria-hidden="true" />
+              <Icono size={13} strokeWidth={2.2} aria-hidden="true" color={activo ? color : 'var(--text-tertiary)'} />
               {c.nombre}
             </button>
           );
@@ -379,7 +441,9 @@ function GastosInner() {
             categorias={categorias}
             guardando={guardando}
             inicial={datosDelEscaneo ?? undefined}
+            creandoCategoria={creandoCategoria}
             onGuardar={guardarGasto}
+            onCrearCategoria={crearCategoriaPropia}
             onCerrar={() => {
               setFormularioAbierto(false);
               setDatosDelEscaneo(null);
@@ -446,9 +510,8 @@ function GastosInner() {
                 className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] bg-[var(--surface)] p-3"
               >
                 <span
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)] ${
-                    cat?.color === 'accent-2' ? 'bg-[var(--accent-2)]' : 'bg-[var(--accent)]'
-                  }`}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
+                  style={{ backgroundColor: cat ? colorDeCategoria(cat.color) : 'var(--cat-gray)' }}
                 >
                   <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
                 </span>

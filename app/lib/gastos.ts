@@ -33,7 +33,22 @@ export async function listarCategorias(supabase: SupabaseClient, coupleId: strin
     .eq('couple_id', coupleId)
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono, color: c.color as 'accent' | 'accent-2' }));
+  return (data ?? []).map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono, color: c.color as CategoriaDB['color'] }));
+}
+
+const PALETA_CATEGORIAS: CategoriaDB['color'][] = ['teal', 'coral', 'amber', 'rose', 'blue', 'violet', 'gray'];
+
+// Categorías propias — el color se asigna solo, ciclando la paleta, para que la nueva
+// categoría también se distinga de un vistazo sin pedirle al usuario que elija un color.
+export async function crearCategoria(supabase: SupabaseClient, coupleId: string, nombre: string, existentes: CategoriaDB[]): Promise<CategoriaDB> {
+  const color = PALETA_CATEGORIAS[existentes.length % PALETA_CATEGORIAS.length];
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({ couple_id: coupleId, nombre: nombre.trim(), icono: 'circle', color })
+    .select('id, nombre, icono, color')
+    .single();
+  if (error) throw error;
+  return { id: data.id, nombre: data.nombre, icono: data.icono, color: data.color as CategoriaDB['color'] };
 }
 
 // `prefijoMes` en formato "YYYY-MM" — se resuelve a un rango de fechas real para el filtro,

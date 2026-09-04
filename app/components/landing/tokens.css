@@ -57,6 +57,18 @@
 
   /* ── DERIVADOS (no se tocan: se recalculan solos desde --accent) ── */
   --chip-bg: color-mix(in oklab, var(--accent) 10%, transparent);
+
+  /* ── COLORES DE CATEGORÍA (razón funcional real: distinguir gastos de un vistazo,
+     16/DESIGN-CORE permite pasar de 2 colores cuando hay una función que lo pide — nunca
+     decorativo). Tonos desaturados de la misma familia que --accent/--accent-2, ninguno
+     neón, para no romper la identidad calma de la ficha. */
+  --cat-teal: var(--accent-2);
+  --cat-coral: var(--accent);
+  --cat-amber: #c98a2c;
+  --cat-rose: #b23a63;
+  --cat-blue: #2f6690;
+  --cat-violet: #5b4b8a;
+  --cat-gray: #5a716c;
 }
 
 /* ============================================================================
