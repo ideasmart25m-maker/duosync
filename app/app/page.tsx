@@ -94,7 +94,7 @@ export default function DuoSyncLanding() {
         tituloMarked="Así se ve [acento]llevar las cuentas en equipo[/acento]"
         frames={[
           { label: 'Su pregunta del día, para no perder la conexión', nombrePantalla: 'Hoy' },
-          { label: 'Cada gasto del hogar, categorizado a su manera', nombrePantalla: 'Gastos' },
+          { label: 'Cada gasto, categorizado a su manera', nombrePantalla: 'Gastos' },
           { label: 'La meta que están construyendo juntos', nombrePantalla: 'Metas' },
           { label: 'Su racha de días conectados', nombrePantalla: 'Nosotros' },
         ]}
