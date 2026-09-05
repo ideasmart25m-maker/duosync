@@ -13,7 +13,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { X, Lock, Heart, Loader2 } from 'lucide-react';
+import { X, Lock, Loader2 } from 'lucide-react';
 import { FunnelShell } from '@/components/onboarding/ui';
 import { CheckCustom, Hairline } from '@/components/landing/ui';
 
@@ -128,12 +128,6 @@ function PaywallInner() {
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)] -ml-2.5">
                 S
               </span>
-              <span
-                aria-hidden="true"
-                className="absolute left-1/2 top-1/2 flex size-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--bg)] shadow-[var(--shadow-1)]"
-              >
-                <Heart size={9} strokeWidth={2.5} fill="var(--accent)" color="var(--accent)" aria-hidden="true" />
-              </span>
             </div>
             <span className="rounded-full bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] px-2.5 py-1 text-[12px] font-semibold text-[var(--accent)]">
               Conectados
@@ -143,8 +137,8 @@ function PaywallInner() {
             Su {nombrePlan} <span className="text-[var(--accent)]">está listo</span>
           </h1>
           <p className="mt-1 text-[16px] leading-snug text-[var(--text-secondary)]">
-            Se acabó sentirse <span className="font-semibold text-[var(--text-primary)]">&quot;el cobrador&quot;</span> de
-            la relación — ahora son equipo, no administradores.
+            Se acabó sentirse <span className="font-semibold text-[var(--text-primary)]">&quot;el cobrador&quot;</span> —
+            ahora son equipo, no administradores.
           </p>
         </motion.div>
       </div>
