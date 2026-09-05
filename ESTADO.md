@@ -49,6 +49,11 @@ Reporte completo entregado y aprobado por el usuario ("Apruebo todo"). Puntaje d
 - Corregido: ahora anima cada vez que cambia el monto, desde el último valor mostrado hasta el nuevo — conserva la animación de entrada (0 → monto inicial al abrir la pantalla) y además reacciona a cada aporte nuevo.
 - Verificado: tsc ✓ build ✓.
 
+## Landing: CTA final actualizado (2026-09-04) — a pedido del usuario
+- Título: "Vuelvan a ser pareja, no administradores" → "Menos cuentas, más tiempo para ustedes".
+- PS reescrito para quitar el énfasis exclusivo en "pareja" (consistente con el FAQ nuevo que amplía el uso a cualquier gasto compartido) y "sin pelear" → "sin discutir".
+- Verificado: tsc ✓ build ✓.
+
 ## Landing: FAQ actualizado (2026-09-04) — a pedido del usuario
 - Respuesta de "¿Es seguro poner nuestros gastos ahí?" reescrita: ahora dice explícitamente que no se guardan ni vinculan cuentas bancarias ni tarjetas de crédito.
 - Nueva pregunta agregada: "¿Puedo usarla para gastos compartidos con cualquier persona (compañero de cuarto, un viaje, un proyecto)?" — decisión del usuario de ampliar el uso más allá de parejas (copy, no cambia el producto ni el modelo de datos).

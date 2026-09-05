@@ -189,12 +189,12 @@ export default function DuoSyncLanding() {
 
       {/* 9. CTA FINAL */}
       <CtaFinal
-        h2Marked="Vuelvan a ser [acento]pareja, no administradores[/acento]"
+        h2Marked="Menos cuentas, [acento]más tiempo para ustedes[/acento]"
         futurePacingMarked="Mañana registran un gasto en 2 toques, ven el mismo saldo los dos, y les queda tiempo para lo que sí importa."
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         recap="7 días gratis · Un solo pago para los dos"
-        psMarked="PS: DuoSync Wallet une el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin pelear."
+        psMarked="PS: DuoSync Wallet une el gasto y su conexión diaria en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin discutir."
       />
 
       {/* 10. FOOTER LEGAL */}
