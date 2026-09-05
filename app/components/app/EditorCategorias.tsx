@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Plus, Bell } from 'lucide-react';
+import { X, Minus, Plus, Bell, Trash2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { actualizarCategoria } from '@/lib/gastos';
@@ -84,7 +84,13 @@ function FilaCategoria({
         <button
           type="button"
           disabled={guardando}
-          onClick={() => guardar(categoria.esRecurrente ? { esRecurrente: false, diaVencimiento: null } : { esRecurrente: true, diaVencimiento: categoria.diaVencimiento ?? 1 })}
+          onClick={() =>
+            guardar(
+              categoria.esRecurrente
+                ? { esRecurrente: false, diasVencimiento: null }
+                : { esRecurrente: true, diasVencimiento: categoria.diasVencimiento?.length ? categoria.diasVencimiento : [1] }
+            )
+          }
           aria-pressed={categoria.esRecurrente}
           className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors [touch-action:manipulation] ${
             categoria.esRecurrente ? 'justify-end bg-[var(--accent)]' : 'justify-start bg-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)]'
@@ -95,20 +101,57 @@ function FilaCategoria({
       </div>
 
       {categoria.esRecurrente && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[12px] text-[var(--text-secondary)]">Vence el día</span>
-          <input
-            type="number"
-            min={1}
-            max={31}
-            value={categoria.diaVencimiento ?? 1}
-            onChange={(e) => {
-              const dia = Math.min(31, Math.max(1, Number(e.target.value) || 1));
-              guardar({ diaVencimiento: dia });
-            }}
-            className="h-9 w-16 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-2 text-center text-[13px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-          />
-          <span className="text-[12px] text-[var(--text-secondary)]">de cada mes</span>
+        <div className="mt-3 space-y-2">
+          <span className="text-[12px] text-[var(--text-secondary)]">
+            {categoria.nombre === 'Servicios públicos' || (categoria.diasVencimiento?.length ?? 0) > 1
+              ? 'Un día por cada factura (acueducto, energía, gas…)'
+              : 'Vence el día de cada mes'}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {(categoria.diasVencimiento ?? [1]).map((dia, indice) => (
+              <div
+                key={indice}
+                className="flex items-center gap-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] pl-2 pr-1"
+              >
+                <input
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={dia}
+                  onChange={(e) => {
+                    const nuevoDia = Math.min(31, Math.max(1, Number(e.target.value) || 1));
+                    const dias = [...(categoria.diasVencimiento ?? [1])];
+                    dias[indice] = nuevoDia;
+                    guardar({ diasVencimiento: dias });
+                  }}
+                  className="h-9 w-12 bg-transparent text-center text-[13px] tabular-nums text-[var(--text-primary)] outline-none"
+                />
+                {(categoria.diasVencimiento?.length ?? 1) > 1 && (
+                  <button
+                    type="button"
+                    disabled={guardando}
+                    onClick={() => {
+                      const dias = (categoria.diasVencimiento ?? [1]).filter((_, i) => i !== indice);
+                      guardar({ diasVencimiento: dias });
+                    }}
+                    aria-label="Quitar esta fecha"
+                    className="flex size-7 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+                  >
+                    <Trash2 size={13} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              disabled={guardando || (categoria.diasVencimiento?.length ?? 0) >= 6}
+              onClick={() => guardar({ diasVencimiento: [...(categoria.diasVencimiento ?? [1]), 1] })}
+              aria-label="Agregar otra fecha"
+              className="flex size-9 items-center justify-center rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_35%,transparent)] text-[var(--text-tertiary)] disabled:opacity-40 [touch-action:manipulation]"
+            >
+              <Plus size={14} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       )}
     </div>

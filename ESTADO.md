@@ -1,5 +1,14 @@
 # ESTADO — DuoSync Wallet
-Última actualización: 2026-08-27 | Sesión actual: 6
+Última actualización: 2026-09-05 | Sesión actual: 6
+
+## Recordatorios recurrentes: varias fechas por categoría (2026-09-05) ✅ — a pedido del usuario
+- Motivo: "Servicios públicos" agrupa varias facturas (acueducto, energía, gas), cada una con su propia fecha de pago — antes una categoría solo admitía UN día de vencimiento. El usuario, tras ver las 2 opciones (separar en 3 categorías vs. ajustar el enfoque), eligió "ajustar el enfoque": una misma categoría ahora admite varias fechas.
+- Migración `20260905130000_varios_vencimientos.sql` (aplicada): `categories.dia_vencimiento` (un solo número) → `categories.dias_vencimiento` (lista de números, hasta 31), migrando el dato existente sin perderlo. `recordatorios_enviados` ahora también guarda el día concreto avisado (antes el aviso era único por categoría+mes; ahora es único por categoría+mes+día, para no bloquear el segundo aviso del mismo mes cuando hay varias fechas).
+- `app/lib/categorias.ts`, `app/lib/gastos.ts`: tipos y consultas actualizados a la lista de fechas.
+- `app/components/app/EditorCategorias.tsx`: la sección de recurrencia ahora deja agregar/quitar fechas (hasta 6 por categoría) en vez de un solo campo.
+- `app/app/api/cron/recordatorios/route.ts`: el cron ahora busca "¿mañana es una de las fechas de esta categoría?" en vez de "¿es LA fecha?", y marca el aviso enviado por día concreto.
+- Verificado: tsc ✓ build ✓ (22 rutas, sin errores).
+- Pendiente de que el usuario pruebe en el sitio publicado: abrir el editor de "Servicios públicos", agregar 2-3 fechas distintas, confirmar que las tres quedan guardadas y que cada una manda su propio correo el día antes.
 
 ⏸️ CHECKPOINT — Sesión 5 CERRADA: app interna construida (Hoy/Gastos/Metas/Nosotros), pulida con varias rondas de ajustes de diseño a pedido del usuario (logo real integrado, menú flotante, colores de categoría, profundidad de tarjetas) — detalle completo en las secciones de abajo. Sesión 6 EN CURSO — servicios externos, siguiendo `docs/sistema/62-PUBLICACION-SEGURA-Y-CONTINUA.md` (protocolo P0-P9) + `SECUENCIA-MAESTRA-CONSTRUCCION.md` §Paso 6 (orden: Git/GitHub → Supabase → IA real → Vercel → Resend → dominio → Hotmart).
 - Git/GitHub: HECHO (2026-08-23). Repo inicializado en la raíz del proyecto, `.gitignore` verificado (sin secretos, sin node_modules), primer commit (300 archivos) empujado a `https://github.com/ideasmart25m-maker/duosync.git`, rama `main`. SHA local y remoto coinciden (235e8e4). El usuario tuvo que correr el `push` desde su propia terminal porque requería login interactivo en el navegador (Git Credential Manager) que mi entorno no puede mostrar.

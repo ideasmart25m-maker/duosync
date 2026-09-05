@@ -34,7 +34,7 @@ function mapCategoria(c: {
   color: string;
   split_percent: number;
   es_recurrente: boolean;
-  dia_vencimiento: number | null;
+  dias_vencimiento: number[] | null;
 }): CategoriaDB {
   return {
     id: c.id,
@@ -43,11 +43,11 @@ function mapCategoria(c: {
     color: c.color as CategoriaDB['color'],
     splitPercent: c.split_percent,
     esRecurrente: c.es_recurrente,
-    diaVencimiento: c.dia_vencimiento,
+    diasVencimiento: c.dias_vencimiento,
   };
 }
 
-const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dia_vencimiento';
+const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento';
 
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
   const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).order('created_at', { ascending: true });
@@ -75,12 +75,12 @@ export async function crearCategoria(supabase: SupabaseClient, coupleId: string,
 export async function actualizarCategoria(
   supabase: SupabaseClient,
   categoriaId: string,
-  cambios: { splitPercent?: number; esRecurrente?: boolean; diaVencimiento?: number | null }
+  cambios: { splitPercent?: number; esRecurrente?: boolean; diasVencimiento?: number[] | null }
 ): Promise<CategoriaDB> {
   const patch: Record<string, unknown> = {};
   if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
   if (cambios.esRecurrente !== undefined) patch.es_recurrente = cambios.esRecurrente;
-  if (cambios.diaVencimiento !== undefined) patch.dia_vencimiento = cambios.diaVencimiento;
+  if (cambios.diasVencimiento !== undefined) patch.dias_vencimiento = cambios.diasVencimiento;
 
   const { data, error } = await supabase.from('categories').update(patch).eq('id', categoriaId).select(COLUMNAS_CATEGORIA).single();
   if (error) throw error;

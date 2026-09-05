@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     .from('categories')
     .select('id, nombre, couple_id')
     .eq('es_recurrente', true)
-    .eq('dia_vencimiento', diaVence);
+    .contains('dias_vencimiento', [diaVence]);
   if (error) {
     console.error('[cron/recordatorios] error leyendo categorías:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
@@ -33,11 +33,12 @@ export async function GET(request: NextRequest) {
 
   let enviados = 0;
   for (const cat of categorias ?? []) {
-    // Idempotencia: si ya se avisó esta categoría este mes (reintento del cron, doble
-    // deploy), no se manda dos veces — el índice único de la tabla lo garantiza.
+    // Idempotencia: si ya se avisó esta categoría (y este día concreto, para categorías con
+    // varias facturas como Servicios públicos) este mes, no se manda dos veces — el índice
+    // único de la tabla lo garantiza.
     const { error: errorMarca } = await admin
       .from('recordatorios_enviados')
-      .insert({ category_id: cat.id, anio, mes });
+      .insert({ category_id: cat.id, anio, mes, dia: diaVence });
     if (errorMarca) continue; // ya existía → ya se envió, seguir con la siguiente
 
     const { data: miembros } = await admin.from('couple_members').select('user_id').eq('couple_id', cat.couple_id);
