@@ -163,7 +163,7 @@ export default function DuoSyncLanding() {
           {
             pregunta: '¿Es seguro poner nuestros gastos ahí?',
             respuestaMarked:
-              'No pedimos acceso a su banco. Registran los gastos a mano o con la foto del recibo, y solo ustedes dos ven esos datos.',
+              'No guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros están [b]100% seguros y bajo su control[/b].',
           },
           {
             pregunta: '¿Y si mi pareja deja de usarla a los pocos días?',
@@ -178,6 +178,11 @@ export default function DuoSyncLanding() {
           {
             pregunta: '¿Qué pasa si quiero cancelar?',
             respuestaMarked: 'Cancelan cuando quieran desde el área de miembros de Hotmart, sin llamadas ni trámites.',
+          },
+          {
+            pregunta: '¿Puedo usarla para gastos compartidos con cualquier persona (compañero de cuarto, un viaje, un proyecto)?',
+            respuestaMarked:
+              'Sí, la pueden usar dos personas con gastos compartidos que quieran [b]tener las cuentas claras y en tiempo real[/b].',
           },
         ]}
       />
