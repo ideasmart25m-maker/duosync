@@ -287,7 +287,7 @@ function PasoReconocimiento({ respuestas, onContinuar }: { respuestas: Respuesta
       return 'Que nadie lleve las cuentas no es desorganización: es que hasta hoy no tenían un lugar donde los dos vieran lo mismo al mismo tiempo. El Código de Pareja arregla exactamente eso — en un minuto, sus cuentas quedan conectadas.';
     }
     if (quien === 'Los dos, pero sin orden') {
-      return 'Cuando los dos meten mano pero sin un sistema, cada uno termina con su propia versión de las cuentas — y ahí nace la desconfianza. No es falta de comunicación: es falta de un lugar único donde mirar. Por eso existe el Código de Pareja.';
+      return 'No es falta de comunicación. Es falta de claridad y de un lugar único donde ambos puedan mirar, entender y decidir. Por eso existe un Código de Pareja: para crear acuerdos, ordenar las cuentas y construir confianza desde la claridad.';
     }
     return 'Cuando uno solo lleva las cuentas, el otro no se desentiende por falta de interés — es que nunca tuvo un lugar claro donde ver lo mismo. El Código de Pareja termina con eso: conecta sus cuentas en un minuto, para que dejen de ser trabajo de una sola persona.';
   }, [respuestas.quienLleva]);
