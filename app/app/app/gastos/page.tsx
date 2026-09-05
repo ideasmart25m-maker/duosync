@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus, Tag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus, Tag, Pencil, Trash2 } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -17,6 +17,8 @@ import {
   listarCategorias,
   listarGastosDelMes,
   crearGasto,
+  actualizarGasto,
+  eliminarGasto,
   crearCategoria,
   iniciarEscaneoRecibo,
   consultarEscaneoRecibo,
@@ -46,6 +48,7 @@ function FormularioGasto({
   categorias,
   guardando,
   inicial,
+  esEdicion,
   creandoCategoria,
   onGuardar,
   onCerrar,
@@ -53,7 +56,8 @@ function FormularioGasto({
 }: {
   categorias: CategoriaDB[];
   guardando: boolean;
-  inicial?: { categoriaId: string | null; monto: number };
+  inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null };
+  esEdicion?: boolean;
   creandoCategoria: boolean;
   onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => void;
   onCerrar: () => void;
@@ -61,11 +65,11 @@ function FormularioGasto({
 }) {
   const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
-  const [nota, setNota] = useState('');
-  const [moneda, setMoneda] = useState<string | null>(null);
+  const [nota, setNota] = useState(inicial?.nota ?? '');
+  const [moneda, setMoneda] = useState<string | null>(inicial?.moneda ?? null);
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
-  const [reparto, setReparto] = useState(categoriaActual?.splitPercent ?? 50);
+  const [reparto, setReparto] = useState(inicial?.splitPercent ?? categoriaActual?.splitPercent ?? 50);
   const [ajustandoReparto, setAjustandoReparto] = useState(false);
 
   // Si cambian de categoría, el % vuelve al de la categoría nueva (a menos que ya lo hayan
@@ -94,7 +98,7 @@ function FormularioGasto({
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
-        {inicial && (
+        {inicial && !esEdicion && (
           <p className="mb-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--accent)]">
             <Sparkles size={13} strokeWidth={2.2} aria-hidden="true" />
             Leído del recibo — revisen y corrijan si hace falta
@@ -273,7 +277,7 @@ function FormularioGasto({
             className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
           >
             {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
-            {guardando ? 'Guardando…' : 'Guardar gasto'}
+            {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar gasto'}
           </button>
         </div>
       </div>
@@ -297,6 +301,10 @@ function GastosInner() {
   const [saldos, setSaldos] = useState<SaldoPorMoneda[] | null>(null);
   const [saldoCargado, setSaldoCargado] = useState(false);
   const [liquidandoMoneda, setLiquidandoMoneda] = useState<string | null | undefined>(undefined);
+
+  const [gastoEditando, setGastoEditando] = useState<GastoDB | null>(null);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<string | null>(null);
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
   const [editandoCategorias, setEditandoCategorias] = useState(false);
@@ -422,6 +430,50 @@ function GastosInner() {
       setError('No pudimos liquidar el saldo. Intenten de nuevo en un momento.');
     } finally {
       setLiquidandoMoneda(undefined);
+    }
+  };
+
+  const empezarEdicion = (g: GastoDB) => {
+    setFormularioAbierto(false);
+    setDatosDelEscaneo(null);
+    setReceiptScanId(null);
+    setConfirmandoEliminar(null);
+    setGastoEditando(g);
+  };
+
+  const guardarEdicion = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => {
+    if (!gastoEditando || !coupleId || !userId) return;
+    setGuardando(true);
+    try {
+      const actualizado = await actualizarGasto(supabase, gastoEditando.id, {
+        categoriaId: g.categoriaId,
+        monto: g.monto,
+        nota: g.nota ?? null,
+        splitPercent: g.splitPercent ?? null,
+        moneda: g.moneda ?? null,
+      });
+      setGastos((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)));
+      setGastoEditando(null);
+      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldos).catch(() => {});
+    } catch {
+      setError('No pudimos guardar los cambios. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const eliminar = async (gastoId: string) => {
+    if (!coupleId || !userId) return;
+    setEliminando(gastoId);
+    try {
+      await eliminarGasto(supabase, gastoId);
+      setGastos((prev) => prev.filter((x) => x.id !== gastoId));
+      setConfirmandoEliminar(null);
+      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldos).catch(() => {});
+    } catch {
+      setError('No pudimos eliminar el gasto. Intenten de nuevo en un momento.');
+    } finally {
+      setEliminando(null);
     }
   };
 
@@ -649,7 +701,28 @@ function GastosInner() {
         )}
       </AnimatePresence>
 
-      {!formularioAbierto && (
+      <AnimatePresence initial={false}>
+        {gastoEditando && (
+          <FormularioGasto
+            categorias={categorias}
+            guardando={guardando}
+            esEdicion
+            inicial={{
+              categoriaId: gastoEditando.categoriaId,
+              monto: gastoEditando.monto,
+              nota: gastoEditando.nota,
+              splitPercent: gastoEditando.splitPercent,
+              moneda: gastoEditando.moneda,
+            }}
+            creandoCategoria={creandoCategoria}
+            onGuardar={guardarEdicion}
+            onCrearCategoria={crearCategoriaPropia}
+            onCerrar={() => setGastoEditando(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {!formularioAbierto && !gastoEditando && (
         <div className="flex gap-2">
           <button
             type="button"
@@ -703,25 +776,69 @@ function GastosInner() {
             return (
               <li
                 key={g.id}
-                className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] bg-[var(--surface)] p-3"
+                className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] bg-[var(--surface)] p-3"
               >
-                <span
-                  className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
-                  style={{ backgroundColor: cat ? colorDeCategoria(cat.color) : 'var(--cat-gray)' }}
-                >
-                  <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block truncate text-[14px] font-medium text-[var(--text-primary)]">
-                    {g.nota || cat?.nombre || 'Gasto'}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
+                    style={{ backgroundColor: cat ? colorDeCategoria(cat.color) : 'var(--cat-gray)' }}
+                  >
+                    <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
                   </span>
-                  <span className="block text-[12px] text-[var(--text-tertiary)]">
-                    {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate text-[14px] font-medium text-[var(--text-primary)]">
+                      {g.nota || cat?.nombre || 'Gasto'}
+                    </span>
+                    <span className="block text-[12px] text-[var(--text-tertiary)]">
+                      {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
+                    </span>
                   </span>
-                </span>
-                <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
-                  {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
-                </span>
+                  <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
+                    {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
+                  </span>
+                </div>
+
+                {confirmandoEliminar === g.id ? (
+                  <div className="mt-2 flex items-center justify-end gap-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-2">
+                    <span className="mr-auto text-[12px] text-[var(--text-secondary)]">¿Eliminar este gasto?</span>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmandoEliminar(null)}
+                      disabled={eliminando === g.id}
+                      className="flex h-9 items-center justify-center rounded-[var(--radius-button)] px-3 text-[12px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminar(g.id)}
+                      disabled={eliminando === g.id}
+                      className="flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_12%,transparent)] px-3 text-[12px] font-semibold text-[var(--danger)] disabled:opacity-50 [touch-action:manipulation]"
+                    >
+                      {eliminando === g.id && <Loader2 size={13} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                      {eliminando === g.id ? 'Eliminando…' : 'Sí, eliminar'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-1 flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => empezarEdicion(g)}
+                      aria-label="Editar gasto"
+                      className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
+                    >
+                      <Pencil size={14} strokeWidth={2.2} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmandoEliminar(g.id)}
+                      aria-label="Eliminar gasto"
+                      className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
+                    >
+                      <Trash2 size={14} strokeWidth={2.2} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </li>
             );
           })}

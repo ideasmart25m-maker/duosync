@@ -212,6 +212,45 @@ export interface SaldoPorMoneda {
   saldo: number;
 }
 
+// Corrige un gasto ya guardado (monto, categoría, nota, reparto o moneda) — la política de
+// UPDATE de `expenses` ya permite que CUALQUIERA de los dos integrantes lo edite, no solo quien
+// lo registró (es un gasto del hogar, no personal).
+export async function actualizarGasto(
+  supabase: SupabaseClient,
+  gastoId: string,
+  cambios: { categoriaId?: string; monto?: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null }
+): Promise<GastoDB> {
+  const patch: Record<string, unknown> = {};
+  if (cambios.categoriaId !== undefined) patch.category_id = cambios.categoriaId;
+  if (cambios.monto !== undefined) patch.monto = cambios.monto;
+  if (cambios.nota !== undefined) patch.nota = cambios.nota || null;
+  if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
+  if (cambios.moneda !== undefined) patch.moneda = cambios.moneda;
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .update(patch)
+    .eq('id', gastoId)
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    categoriaId: data.category_id,
+    monto: Number(data.monto),
+    fecha: data.fecha,
+    registradoPor: data.registrado_por,
+    nota: data.nota,
+    splitPercent: data.split_percent,
+    moneda: data.moneda,
+  };
+}
+
+export async function eliminarGasto(supabase: SupabaseClient, gastoId: string): Promise<void> {
+  const { error } = await supabase.from('expenses').delete().eq('id', gastoId);
+  if (error) throw error;
+}
+
 // Saldo pendiente entre la pareja desde la última liquidación, UNA fila por moneda (RPC — lo
 // calcula el servidor, nunca sumando en el cliente, para que la cuenta oficial sea siempre la
 // misma para los dos). Positivo = "tu pareja te debe"; negativo = "le debes a tu pareja" — ya

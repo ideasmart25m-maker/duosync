@@ -1,6 +1,14 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-05 | Sesión actual: 6
 
+## Editar y eliminar un gasto ya guardado (2026-09-05) ✅ — a pedido del usuario
+- Motivo: el usuario preguntó cómo corregir un gasto si se equivocaron en el monto — no existía ninguna forma de editar o borrar un gasto una vez guardado (solo se podía crear). Hueco real de producto (acción básica que cualquier usuario espera), no un pedido cosmético.
+- No hizo falta migración: la política RLS de `update`/`delete` de `expenses` ya permitía que CUALQUIERA de los dos integrantes de la pareja edite o borre un gasto del hogar (no solo quien lo registró) — solo faltaba el código.
+- `app/lib/gastos.ts`: nuevas `actualizarGasto()` y `eliminarGasto()`.
+- `app/app/app/gastos/page.tsx`: cada gasto de la lista tiene ahora botones de editar (lápiz) y eliminar (basura) — editar reabre el mismo formulario de "Nuevo gasto" pero precargado con sus valores reales (incluida la moneda de viaje si aplica); eliminar pide confirmación en línea ("¿Eliminar este gasto? Cancelar / Sí, eliminar") antes de borrar, por ser una acción irreversible (regla 8 de UX: "confirmación solo para irreversibles"). En ambos casos el saldo compartido (`Cuentas entre ustedes`) se recalcula solo.
+- Verificado: tsc ✓ build ✓ (22 rutas).
+- Pendiente de que el usuario pruebe en el sitio publicado (la pantalla exige sesión real, no se pudo verificar visualmente en local sin login): editar un gasto y confirmar que el monto/categoría cambian en la lista y en el saldo; eliminar uno y confirmar que desaparece y el saldo baja.
+
 ## Gastos de viaje en otra moneda (2026-09-05) ✅ — a pedido del usuario
 - Motivo: cuando la pareja viaja al exterior, quiere registrar esos gastos en dólares/euros/libras SIN convertir a la moneda de la casa — decisión explícita del usuario: la conversión real depende de cómo pagaron (efectivo, tarjeta, a cuotas), así que forzar una conversión sería menos fiel, no más. La pareja convierte a mano si quiere, cuando quiere.
 - Decisión de reparto (elegida por el usuario entre 2 opciones que se le presentaron): el gasto en otra moneda SÍ sigue repartiéndose 50/50 (o el % que corresponda) y sigue sumando a "quién le debe a quién" — pero ese saldo se lleva POR SEPARADO por moneda, nunca mezclado con las cuentas normales de la casa.
