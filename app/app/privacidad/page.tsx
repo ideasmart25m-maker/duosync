@@ -69,8 +69,11 @@ export default function PrivacidadPage() {
 
       <h2 className="text-lg font-semibold mb-2">Ley aplicable</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-        Esta política se rige por la Ley 1581 de 2012 de Colombia (protección de datos personales) y
-        sus decretos reglamentarios.
+        Como operamos desde Colombia, esta política se rige por la Ley 1581 de 2012 (protección de
+        datos personales) y sus decretos reglamentarios. Si viven en otro país de Latinoamérica
+        (por ejemplo México o Argentina), además tienen los derechos que les da la ley de
+        protección de datos de su propio país — esta política no reemplaza esos derechos, los
+        complementa.
       </p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
