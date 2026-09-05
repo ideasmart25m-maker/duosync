@@ -1,6 +1,17 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-05 | Sesión actual: 6
 
+## Gastos de viaje en otra moneda (2026-09-05) ✅ — a pedido del usuario
+- Motivo: cuando la pareja viaja al exterior, quiere registrar esos gastos en dólares/euros/libras SIN convertir a la moneda de la casa — decisión explícita del usuario: la conversión real depende de cómo pagaron (efectivo, tarjeta, a cuotas), así que forzar una conversión sería menos fiel, no más. La pareja convierte a mano si quiere, cuando quiere.
+- Decisión de reparto (elegida por el usuario entre 2 opciones que se le presentaron): el gasto en otra moneda SÍ sigue repartiéndose 50/50 (o el % que corresponda) y sigue sumando a "quién le debe a quién" — pero ese saldo se lleva POR SEPARADO por moneda, nunca mezclado con las cuentas normales de la casa.
+- Migración `20260905140000_gastos_moneda_viaje.sql` (aplicada): `expenses.moneda` y `settlements.moneda` (nullable, 'USD'/'EUR'/'GBP' o null = moneda de la casa). `calcular_saldo_pareja()` cambió de devolver un solo número a devolver UNA FILA POR MONEDA; `liquidar_saldo(p_moneda)` ahora liquida una moneda a la vez (el viaje se liquida aparte de las cuentas de la casa).
+- `app/lib/monedas.ts` (nuevo): las 3 monedas de viaje ofrecidas hoy (dólares, euros, libras) + formato de número consistente (locale fijo es-CO, solo cambia el símbolo).
+- `app/lib/gastos.ts`: `crearGasto`/`listarGastosDelMes` ahora leen/escriben `moneda`; `obtenerSaldoPareja` devuelve `SaldoPorMoneda[] | null` (antes `number | null`); `liquidarSaldo` recibe la moneda a liquidar.
+- `app/app/app/gastos/page.tsx`: el formulario de "Nuevo gasto" tiene un selector "Moneda de casa / Dólares / Euros / Libras"; "Cuentas entre ustedes" ahora muestra una fila por moneda (cada una con su propio botón "Ya nos pusimos al día"); "Total del mes" separa el total de la casa de los totales de viaje (nunca se suman entre sí, son unidades distintas); la lista de gastos muestra cada uno en su propia moneda.
+- Verificado: tsc ✓ build ✓ (22 rutas) · migración confirmada contra la base de datos real (columna `moneda` existe en `expenses`).
+- Pendiente de que el usuario pruebe en el sitio publicado: registrar un gasto en euros, confirmar que aparece en su propia fila de "Cuentas entre ustedes" sin mezclarse con el saldo en pesos, y que "Ya nos pusimos al día" de esa fila liquida solo esa moneda.
+- Alcance deliberado: solo 3 monedas de viaje (USD/EUR/GBP) — si la pareja viaja a un país con otra moneda, se puede ampliar la lista fácilmente cuando se pida.
+
 ## Recordatorios recurrentes: varias fechas por categoría (2026-09-05) ✅ — a pedido del usuario
 - Motivo: "Servicios públicos" agrupa varias facturas (acueducto, energía, gas), cada una con su propia fecha de pago — antes una categoría solo admitía UN día de vencimiento. El usuario, tras ver las 2 opciones (separar en 3 categorías vs. ajustar el enfoque), eligió "ajustar el enfoque": una misma categoría ahora admite varias fechas.
 - Migración `20260905130000_varios_vencimientos.sql` (aplicada): `categories.dia_vencimiento` (un solo número) → `categories.dias_vencimiento` (lista de números, hasta 31), migrando el dato existente sin perderlo. `recordatorios_enviados` ahora también guarda el día concreto avisado (antes el aviso era único por categoría+mes; ahora es único por categoría+mes+día, para no bloquear el segundo aviso del mismo mes cuando hay varias fechas).

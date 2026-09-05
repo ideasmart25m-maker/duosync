@@ -9,6 +9,7 @@ export interface GastoDB {
   registradoPor: string; // user id — la pantalla decide cómo mostrarlo (inicial, nombre, etc.)
   nota: string | null;
   splitPercent: number | null; // override puntual del % de la categoría; null = usa el de la categoría
+  moneda: string | null; // 'USD'/'EUR'/'GBP' si es un gasto de viaje; null = moneda normal de la casa
 }
 
 // Toda pantalla conectada necesita saber a qué pareja pertenece el usuario antes de
@@ -97,7 +98,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
 
   const { data, error } = await supabase
     .from('expenses')
-    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
     .eq('couple_id', coupleId)
     .gte('fecha', desde)
     .lt('fecha', hasta)
@@ -111,6 +112,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
     registradoPor: g.registrado_por,
     nota: g.nota,
     splitPercent: g.split_percent,
+    moneda: g.moneda,
   }));
 }
 
@@ -171,7 +173,7 @@ export async function consultarEscaneoRecibo(supabase: SupabaseClient, scanId: s
 export async function crearGasto(
   supabase: SupabaseClient,
   coupleId: string,
-  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string; splitPercent?: number }
+  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string; splitPercent?: number; moneda?: string | null }
 ): Promise<GastoDB> {
   const {
     data: { user },
@@ -188,8 +190,9 @@ export async function crearGasto(
       nota: gasto.nota || null,
       receipt_scan_id: gasto.receiptScanId ?? null,
       split_percent: gasto.splitPercent ?? null,
+      moneda: gasto.moneda ?? null,
     })
-    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
     .single();
   if (error) throw error;
   return {
@@ -200,17 +203,24 @@ export async function crearGasto(
     registradoPor: data.registrado_por,
     nota: data.nota,
     splitPercent: data.split_percent,
+    moneda: data.moneda,
   };
 }
 
-// Saldo pendiente entre la pareja desde la última liquidación (RPC — lo calcula el servidor,
-// nunca sumando en el cliente, para que la cuenta oficial sea siempre la misma para los dos).
-// Positivo = "tu pareja te debe"; negativo = "le debes a tu pareja" — ya resuelto desde el
-// punto de vista del usuario que llama (ver comentario en la migración sobre member_a/b).
+export interface SaldoPorMoneda {
+  moneda: string | null; // null = la moneda normal de la casa; 'USD'/'EUR'/'GBP' = un viaje
+  saldo: number;
+}
+
+// Saldo pendiente entre la pareja desde la última liquidación, UNA fila por moneda (RPC — lo
+// calcula el servidor, nunca sumando en el cliente, para que la cuenta oficial sea siempre la
+// misma para los dos). Positivo = "tu pareja te debe"; negativo = "le debes a tu pareja" — ya
+// resuelto desde el punto de vista del usuario que llama (ver comentario en la migración sobre
+// member_a/b). Un gasto de viaje en euros suma a SU PROPIA fila, nunca a la de la casa.
 // `null` = todavía no hay una SEGUNDA persona en la pareja (nadie con quien repartir) — se
 // distingue a propósito de un saldo real en $0 (defecto real detectado: antes devolvía 0 en
 // los dos casos y la pantalla decía "están al día" cuando en realidad nadie se había unido).
-export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<number | null> {
+export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<SaldoPorMoneda[] | null> {
   const { data: membresias } = await supabase.from('couple_members').select('user_id').eq('couple_id', coupleId);
   const ids = (membresias ?? []).map((m) => m.user_id as string);
   if (ids.length < 2) return null;
@@ -218,12 +228,14 @@ export async function obtenerSaldoPareja(supabase: SupabaseClient, coupleId: str
   const { data, error } = await supabase.rpc('calcular_saldo_pareja', { p_couple_id: coupleId });
   if (error) throw error;
   const memberA = ids.sort()[0]; // mismo criterio que la función SQL: el menor por orden de texto de UUID
-  const saldoDesdeA = Number(data);
   // La función devuelve el saldo desde la perspectiva de member_a (positivo = member_b le debe a A).
-  return miUserId === memberA ? saldoDesdeA : -saldoDesdeA;
+  return (data ?? []).map((fila: { moneda: string | null; saldo: number }) => ({
+    moneda: fila.moneda,
+    saldo: miUserId === memberA ? Number(fila.saldo) : -Number(fila.saldo),
+  }));
 }
 
-export async function liquidarSaldo(supabase: SupabaseClient): Promise<void> {
-  const { error } = await supabase.rpc('liquidar_saldo');
+export async function liquidarSaldo(supabase: SupabaseClient, moneda: string | null = null): Promise<void> {
+  const { error } = await supabase.rpc('liquidar_saldo', { p_moneda: moneda });
   if (error) throw error;
 }

@@ -23,10 +23,12 @@ import {
   obtenerSaldoPareja,
   liquidarSaldo,
   type GastoDB,
+  type SaldoPorMoneda,
 } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
+import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
 import { EditorCategorias } from '@/components/app/EditorCategorias';
 
@@ -53,13 +55,14 @@ function FormularioGasto({
   guardando: boolean;
   inicial?: { categoriaId: string | null; monto: number };
   creandoCategoria: boolean;
-  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => void;
+  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => void;
   onCerrar: () => void;
   onCrearCategoria: (nombre: string) => void;
 }) {
   const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState('');
+  const [moneda, setMoneda] = useState<string | null>(null);
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
   const [reparto, setReparto] = useState(categoriaActual?.splitPercent ?? 50);
@@ -87,7 +90,7 @@ function FormularioGasto({
         e.preventDefault();
         const valor = Number(monto);
         if (!valor || valor <= 0 || !categoriaId || guardando) return;
-        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto });
+        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto, moneda });
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
@@ -176,6 +179,38 @@ function FormularioGasto({
           placeholder="Nota (opcional)"
           className="mt-2 h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setMoneda(null)}
+            className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
+              moneda === null
+                ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
+                : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
+            }`}
+          >
+            Moneda de casa
+          </button>
+          {MONEDAS_VIAJE.map((m) => (
+            <button
+              key={m.codigo}
+              type="button"
+              onClick={() => setMoneda(m.codigo)}
+              className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
+                moneda === m.codigo
+                  ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
+                  : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
+              }`}
+            >
+              {m.nombre}
+            </button>
+          ))}
+        </div>
+        {moneda !== null && (
+          <p className="mt-1.5 text-[12px] text-[var(--text-secondary)]">
+            Gasto de viaje — se guarda en {nombreMoneda(moneda)}, sin convertir, y se reparte aparte de las cuentas de la casa.
+          </p>
+        )}
         {!ajustandoReparto ? (
           <button
             type="button"
@@ -259,9 +294,9 @@ function GastosInner() {
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
-  const [saldo, setSaldo] = useState<number | null>(null);
+  const [saldos, setSaldos] = useState<SaldoPorMoneda[] | null>(null);
   const [saldoCargado, setSaldoCargado] = useState(false);
-  const [liquidando, setLiquidando] = useState(false);
+  const [liquidandoMoneda, setLiquidandoMoneda] = useState<string | null | undefined>(undefined);
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
   const [editandoCategorias, setEditandoCategorias] = useState(false);
@@ -316,7 +351,7 @@ function GastosInner() {
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
-        setSaldo(saldoActual);
+        setSaldos(saldoActual);
         setSaldoCargado(true);
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
@@ -346,11 +381,20 @@ function GastosInner() {
     () => gastos.filter((g) => filtro === 'todas' || g.categoriaId === filtro).sort((a, b) => (a.fecha < b.fecha ? 1 : -1)),
     [gastos, filtro]
   );
-  const totalMes = gastosDelMes.reduce((a, g) => a + g.monto, 0);
+  // Solo suma los gastos en la moneda de la casa — mezclar pesos con dólares/euros en un solo
+  // total no tendría sentido (son unidades distintas). Los de viaje se ven aparte en su fila.
+  const totalMes = gastosDelMes.filter((g) => !g.moneda).reduce((a, g) => a + g.monto, 0);
+  const totalesViajePorMoneda = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const g of gastosDelMes) {
+      if (g.moneda) mapa.set(g.moneda, (mapa.get(g.moneda) ?? 0) + g.monto);
+    }
+    return Array.from(mapa.entries());
+  }, [gastosDelMes]);
 
   const categoriaPorId = useCallback((id: string) => categorias.find((c) => c.id === id), [categorias]);
 
-  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => {
+  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => {
     if (!coupleId || !userId) return;
     setGuardando(true);
     try {
@@ -359,7 +403,7 @@ function GastosInner() {
       setFormularioAbierto(false);
       setDatosDelEscaneo(null);
       setReceiptScanId(null);
-      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldo).catch(() => {});
+      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldos).catch(() => {});
     } catch {
       setError('No pudimos guardar el gasto. Intenten de nuevo en un momento.');
     } finally {
@@ -367,17 +411,17 @@ function GastosInner() {
     }
   };
 
-  const liquidar = async () => {
+  const liquidar = async (moneda: string | null) => {
     if (!coupleId || !userId) return;
-    setLiquidando(true);
+    setLiquidandoMoneda(moneda);
     try {
-      await liquidarSaldo(supabase);
-      const nuevoSaldo = await obtenerSaldoPareja(supabase, coupleId, userId);
-      setSaldo(nuevoSaldo);
+      await liquidarSaldo(supabase, moneda);
+      const nuevosSaldos = await obtenerSaldoPareja(supabase, coupleId, userId);
+      setSaldos(nuevosSaldos);
     } catch {
       setError('No pudimos liquidar el saldo. Intenten de nuevo en un momento.');
     } finally {
-      setLiquidando(false);
+      setLiquidandoMoneda(undefined);
     }
   };
 
@@ -521,11 +565,19 @@ function GastosInner() {
         Editar reparto y recurrencia
       </button>
 
-      <div className="flex items-center justify-between rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
-        <span className="text-[13px] text-[var(--text-secondary)]">Total del mes</span>
-        <span className="text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoMoneda(totalMes, pais)}
-        </span>
+      <div className="rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] text-[var(--text-secondary)]">Total del mes</span>
+          <span className="text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+            {formatoMoneda(totalMes, pais)}
+          </span>
+        </div>
+        {totalesViajePorMoneda.map(([codigo, total]) => (
+          <div key={codigo} className="mt-1.5 flex items-center justify-between border-t border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] pt-1.5">
+            <span className="text-[12px] text-[var(--text-tertiary)]">Viaje en {nombreMoneda(codigo)}</span>
+            <span className="text-[14px] font-semibold tabular-nums text-[var(--text-secondary)]">{formatoMonedaViaje(total, codigo)}</span>
+          </div>
+        ))}
       </div>
 
       {saldoCargado && (
@@ -534,30 +586,44 @@ function GastosInner() {
             <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
             Cuentas entre ustedes
           </p>
-          {saldo === null ? (
+          {saldos === null ? (
             <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">
               Cuando tu pareja se una con el código de invitación, aquí van a ver cuánto le corresponde a cada uno.
             </p>
-          ) : Math.round(Math.abs(saldo)) === 0 ? (
-            <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
           ) : (
-            <>
-              <p className="mt-1.5 text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-                {formatoMoneda(Math.abs(saldo), pais)}
-              </p>
-              <p className="text-[13px] text-[var(--text-secondary)]">
-                {saldo > 0 ? 'Tu pareja te debe esto' : 'Le debes esto a tu pareja'}
-              </p>
-              <button
-                type="button"
-                onClick={liquidar}
-                disabled={liquidando}
-                className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[13px] font-semibold text-[var(--text-primary)] disabled:opacity-50 [touch-action:manipulation]"
-              >
-                {liquidando && <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
-                {liquidando ? 'Liquidando…' : 'Ya nos pusimos al día'}
-              </button>
-            </>
+            <div className="mt-2 flex flex-col gap-3">
+              {saldos.map((s) => {
+                const formatear = (n: number) => (s.moneda ? formatoMonedaViaje(n, s.moneda) : formatoMoneda(n, pais));
+                const etiqueta = s.moneda ? `Viaje en ${nombreMoneda(s.moneda)}` : 'Cuentas de la casa';
+                const alDia = Math.round(Math.abs(s.saldo)) === 0;
+                return (
+                  <div key={s.moneda ?? 'casa'} className={s.moneda ? 'border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-3' : ''}>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[var(--text-tertiary)]">{etiqueta}</p>
+                    {alDia ? (
+                      <p className="mt-1 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
+                    ) : (
+                      <>
+                        <p className="mt-1 text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                          {formatear(Math.abs(s.saldo))}
+                        </p>
+                        <p className="text-[13px] text-[var(--text-secondary)]">
+                          {s.saldo > 0 ? 'Tu pareja te debe esto' : 'Le debes esto a tu pareja'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => liquidar(s.moneda)}
+                          disabled={liquidandoMoneda !== undefined}
+                          className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[13px] font-semibold text-[var(--text-primary)] disabled:opacity-50 [touch-action:manipulation]"
+                        >
+                          {liquidandoMoneda === s.moneda && <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                          {liquidandoMoneda === s.moneda ? 'Liquidando…' : 'Ya nos pusimos al día'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -654,7 +720,7 @@ function GastosInner() {
                   </span>
                 </span>
                 <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
-                  {formatoMoneda(g.monto, pais)}
+                  {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
                 </span>
               </li>
             );
