@@ -1,5 +1,30 @@
 # ESTADO — DuoSync Wallet
-Última actualización: 2026-09-05 | Sesión actual: 6
+Última actualización: 2026-09-07 | Sesión actual: 6
+
+## Metas conectada a datos reales (2026-09-07) ✅ — a pedido del usuario
+- Motivo: el usuario reportó (con screenshot) que solo el nombre de la meta era editable, no la fecha
+  ni el monto objetivo, y que "+ Nueva meta juntos" no hacía nada. Causa real: Metas nunca se conectó
+  a Supabase — vivía enteramente en `seed-datos.ts` (mock), solo el nombre estaba en estado local.
+- Migración `20260907120000_metas_reales.sql` (aplicada): agrega `savings_goals.fecha_objetivo` (la
+  tabla y sus 4 políticas RLS ya existían desde el esquema inicial, nunca se habían usado) + función
+  `aportar_a_meta(p_meta_id, p_monto)` — UPDATE atómico en el servidor (`monto_actual = monto_actual +
+  p_monto`), no "leer y sumar en JS", para que un aporte de cada integrante casi al mismo tiempo no se
+  pise entre sí.
+- `app/lib/metas.ts` (nuevo): `listarMetas`, `crearMeta`, `actualizarMeta`, `aportarAMeta`.
+- `app/app/app/metas/page.tsx` reescrita: ahora soporta VARIAS metas reales (antes una sola, fija).
+  Cada tarjeta se puede editar completa (nombre + monto objetivo + fecha, un solo formulario, ya no
+  solo el nombre) tocando el lápiz. "+ Nueva meta juntos" abre un formulario real que crea la meta en
+  la base de datos. Estado vacío (sin ninguna meta todavía) con mensaje + CTA, en vez de dejar la
+  pantalla con datos de ejemplo falsos.
+- Verificado: tsc ✓ build ✓ (22 rutas) · migración confirmada contra la base de datos real (columna
+  `fecha_objetivo` existe en `savings_goals`).
+- Pendiente de que el usuario pruebe en el sitio publicado (la pantalla exige sesión real, no se pudo
+  verificar visualmente en local sin login): crear una meta, editarle la fecha y el monto, aportar y
+  confirmar que el hito del 100% sigue mostrando el confeti.
+- Alcance deliberado: la tarjeta de "meta" que se ve en Hoy (previsualización) sigue mostrando el
+  dato de ejemplo — no se tocó en esta tarea, el pedido del usuario era específicamente la pantalla
+  Metas. Cuando Hoy se conecte a datos reales, debe leer la primera meta real de `listarMetas()` en
+  vez de `META_AHORRO` de seed-datos.
 
 ## Rescate de diseño premium — EN CURSO (2026-09-05) — a pedido del usuario
 Motivo: el usuario pidió subir el diseño/experiencia de la app interna (Hoy/Gastos/Metas/Nosotros) a

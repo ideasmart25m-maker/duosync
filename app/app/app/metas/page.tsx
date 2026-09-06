@@ -3,14 +3,18 @@
 // Pantalla METAS — protagonista: el progreso de la meta de ahorro compartida, con la misma
 // metáfora semilla→árbol-con-frutos del Hero de la landing (dispositivo ownable reutilizado,
 // no reinventado — FICHA-ARTE.md). Acción primaria: aportar a la meta.
+// Conectada a datos reales de Supabase (pedido real del usuario, 2026-09-07) — antes vivía
+// enteramente en datos de ejemplo: solo el nombre "se editaba" (era el único campo guardado en
+// el estado del componente), la fecha y el monto objetivo estaban fijos en el código, y
+// "+ Nueva meta juntos" no tenía ninguna acción conectada.
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
-import { useEffect } from 'react';
-import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check } from 'lucide-react';
-import { META_AHORRO } from '@/lib/seed-datos';
+import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
+import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
+import { listarMetas, crearMeta, actualizarMeta, aportarAMeta, type MetaDB } from '@/lib/metas';
 import { formatoMoneda } from '@/lib/paises';
 
 // Anima CADA VEZ que cambia `target` (desde el último valor mostrado, no siempre desde 0) —
@@ -79,46 +83,141 @@ function ConfettiMeta() {
   );
 }
 
-export default function MetasPage() {
+// Formulario compartido por "editar meta" y "nueva meta juntos" — mismos 3 campos reales
+// (nombre, monto objetivo, fecha objetivo), la única diferencia es si viene precargado.
+function FormularioMeta({
+  inicial,
+  guardando,
+  textoBoton,
+  onGuardar,
+  onCancelar,
+}: {
+  inicial?: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null };
+  guardando: boolean;
+  textoBoton: string;
+  onGuardar: (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => void;
+  onCancelar: () => void;
+}) {
+  const [nombre, setNombre] = useState(inicial?.nombre ?? '');
+  const [montoObjetivo, setMontoObjetivo] = useState(inicial?.montoObjetivo ? String(inicial.montoObjetivo) : '');
+  const [fechaObjetivo, setFechaObjetivo] = useState(inicial?.fechaObjetivo ?? '');
+
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const valor = Number(montoObjetivo);
+        if (!nombre.trim() || !valor || valor <= 0 || guardando) return;
+        onGuardar({ nombre: nombre.trim(), montoObjetivo: valor, fechaObjetivo: fechaObjetivo || null });
+      }}
+    >
+      <input
+        autoFocus
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+        placeholder="Nombre de la meta"
+        maxLength={60}
+        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+      />
+      <input
+        inputMode="numeric"
+        value={montoObjetivo}
+        onChange={(e) => setMontoObjetivo(e.target.value.replace(/\D/g, ''))}
+        placeholder="Monto objetivo"
+        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+      />
+      <input
+        type="date"
+        value={fechaObjetivo}
+        onChange={(e) => setFechaObjetivo(e.target.value)}
+        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+      />
+      <div className="mt-1 flex gap-2">
+        <button
+          type="button"
+          onClick={onCancelar}
+          disabled={guardando}
+          className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={!nombre.trim() || !montoObjetivo || guardando}
+          className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+        >
+          {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+          {guardando ? 'Guardando…' : textoBoton}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function TarjetaMeta({
+  meta,
+  pais,
+  supabase,
+  onActualizada,
+}: {
+  meta: MetaDB;
+  pais: string | null;
+  supabase: ReturnType<typeof crearClienteNavegador>;
+  onActualizada: (m: MetaDB) => void;
+}) {
   const reducido = useReducedMotion();
-  const [montoActual, setMontoActual] = useState(META_AHORRO.montoActual);
   const [celebrar, setCelebrar] = useState(false);
   const [metaCumplida, setMetaCumplida] = useState(false);
   const [aportando, setAportando] = useState(false);
   const [montoAporte, setMontoAporte] = useState('');
-  const [pais, setPais] = useState<string | null>(null);
-  const [nombreMeta, setNombreMeta] = useState(META_AHORRO.nombre);
-  const [editandoNombre, setEditandoNombre] = useState(false);
-  const [borradorNombre, setBorradorNombre] = useState(nombreMeta);
-  const montoMostrado = useCountUp(montoActual);
+  const [guardandoAporte, setGuardandoAporte] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const montoMostrado = useCountUp(meta.montoActual);
 
-  useEffect(() => {
-    // Mismo dato real que Hoy — el resto de esta pantalla sigue en datos de ejemplo (ver ESTADO.md).
-    (async () => {
-      const supabase = crearClienteNavegador();
-      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
-      if (!membresia) return;
-      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
-      setPais(pareja?.pais ?? null);
-    })();
-  }, []);
-  const pct = Math.min(100, Math.round((montoActual / META_AHORRO.montoObjetivo) * 100));
+  const pct = Math.min(100, Math.round((meta.montoActual / meta.montoObjetivo) * 100));
 
-  const confirmarAporte = () => {
+  const confirmarAporte = async () => {
     const valor = Number(montoAporte);
     if (!valor || valor <= 0) return;
-    const pctAntes = pct;
-    setMontoActual((m) => Math.min(META_AHORRO.montoObjetivo, m + valor));
-    setCelebrar(true);
-    setTimeout(() => setCelebrar(false), 900);
-    // El confeti es para el HITO real de completar la meta, no para cualquier aporte — un
-    // aporte normal ya tiene su propio feedback (el pop del %, la barra creciendo).
-    if (pctAntes < 100 && Math.min(100, Math.round(((montoActual + valor) / META_AHORRO.montoObjetivo) * 100)) >= 100) {
-      setMetaCumplida(true);
-      setTimeout(() => setMetaCumplida(false), 1000);
+    setGuardandoAporte(true);
+    setError(null);
+    try {
+      const pctAntes = pct;
+      const actualizado = await aportarAMeta(supabase, meta.id, valor);
+      onActualizada(actualizado);
+      setCelebrar(true);
+      setTimeout(() => setCelebrar(false), 900);
+      // El confeti es para el HITO real de completar la meta, no para cualquier aporte — un
+      // aporte normal ya tiene su propio feedback (el pop del %, la barra creciendo).
+      const pctNuevo = Math.min(100, Math.round((actualizado.montoActual / actualizado.montoObjetivo) * 100));
+      if (pctAntes < 100 && pctNuevo >= 100) {
+        setMetaCumplida(true);
+        setTimeout(() => setMetaCumplida(false), 1000);
+      }
+      setMontoAporte('');
+      setAportando(false);
+    } catch {
+      setError('No pudimos guardar el aporte. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardandoAporte(false);
     }
-    setMontoAporte('');
-    setAportando(false);
+  };
+
+  const guardarEdicion = async (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => {
+    setGuardandoEdicion(true);
+    setError(null);
+    try {
+      const actualizado = await actualizarMeta(supabase, meta.id, v);
+      onActualizada(actualizado);
+      setEditando(false);
+    } catch {
+      setError('No pudimos guardar los cambios. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardandoEdicion(false);
+    }
   };
 
   // 4 etapas visualmente DISTINTAS (defecto real reportado: el paso 2 y 3 usaban el mismo
@@ -131,169 +230,260 @@ export default function MetasPage() {
   ];
 
   return (
-    // flex-1 + justify-center: con una sola meta activa, el contenido se centra en el
-    // espacio disponible en vez de dejar ~40% del viewport en blanco debajo del botón
-    // "Nueva meta juntos" (defecto real detectado en la auditoría).
-    <div className="flex flex-1 flex-col justify-center gap-5">
-      <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+    <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-hero)]">
+      {metaCumplida && <ConfettiMeta />}
 
-      <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-hero)]">
-        {metaCumplida && <ConfettiMeta />}
-        <div className="flex items-center justify-between gap-2">
-          {editandoNombre ? (
-            <form
-              className="flex flex-1 items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (borradorNombre.trim()) setNombreMeta(borradorNombre.trim());
-                setEditandoNombre(false);
-              }}
-            >
-              <input
-                autoFocus
-                value={borradorNombre}
-                onChange={(e) => setBorradorNombre(e.target.value)}
-                maxLength={40}
-                className="h-9 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-2 text-[15px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-              />
-              <button type="submit" aria-label="Guardar nombre" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg)] [touch-action:manipulation]">
-                <Check size={14} strokeWidth={2.4} aria-hidden="true" />
-              </button>
-            </form>
-          ) : (
+      {editando ? (
+        <FormularioMeta
+          inicial={{ nombre: meta.nombre, montoObjetivo: meta.montoObjetivo, fechaObjetivo: meta.fechaObjetivo }}
+          guardando={guardandoEdicion}
+          textoBoton="Guardar cambios"
+          onGuardar={guardarEdicion}
+          onCancelar={() => setEditando(false)}
+        />
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => {
-                setBorradorNombre(nombreMeta);
-                setEditandoNombre(true);
-              }}
+              onClick={() => setEditando(true)}
               className="flex items-center gap-1.5 text-left [touch-action:manipulation]"
             >
-              <h2 className="text-[19px] font-semibold text-[var(--text-primary)]">{nombreMeta}</h2>
+              <h2 className="text-[19px] font-semibold text-[var(--text-primary)]">{meta.nombre}</h2>
               <Pencil size={13} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
             </button>
+            <motion.span
+              key={celebrar ? 'on' : 'off'}
+              animate={celebrar ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="text-[15px] font-bold tabular-nums text-[var(--accent)]"
+            >
+              {pct}%
+            </motion.span>
+          </div>
+
+          {meta.fechaObjetivo && (
+            <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-tertiary)]">
+              <CalendarDays size={13} strokeWidth={2} aria-hidden="true" />
+              Meta para el {fechaLarga(meta.fechaObjetivo)}
+            </p>
           )}
-          <motion.span
-            key={celebrar ? 'on' : 'off'}
-            animate={celebrar ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="text-[15px] font-bold tabular-nums text-[var(--accent)]"
-          >
-            {pct}%
-          </motion.span>
-        </div>
 
-        <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-tertiary)]">
-          <CalendarDays size={13} strokeWidth={2} aria-hidden="true" />
-          Meta para el {fechaLarga(META_AHORRO.fechaObjetivo)}
-        </p>
+          <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
+            {formatoMoneda(montoMostrado, pais)}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[var(--text-tertiary)]">
+            de <span className="font-semibold tabular-nums">{formatoMoneda(meta.montoObjetivo, pais)}</span> — su meta total
+          </p>
 
-        <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoMoneda(montoMostrado, pais)}
-        </p>
-        <p className="mt-0.5 text-[12px] text-[var(--text-tertiary)]">
-          de <span className="font-semibold tabular-nums">{formatoMoneda(META_AHORRO.montoObjetivo, pais)}</span> — su meta total
-        </p>
+          {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
+              metáfora del Hero de la landing, ahora con más espacio y detalle. */}
+          <div className="relative mt-6 flex h-9 items-center justify-between">
+            <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]" />
+            <motion.div
+              className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--accent)]"
+              initial={{ width: reducido ? `${pct}%` : 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            />
+            {nodos.map((n, i) => (
+              <span
+                key={i}
+                className={`relative z-10 flex size-9 items-center justify-center rounded-full ${
+                  n.activo
+                    ? i === nodos.length - 1
+                      ? 'bg-[var(--accent-2)]'
+                      : 'bg-[var(--accent)]'
+                    : 'border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] bg-[var(--surface)] opacity-60'
+                }`}
+              >
+                <n.icono size={17} strokeWidth={2.2} color={n.activo ? 'var(--bg)' : 'var(--text-tertiary)'} aria-hidden="true" />
+              </span>
+            ))}
+          </div>
+          <div className="mt-1.5 flex justify-between text-[12px] text-[var(--text-tertiary)]">
+            <span>Hoy siembran</span>
+            <span>Su meta, cumplida</span>
+          </div>
 
-        {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
-            metáfora del Hero de la landing, ahora con más espacio y detalle. */}
-        <div className="relative mt-6 flex h-9 items-center justify-between">
-          <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]" />
-          <motion.div
-            className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--accent)]"
-            initial={{ width: reducido ? `${pct}%` : 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          />
-          {nodos.map((n, i) => (
-            <span
-              key={i}
-              className={`relative z-10 flex size-9 items-center justify-center rounded-full ${
-                n.activo
-                  ? i === nodos.length - 1
-                    ? 'bg-[var(--accent-2)]'
-                    : 'bg-[var(--accent)]'
-                  : 'border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] bg-[var(--surface)] opacity-60'
-              }`}
-            >
-              <n.icono size={17} strokeWidth={2.2} color={n.activo ? 'var(--bg)' : 'var(--text-tertiary)'} aria-hidden="true" />
-            </span>
-          ))}
-        </div>
-        <div className="mt-1.5 flex justify-between text-[12px] text-[var(--text-tertiary)]">
-          <span>Hoy siembran</span>
-          <span>Su meta, cumplida</span>
-        </div>
+          {error && <p className="mt-3 text-[12px] font-medium text-[var(--danger)]">{error}</p>}
 
-        <AnimatePresence initial={false} mode="wait">
-          {aportando ? (
-            <motion.form
-              key="form"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-5 overflow-hidden"
-              onSubmit={(e) => {
-                e.preventDefault();
-                confirmarAporte();
-              }}
-            >
-              <input
-                autoFocus
-                inputMode="numeric"
-                value={montoAporte}
-                onChange={(e) => setMontoAporte(e.target.value.replace(/\D/g, ''))}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') e.preventDefault();
+          <AnimatePresence initial={false} mode="wait">
+            {aportando ? (
+              <motion.form
+                key="form"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-5 overflow-hidden"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  confirmarAporte();
                 }}
-                placeholder="¿Cuánto van a aportar?"
-                className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAportando(false);
-                    setMontoAporte('');
+              >
+                <input
+                  autoFocus
+                  inputMode="numeric"
+                  value={montoAporte}
+                  onChange={(e) => setMontoAporte(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.preventDefault();
                   }}
-                  className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={!montoAporte}
-                  className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
-                >
-                  <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
-                  Confirmar aporte
-                </button>
-              </div>
-            </motion.form>
-          ) : (
-            <motion.button
-              key="boton"
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setAportando(true)}
-              disabled={pct >= 100}
-              className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
-            >
-              <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
-              {pct >= 100 ? 'Meta cumplida' : 'Aportar a la meta'}
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
+                  placeholder="¿Cuánto van a aportar?"
+                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAportando(false);
+                      setMontoAporte('');
+                    }}
+                    disabled={guardandoAporte}
+                    className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!montoAporte || guardandoAporte}
+                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                  >
+                    {guardandoAporte ? <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Plus size={16} strokeWidth={2.4} aria-hidden="true" />}
+                    {guardandoAporte ? 'Guardando…' : 'Confirmar aporte'}
+                  </button>
+                </div>
+              </motion.form>
+            ) : (
+              <motion.button
+                key="boton"
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setAportando(true)}
+                disabled={pct >= 100}
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+              >
+                <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+                {pct >= 100 ? 'Meta cumplida' : 'Aportar a la meta'}
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
+  );
+}
 
-      <button
-        type="button"
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] text-[15px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
-      >
-        <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
-        Nueva meta juntos
-      </button>
+export default function MetasPage() {
+  const supabase = useMemo(() => crearClienteNavegador(), []);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [coupleId, setCoupleId] = useState<string | null>(null);
+  const [pais, setPais] = useState<string | null>(null);
+  const [metas, setMetas] = useState<MetaDB[]>([]);
+  const [creandoMeta, setCreandoMeta] = useState(false);
+  const [guardandoMeta, setGuardandoMeta] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const cid = await obtenerCoupleId(supabase);
+        if (!cid) throw new Error('Todavía no tienen una pareja vinculada.');
+        if (cancelado) return;
+        setCoupleId(cid);
+        const [paisPareja, metasReales] = await Promise.all([obtenerPaisPareja(supabase, cid), listarMetas(supabase, cid)]);
+        if (cancelado) return;
+        setPais(paisPareja);
+        setMetas(metasReales);
+      } catch (e) {
+        if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus metas.');
+      } finally {
+        if (!cancelado) setCargando(false);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [supabase]);
+
+  const actualizarEnLista = useCallback((m: MetaDB) => {
+    setMetas((prev) => prev.map((x) => (x.id === m.id ? m : x)));
+  }, []);
+
+  const crearMetaNueva = async (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => {
+    if (!coupleId) return;
+    setGuardandoMeta(true);
+    setError(null);
+    try {
+      const nueva = await crearMeta(supabase, coupleId, v);
+      setMetas((prev) => [...prev, nueva]);
+      setCreandoMeta(false);
+    } catch {
+      setError('No pudimos crear la meta. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardandoMeta(false);
+    }
+  };
+
+  if (cargando) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+        <div className="h-64 animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
+      </div>
+    );
+  }
+
+  if (error && !coupleId) {
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--danger)_35%,transparent)] py-10 text-center">
+        <p className="text-[14px] text-[var(--danger)]">{error}</p>
+      </div>
+    );
+  }
+
+  const sinMetasNiFormulario = metas.length === 0 && !creandoMeta;
+
+  return (
+    <div className={`flex flex-1 flex-col gap-4 ${sinMetasNiFormulario ? 'justify-center' : ''}`}>
+      <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+
+      {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
+
+      {sinMetasNiFormulario ? (
+        <div className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] px-6 py-10 text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
+            <Sparkles size={22} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+          </span>
+          <p className="text-[15px] font-medium text-[var(--text-primary)]">Todavía no tienen una meta en común.</p>
+          <p className="text-[13px] text-[var(--text-tertiary)]">Un viaje, un proyecto, un ahorro para lo que sea — empiecen por ponerle nombre.</p>
+        </div>
+      ) : (
+        metas.map((m) => <TarjetaMeta key={m.id} meta={m} pais={pais} supabase={supabase} onActualizada={actualizarEnLista} />)
+      )}
+
+      {creandoMeta ? (
+        <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[15px] font-semibold text-[var(--text-primary)]">Nueva meta juntos</p>
+            <button type="button" onClick={() => setCreandoMeta(false)} aria-label="Cerrar" className="text-[var(--text-tertiary)] [touch-action:manipulation]">
+              <X size={16} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          </div>
+          <FormularioMeta guardando={guardandoMeta} textoBoton="Crear meta" onGuardar={crearMetaNueva} onCancelar={() => setCreandoMeta(false)} />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setCreandoMeta(true)}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] text-[15px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+        >
+          <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+          Nueva meta juntos
+        </button>
+      )}
     </div>
   );
 }
