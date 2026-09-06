@@ -1,6 +1,13 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-05 | Sesión actual: 6
 
+## Corregido: páginas legales desactualizadas sobre la IA (2026-09-05) ✅
+- Motivo: la auditoría legal (2026-08-27) había marcado el escaneo de recibos y el asistente como "todavía no están activas" — correcto en su momento, pero ambas funciones se terminaron de construir y probar DESPUÉS de esa auditoría (2026-09-01 y 2026-09-02). Las páginas legales nunca se actualizaron para reflejarlo — quedaron diciendo algo falso (el riesgo real que la propia auditoría advertía: "vender/describir algo que no es cierto").
+- `app/app/aviso-ia/page.tsx`: ya no dice "estamos construyendo esto" — dice que ambas funciones están activas, nombra a Anthropic (Claude) como proveedor (tal como la propia página prometía hacer "el día que se activen").
+- `app/app/privacidad/page.tsx`: la lista de subprocesadores ahora nombra también a Resend (envío de correos) y Anthropic (procesa fotos de recibos y preguntas del asistente) — antes decía "todavía no usamos IA", que ya no era cierto.
+- Con esto, lo que el paywall y la landing prometen sobre la IA (escaneo de recibos, asistente) YA ES CIERTO — no hace falta marcarlas como "Próximamente" ni esperar más para venderlas por ese motivo. Lo único que falta antes de abrir venta real es la prueba de punta a punta con un pago de Hotmart de verdad (parte del checklist de lanzamiento, no bloqueante para seguir construyendo).
+- Verificado: tsc ✓ build ✓ (22 rutas).
+
 ## Editar y eliminar un gasto ya guardado (2026-09-05) ✅ — a pedido del usuario
 - Motivo: el usuario preguntó cómo corregir un gasto si se equivocaron en el monto — no existía ninguna forma de editar o borrar un gasto una vez guardado (solo se podía crear). Hueco real de producto (acción básica que cualquier usuario espera), no un pedido cosmético.
 - No hizo falta migración: la política RLS de `update`/`delete` de `expenses` ya permitía que CUALQUIERA de los dos integrantes de la pareja edite o borre un gasto del hogar (no solo quien lo registró) — solo faltaba el código.

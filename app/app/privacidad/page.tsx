@@ -35,13 +35,13 @@ export default function PrivacidadPage() {
         <li><strong>Supabase</strong> (EE. UU.) — guarda la base de datos y gestiona el inicio de sesión.</li>
         <li><strong>Vercel</strong> (EE. UU.) — aloja la aplicación web que ustedes usan.</li>
         <li><strong>Hotmart</strong> — procesa el pago de la suscripción; ve los datos de pago, nosotros no.</li>
+        <li><strong>Resend</strong> (EE. UU.) — envía los correos de acceso y los recordatorios de pago.</li>
+        <li><strong>Anthropic</strong> (EE. UU.) — procesa las fotos de recibos y las preguntas del asistente de IA del plan Premium (ver el{' '}
+          <a href="/aviso-ia" className="underline">Aviso de IA</a>).</li>
       </ul>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Como Supabase y Vercel operan desde Estados Unidos, sus datos viajan y se almacenan fuera de
-        Colombia bajo los términos de esos proveedores. Todavía no usamos inteligencia artificial en
-        la app (ver el{' '}
-        <a href="/aviso-ia" className="underline">Aviso de IA</a>); el día que la activemos, nombraremos
-        aquí al proveedor y les avisaremos por correo antes de que empiece a procesar sus datos.
+        Como estos proveedores operan desde Estados Unidos, sus datos viajan y se almacenan fuera de
+        Colombia bajo los términos de cada uno.
       </p>
 
       <h2 className="text-lg font-semibold mb-2">Cómo pedir que borremos sus datos</h2>
