@@ -54,6 +54,10 @@
      que --shadow-1 deja casi imperceptible sobre --bg claro, y --shadow-2 es demasiado
      pesada para su tamaño (defecto real detectado por el revisor-visual). */
   --shadow-chip: 0 2px 8px rgb(21 42 39 / 0.12);
+  /* Elevación reservada para LA tarjeta protagonista de cada pantalla (nunca más de una a la
+     vez) — la sombra lleva el tinte del acento estructural en vez del neutro, para que se sienta
+     "flotando" con intención en vez de una tarjeta blanca más entre varias del mismo peso. */
+  --shadow-hero: 0 16px 40px -16px color-mix(in oklab, var(--accent-2) 35%, transparent);
 
   /* ── DERIVADOS (no se tocan: se recalculan solos desde --accent) ── */
   --chip-bg: color-mix(in oklab, var(--accent) 10%, transparent);
@@ -112,9 +116,14 @@ body {
 
 /* Foco de teclado con el acento de marca, visible en toda la app (landing, onboarding,
    paywall, login) — sin esto la navegación por teclado depende del outline por defecto
-   del navegador, que a veces se pierde sobre fondos claros (defecto real detectado). */
+   del navegador, que a veces se pierde sobre fondos claros (defecto real detectado).
+   `--focus-ring` con fallback a `--accent`: un elemento sobre una tarjeta de color sólido
+   (ej. el input dentro de la tarjeta "Pregunta de hoy", fondo --accent-2) puede sobrescribir
+   solo esta variable para que su foco no salga en coral — muy parecido al rojo de error,
+   se veía como un estado de error falso sin que el usuario hubiera hecho nada mal (defecto
+   real detectado por el revisor-visual). */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring, var(--accent));
   outline-offset: 2px;
   border-radius: 4px;
 }

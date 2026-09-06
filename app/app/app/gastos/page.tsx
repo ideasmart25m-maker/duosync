@@ -28,7 +28,7 @@ import {
   type SaldoPorMoneda,
 } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
-import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
+import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
 import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
@@ -106,9 +106,12 @@ function FormularioGasto({
         )}
         <div className="mb-4 grid grid-cols-3 gap-3">
           {categorias.map((c) => {
-            const Icono = iconoDeCategoria(c.icono);
-            const color = colorDeCategoria(c.color);
             const seleccionada = categoriaId === c.id;
+            // Fill (Phosphor) cuando está seleccionada, trazo (Lucide) cuando no — mismo
+            // criterio del nav inferior (22-LIBRERIAS-Y-CRAFT.md).
+            const IconoTrazo = iconoDeCategoria(c.icono);
+            const IconoRelleno = iconoDeCategoriaFill(c.icono);
+            const color = colorDeCategoria(c.color);
             return (
               <button
                 key={c.id}
@@ -120,7 +123,11 @@ function FormularioGasto({
                 style={seleccionada ? { borderColor: color, backgroundColor: `color-mix(in oklab, ${color} 10%, transparent)` } : undefined}
               >
                 <span className="flex size-12 items-center justify-center rounded-full" style={{ backgroundColor: color }}>
-                  <Icono size={22} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+                  {seleccionada ? (
+                    <IconoRelleno size={22} weight="fill" color="var(--bg)" aria-hidden="true" />
+                  ) : (
+                    <IconoTrazo size={22} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+                  )}
                 </span>
                 <span className="text-[12px] font-medium leading-tight text-[var(--text-primary)]">{c.nombre}</span>
               </button>
@@ -146,7 +153,7 @@ function FormularioGasto({
               onChange={(e) => setNuevaCategoria(e.target.value)}
               placeholder="Nombre de la categoría"
               maxLength={40}
-              className="h-11 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="h-11 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             />
             <button
               type="button"
@@ -267,14 +274,14 @@ function FormularioGasto({
             type="button"
             onClick={onCerrar}
             disabled={guardando}
-            className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation] disabled:opacity-50"
+            className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation] disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={!monto || !categoriaId || guardando}
-            className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
           >
             {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
             {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar gasto'}
@@ -530,7 +537,7 @@ function GastosInner() {
   if (cargando) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Gastos</h1>
+        <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Gastos</h1>
         <div className="h-11 animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
         <div className="h-16 animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
         <div className="h-20 animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
@@ -542,14 +549,14 @@ function GastosInner() {
   if (error && !coupleId) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--danger)_35%,transparent)] py-10 text-center">
-        <p className="text-[14px] text-[var(--danger)]">{error}</p>
+        <p className="text-[15px] text-[var(--danger)]">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Gastos</h1>
+      <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Gastos</h1>
 
       <div className="flex items-center justify-between">
         <button
@@ -619,15 +626,15 @@ function GastosInner() {
 
       <div className="rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] text-[var(--text-secondary)]">Total del mes</span>
-          <span className="text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+          <span className="text-[12px] text-[var(--text-secondary)]">Total del mes</span>
+          <span className="text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
             {formatoMoneda(totalMes, pais)}
           </span>
         </div>
         {totalesViajePorMoneda.map(([codigo, total]) => (
           <div key={codigo} className="mt-1.5 flex items-center justify-between border-t border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] pt-1.5">
             <span className="text-[12px] text-[var(--text-tertiary)]">Viaje en {nombreMoneda(codigo)}</span>
-            <span className="text-[14px] font-semibold tabular-nums text-[var(--text-secondary)]">{formatoMonedaViaje(total, codigo)}</span>
+            <span className="text-[15px] font-semibold tabular-nums text-[var(--text-secondary)]">{formatoMonedaViaje(total, codigo)}</span>
           </div>
         ))}
       </div>
@@ -650,22 +657,22 @@ function GastosInner() {
                 const alDia = Math.round(Math.abs(s.saldo)) === 0;
                 return (
                   <div key={s.moneda ?? 'casa'} className={s.moneda ? 'border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-3' : ''}>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[var(--text-tertiary)]">{etiqueta}</p>
+                    <p className="text-[12px] font-medium uppercase tracking-[0.04em] text-[var(--text-tertiary)]">{etiqueta}</p>
                     {alDia ? (
                       <p className="mt-1 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
                     ) : (
                       <>
-                        <p className="mt-1 text-[18px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                        <p className="mt-1 text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
                           {formatear(Math.abs(s.saldo))}
                         </p>
-                        <p className="text-[13px] text-[var(--text-secondary)]">
+                        <p className="text-[12px] text-[var(--text-secondary)]">
                           {s.saldo > 0 ? 'Tu pareja te debe esto' : 'Le debes esto a tu pareja'}
                         </p>
                         <button
                           type="button"
                           onClick={() => liquidar(s.moneda)}
                           disabled={liquidandoMoneda !== undefined}
-                          className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[13px] font-semibold text-[var(--text-primary)] disabled:opacity-50 [touch-action:manipulation]"
+                          className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[12px] font-semibold text-[var(--text-primary)] disabled:opacity-50 [touch-action:manipulation]"
                         >
                           {liquidandoMoneda === s.moneda && <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
                           {liquidandoMoneda === s.moneda ? 'Liquidando…' : 'Ya nos pusimos al día'}
@@ -728,7 +735,7 @@ function GastosInner() {
             type="button"
             onClick={() => setFormularioAbierto(true)}
             disabled={categorias.length === 0}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[14px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[15px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
           >
             <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
             Nuevo gasto
@@ -737,7 +744,7 @@ function GastosInner() {
             type="button"
             onClick={() => inputFotoRef.current?.click()}
             disabled={categorias.length === 0 || escaneando}
-            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] px-4 text-[14px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] px-4 text-[15px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
           >
             {escaneando ? (
               <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />
@@ -764,7 +771,7 @@ function GastosInner() {
       {gastosDelMes.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] py-10 text-center">
           <Inbox size={28} strokeWidth={1.6} color="var(--text-tertiary)" aria-hidden="true" />
-          <p className="text-[14px] text-[var(--text-tertiary)]">
+          <p className="text-[15px] text-[var(--text-tertiary)]">
             {filtro === 'todas' ? 'Sin gastos registrados este mes.' : 'Sin gastos en esta categoría.'}
           </p>
         </div>
@@ -786,14 +793,14 @@ function GastosInner() {
                     <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block truncate text-[14px] font-medium text-[var(--text-primary)]">
+                    <span className="block truncate text-[15px] font-medium text-[var(--text-primary)]">
                       {g.nota || cat?.nombre || 'Gasto'}
                     </span>
                     <span className="block text-[12px] text-[var(--text-tertiary)]">
                       {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
                     </span>
                   </span>
-                  <span className="shrink-0 tabular-nums text-[14px] font-semibold text-[var(--text-primary)]">
+                  <span className="shrink-0 tabular-nums text-[15px] font-semibold text-[var(--text-primary)]">
                     {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
                   </span>
                 </div>

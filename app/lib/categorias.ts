@@ -5,6 +5,18 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { Home, Receipt, ShoppingCart, Car, Popcorn, Zap, Utensils, Film, Circle } from 'lucide-react';
+import {
+  House,
+  Receipt as ReceiptFill,
+  ShoppingCart as ShoppingCartFill,
+  Car as CarFill,
+  Popcorn as PopcornFill,
+  Lightning,
+  ForkKnife,
+  FilmSlate,
+  Circle as CircleFill,
+  type Icon as PhosphorIcon,
+} from '@phosphor-icons/react';
 
 export type ColorCategoria = 'teal' | 'coral' | 'amber' | 'rose' | 'blue' | 'violet' | 'gray';
 
@@ -31,6 +43,24 @@ const ICONOS: Record<string, LucideIcon> = {
 
 export function iconoDeCategoria(nombreIcono: string): LucideIcon {
   return ICONOS[nombreIcono] ?? Circle;
+}
+
+// Versión Phosphor (peso `fill`) del mismo ícono — SOLO para el estado "seleccionada" del
+// selector de categoría (22-LIBRERIAS-Y-CRAFT.md: Phosphor fill para estados activos). El resto
+// de la app sigue usando `iconoDeCategoria` (Lucide) sin cambios.
+const ICONOS_FILL: Record<string, PhosphorIcon> = {
+  home: House,
+  receipt: ReceiptFill,
+  'shopping-cart': ShoppingCartFill,
+  car: CarFill,
+  popcorn: PopcornFill,
+  zap: Lightning,
+  utensils: ForkKnife,
+  film: FilmSlate,
+};
+
+export function iconoDeCategoriaFill(nombreIcono: string): PhosphorIcon {
+  return ICONOS_FILL[nombreIcono] ?? CircleFill;
 }
 
 // La variable CSS `--cat-*` correspondiente (tokens.css) — un color propio por categoría en

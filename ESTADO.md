@@ -1,6 +1,97 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-05 | Sesión actual: 6
 
+## Rescate de diseño premium — EN CURSO (2026-09-05) — a pedido del usuario
+Motivo: el usuario pidió subir el diseño/experiencia de la app interna (Hoy/Gastos/Metas/Nosotros) a
+nivel de estudio premium — rescate SOLO visual/experiencia, sin tocar lógica ni datos. Plan aprobado
+por el usuario, ejecutando CAPA POR CAPA con verificación (tsc+build+render 375px) entre cada una.
+No se re-decide la paleta de FICHA-ARTE.md (sigue siendo cosa juzgada) — solo se refina profundidad,
+tipografía disciplinada a los 4 pasos exactos de la ficha (32/19/15/12px) y motion con propósito.
+
+Escala tipográfica NUEVA, aplicada de forma consistente (reemplaza los tamaños sueltos 13/14/17/18/20/24/28/30px):
+- **display 32px/700**: montos héroe (saldo del mes, monto de meta, racha en días) y la pregunta del día (28px, un paso más chico dentro del mismo rango 28-34, para que el dinero siga siendo LO más grande)
+- **title 19px/600**: h1 de cada pantalla y subtítulos de sección (antes 24px/15px sueltos)
+- **body 15px/400**: texto normal, nombres de categoría, respuestas
+- **label 12px/500**: eyebrows, fechas, texto terciario
+
+Token nuevo en `app/components/landing/tokens.css`: `--shadow-hero` (sombra con tinte de `--accent-2`,
+SOLO para la tarjeta protagonista de cada pantalla — nunca más de una a la vez).
+
+**Capa 1 — Hoy: HECHA.** Jerarquía (monto domina sobre el nombre de la pareja), `--shadow-hero` en la
+tarjeta de Pregunta del día, badge de racha con pop de resorte (spring). Verificado: tsc ✓ build ✓ ·
+render 375px real (protección de rutas desactivada un momento en local para verlo sin sesión, restaurada
+de inmediato después — mismo protocolo ya usado en la auditoría de Sesión 6).
+
+**Capa 2 — Nosotros: HECHA.** Mismos ajustes de tipografía/sombra/badge-pop + la grilla de 28 días ahora
+se "dibuja" casilla por casilla (stagger 15ms, mismo lenguaje de movimiento que la barra de Metas).
+Verificado: tsc ✓ build ✓ · render 375px real.
+
+**Capa 3 — Metas: HECHA.** Mismos ajustes de tipografía/sombra + celebración real: confeti de partículas
+SOLO al llegar al 100% de la meta (hito real, no cualquier aporte), construido con Motion (ya instalada)
+en vez de Lottie como se había propuesto en el plan — evita sumar una dependencia nueva y un archivo de
+animación externo sin poder revisarlo antes; mismo resultado (estallido en los colores de la marca).
+Verificado: tsc ✓ build ✓ · render 375px real · probado llegando al 100% de verdad (los 4 nodos se
+activan, botón cambia a "Meta cumplida").
+
+**Capa 4 — Gastos + nav inferior: HECHA.** Instalado `@phosphor-icons/react` (nueva dependencia, única
+para: el nav inferior completo y el ícono de la categoría seleccionada en "Nuevo gasto" — Lucide sigue
+siendo la librería base para todo lo demás). `app/lib/categorias.ts` tiene ahora `iconoDeCategoriaFill()`
+en paralelo a `iconoDeCategoria()`. Mismos ajustes de tipografía (h1→19/600, sueltos 11/13/14/18/24px
+normalizados a la escala 12/15/19/32) en Gastos. Verificado: tsc ✓ build ✓ · render 375px real del nav
+(ícono activo relleno en círculo sólido, inactivos con trazo) y de Hoy con el nav ya actualizado.
+⚠️ El selector de categoría con ícono relleno NO se pudo ver renderizado en local — Gastos exige sesión
+real (sin datos de ejemplo, a diferencia de Hoy/Metas/Nosotros); queda pendiente que el usuario lo
+confirme en el sitio publicado.
+
+**Las 4 capas del rescate visual quedaron completas.** Se corrió el revisor-visual (subagente) sobre Hoy:
+1ª ronda → NO LISTA (32/40 · 13/20). Defectos reales encontrados y corregidos:
+1. Nav flotante se solapaba visualmente con la card de Meta (contenido "atravesado" detrás de la píldora) →
+   agregado un velo de desvanecido fijo (`app/app/app/layout.tsx`) detrás del nav + `pb-24`→`pb-32` en `<main>`.
+2. Botón "Responder" con borde casi invisible (opacidad 45%) → subido a 70% + fondo sutil.
+3. Avatares M/S del header sin acción (único elemento tapable que no hacía nada) → enlazados a `/app/nosotros`.
+4. Card "Gastado este mes" sin fecha real (regla 13 del SO) → ahora dice "Gastado en [Mes Año]" real,
+   calculado en el cliente (mismo patrón anti-hidratación ya usado para el saludo).
+2ª ronda → NO LISTA (31/40 · 15/20). Defectos nuevos/residuales corregidos:
+1. La pregunta del día (28px) y el monto "Gastado en..." (32px) competían de peso → monto bajado a 20px (título);
+   la pregunta queda como único elemento en la banda "display" de esta pantalla.
+2. Nav en Phosphor, resto de Hoy en Lucide (inconsistencia de librería para el mismo rol de ícono) →
+   toda la pantalla Hoy pasó a Phosphor (Fire, Sparkle, Plus, ArrowRight, PencilSimple).
+3. Sin transición entre pestañas (Hoy/Gastos/Metas/Nosotros) → agregado `AnimatePresence` +
+   `motion.main` con `key={pathname}` en `app/app/app/layout.tsx` (una de las 7 baseline que faltaba).
+4. Formulario "Responder" sin autofocus → agregado `autoFocus` al input.
+5. CAUSA RAÍZ real del solape nav/tarjeta (que el primer velo no resolvía del todo): el contenedor raíz
+   del shell tenía `overflow-hidden` en las dos direcciones — a la altura real de un celular (812px) el
+   contenido se CORTABA en vez de hacer scroll, y ese corte se veía como si "atravesara" el nav.
+   Cambiado a `overflow-x-hidden` (permite scroll vertical) + el velo de desvanecido ahora es sólido
+   exactamente en los 80px que ocupa el nav (16px separación + 64px de píldora), con 20px de difuminado
+   arriba — antes usaba un % arbitrario del alto del velo que no coincidía con la geometría real.
+3ª ronda → NO LISTA (31/40 · 15/20, mismo puntaje que la 2ª — defectos distintos). Corregido:
+1. Input "Escribe tu respuesta..." se veía con borde rojo/coral sin error real — causa raíz: el foco
+   global de la app usa `var(--accent)` (coral, casi igual al rojo `--danger`) y el `autoFocus` del
+   input (agregado en la ronda 2) disparaba ese anillo apenas cargaba, sobre tarjeta oscura, leyéndose
+   como error falso. Agregada `--focus-ring` (fallback a `--accent`) en el CSS global; este input la
+   sobrescribe a `var(--bg)` vía `style` para que su foco no se confunda con un error.
+2. Profundidad de fondo casi imperceptible → radiales existentes subidos de 10/8% a 18/14% + un
+   tercer radial con el tono hundido (`--surface-2`) cerca del fondo.
+3. Filas de categoría (Arriendo/Mercado/Servicios) con apariencia tappable pero sin acción → ahora
+   son `<Link href="/app/gastos">`, mismo destino que "Ver todo".
+4. Verificado manualmente con scroll hasta el fondo real: la tarjeta de Meta queda completa y
+   separada del nav — lo que se veía "cortado" en el screenshot de scroll-0 es el velo de
+   desvanecido funcionando como se diseñó (mismo patrón de "fade" tipo iOS), no un error de recorte.
+5. Encabezado repetía el nombre 2 veces ("Buenas tardes, Sofía" + "Mateo & Sofía") → el saludo ahora
+   es solo "Buenas tardes", el nombre de la pareja queda una sola vez, en el título.
+4ª ronda → NO LISTA (31/40 · 14/20). Corregido: doble borde del input (se quitó `autoFocus`),
+profundidad de fondo subida de nuevo (18/14%→28/22%, 3er radial reposicionado de 120% a 55% para
+que caiga dentro del área visible), espaciado general de gap-5→gap-4 para que se note más la
+tarjeta de Meta sin scroll.
+5ª ronda (pedida explícitamente por el usuario: "una ronda más a ver si pasa") → NO LISTA, PEOR
+que la anterior (29/40 · 13/20). Con esto, decisión conjunta: NO seguir iterando en automático —
+ver la entrada completa en "Problemas conocidos" más abajo. Los cambios reales de las 5 rondas
+quedan en el código (no se revirtió nada); solo la pantalla no se declara "lista" formalmente.
+⚠️ Ninguna pantalla del rescate se declara "lista" en esta sección hasta que el revisor confirme ≥36/40 y ≥16/20.
+Capas 1-4 del plan original (Hoy/Nosotros/Metas/Gastos+nav) siguen completas y funcionando — lo
+pendiente es solo el gate formal del revisor sobre Hoy.
+
 ## Corregido: páginas legales desactualizadas sobre la IA (2026-09-05) ✅
 - Motivo: la auditoría legal (2026-08-27) había marcado el escaneo de recibos y el asistente como "todavía no están activas" — correcto en su momento, pero ambas funciones se terminaron de construir y probar DESPUÉS de esa auditoría (2026-09-01 y 2026-09-02). Las páginas legales nunca se actualizaron para reflejarlo — quedaron diciendo algo falso (el riesgo real que la propia auditoría advertía: "vender/describir algo que no es cierto").
 - `app/app/aviso-ia/page.tsx`: ya no dice "estamos construyendo esto" — dice que ambas funciones están activas, nombra a Anthropic (Claude) como proveedor (tal como la propia página prometía hacer "el día que se activen").
@@ -320,6 +411,7 @@ App móvil para parejas en LATAM que combina finanzas compartidas (gastos, saldo
 - Veredicto onboarding: docs/revisiones/onboarding-veredicto.md dice "Veredicto: NO LISTA" (28/40 · 14/20, 2026-08-15). Mismo pospuesto por decisión del usuario — defectos de pulido visual listados abajo, se retoman en Sesión 7.
 - Veredicto paywall: docs/revisiones/paywall-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 12/20 · 15/20, 2026-08-15). Mismo pospuesto por decisión del usuario — el único bug funcional real que encontró esa ronda (CTA fuera de la pantalla a 375×812) SÍ se corrigió antes de posponer; lo que queda es pulido visual, listado abajo, se retoma en Sesión 7.
 - Veredicto app-hoy: docs/revisiones/app-hoy-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 14/20, 2026-08-16, 2ª ronda). Los 2 bugs reales de esa ronda (navegación con `<a>` nativo rompiendo la app-feel, botón "Responder" compitiendo con el CTA principal) ya se corrigieron. Lo que queda (heurística 9 sin estado de error modelado) se pospone a propósito: sin backend real todavía, un "error" sería artificial — se aborda en Sesión 6 cuando el envío de la respuesta pase por una llamada de verdad.
+- Veredicto Hoy (rescate de diseño premium, 2026-09-06): docs/revisiones/hoy-veredicto.md dice "Veredicto: NO LISTA" — 5 rondas corridas (32/40·13/20 → 31/40·15/20 → 31/40·15/20 → 31/40·14/20 → 29/40·13/20, la última ronda bajó el puntaje). POSPUESTO A PROPÓSITO por decisión explícita del usuario tras ver que 4 rondas no cerraban la brecha y pedir una 5ª "a ver si pasa" — al empeorar, se acordó no seguir iterando en automático (mismo patrón de rendimientos decrecientes ya documentado arriba para landing/onboarding/paywall). Bugs reales SÍ corregidos en el camino (quedan en el código, no se revirtieron): foco coral que se leía como error falso, doble borde del input, filas de categoría sin acción, encabezado con nombre repetido, causa raíz del solape nav/tarjeta (`overflow-hidden` en las 2 direcciones en vez de solo horizontal), transición entre pestañas ausente. Lo que queda sin resolver es más subjetivo que bug: profundidad de fondo que el revisor sigue viendo plana pese a 2 subidas de intensidad, densidad de elementos tappables (7-8, contradice el propio pedido de la ronda 3 de hacer tappables las categorías), y falta de un atajo tipo "recordar última categoría" para el usuario recurrente — esto último exigiría sumar lógica nueva, fuera del alcance que el usuario fijó ("rescate SOLO visual, no tocar lógica ni datos").
 
 Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funcional; el único que lo era, el CTA del paywall fuera de pantalla, ya se corrigió el 2026-08-15):
 - Landing: la sección "App por dentro" muestra placeholders (Hoy/Gastos/Metas/Nosotros) en vez de screenshots reales — aceptado hasta que la app interna exista (Sesión 5); reemplazar antes de mandar tráfico pago.

@@ -7,13 +7,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'motion/react';
-import { Sun, Receipt, Target, Heart } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sun, Receipt, Target, Heart, type Icon as PhosphorIcon } from '@phosphor-icons/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { SelectorPais } from '@/components/app/SelectorPais';
 
-const DESTINOS: { href: string; label: string; icon: LucideIcon }[] = [
+// Phosphor (no Lucide) SOLO para el nav — un mismo set de íconos que pasa de trazo (inactivo)
+// a relleno sólido (activo) cambiando un solo prop `weight`, en vez de mezclar dos librerías
+// distintas para el mismo ícono según el estado (22-LIBRERIAS-Y-CRAFT.md).
+const DESTINOS: { href: string; label: string; icon: PhosphorIcon }[] = [
   { href: '/app/hoy', label: 'Hoy', icon: Sun },
   { href: '/app/gastos', label: 'Gastos', icon: Receipt },
   { href: '/app/metas', label: 'Metas', icon: Target },
@@ -51,19 +53,58 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
   };
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--bg)] [font-family:var(--font-body)]">
+    // overflow-x-hidden (no overflow-hidden a secas): el gradiente decorativo de fondo no debe
+    // desbordar de lado, pero el contenido SÍ debe poder hacer scroll vertical cuando es más alto
+    // que el viewport — con overflow-hidden en las dos direcciones, a la altura real de un celular
+    // (812px) la última tarjeta se CORTABA en vez de quedar scrolleable, y esa mala cortada se
+    // veía como si "atravesara" el nav flotante (causa raíz real del defecto ya reportado 2 veces
+    // por el revisor-visual, no resuelta del todo con el velo de desvanecido por sí solo).
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[var(--bg)] [font-family:var(--font-body)]">
       {/* Profundidad de fondo — antes era un fill plano de un solo tono (defecto real
-          detectado por el revisor-visual: DESIGN-CORE exige 3 niveles, nunca fill plano). */}
+          detectado por el revisor-visual: DESIGN-CORE exige 3 niveles, nunca fill plano).
+          2ª subida de intensidad (18/14%→28/22%): la anterior seguía "casi imperceptible" según
+          el revisor. El tercer radial (tono hundido) estaba centrado al 120% — fuera del
+          viewport, quedaba tapado por el velo blanco del nav antes de notarse — movido al 55%
+          para que caiga dentro del área de contenido visible, no en la zona del nav. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            'radial-gradient(480px 320px at 15% -5%, color-mix(in oklab, var(--accent-2) 10%, transparent) 0%, transparent 60%), ' +
-            'radial-gradient(420px 300px at 100% 10%, color-mix(in oklab, var(--accent) 8%, transparent) 0%, transparent 55%)',
+            'radial-gradient(520px 360px at 15% -5%, color-mix(in oklab, var(--accent-2) 28%, transparent) 0%, transparent 62%), ' +
+            'radial-gradient(460px 340px at 100% 8%, color-mix(in oklab, var(--accent) 22%, transparent) 0%, transparent 58%), ' +
+            'radial-gradient(560px 380px at 50% 55%, var(--surface-2) 0%, transparent 65%)',
         }}
       />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-24 pt-6">{children}</main>
+      {/* Transición entre pestañas (Hoy/Gastos/Metas/Nosotros) — antes el cambio de tab era un
+          corte seco sin animación, una de las 7 baseline de movimiento que faltaba (defecto real
+          detectado por el revisor-visual). `key={pathname}` fuerza a Motion a tratar cada
+          pestaña como una entrada/salida propia. */}
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-28 pt-6"
+        >
+          {children}
+        </motion.main>
+      </AnimatePresence>
+
+      {/* Velo de desvanecido — el nav flotante no cubre todo el ancho (es una píldora centrada),
+          así que sin esto el contenido se veía "atravesado" detrás/alrededor de él (defecto real,
+          reportado 2 veces por el revisor-visual). Los primeros dos intentos usaban un porcentaje
+          arbitrario del alto del velo para la parte sólida — no coincidía con el tramo real que
+          ocupa el nav (16px de separación del fondo + 64px de alto de la píldora = 80px), así que
+          quedaba un filo sin cubrir justo donde empieza el nav. Ahora es sólido exactamente esos
+          80px y solo difumina los últimos 20px de arriba, para que el corte no se sienta abrupto. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30"
+        style={{ height: '100px', background: 'linear-gradient(to top, var(--bg) 0%, var(--bg) 80%, transparent 100%)' }}
+      />
 
       {/* Menú flotante (pedido del usuario, referencia visual) — despegado de los bordes,
           con sombra propia y el destino activo como círculo sólido, en vez de la barra
@@ -85,7 +126,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
               >
                 <d.icon
                   size={20}
-                  strokeWidth={activo ? 2.4 : 2}
+                  weight={activo ? 'fill' : 'regular'}
                   color={activo ? 'var(--bg)' : 'var(--text-tertiary)'}
                   aria-hidden="true"
                 />

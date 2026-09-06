@@ -4,7 +4,7 @@
 // metáfora semilla→árbol-con-frutos del Hero de la landing (dispositivo ownable reutilizado,
 // no reinventado — FICHA-ARTE.md). Acción primaria: aportar a la meta.
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { useEffect } from 'react';
@@ -41,10 +41,49 @@ function fechaLarga(iso: string): string {
   return `${d} de ${meses[m - 1]} de ${y}`;
 }
 
+// Confeti de burst (Motion — misma librería ya instalada, sin sumar dependencias nuevas):
+// una decena de partículas salen desde el centro y caen con gravedad + rotación, SOLO al
+// llegar al 100% de la meta (hito real, no cualquier aporte — 11-DISENO-EMOCIONAL: celebrar
+// solo lo que de verdad se ganó). Colores de la propia marca, nunca confeti multicolor genérico.
+const COLORES_CONFETI = ['var(--accent)', 'var(--accent-2)', 'var(--cat-amber)'];
+function ConfettiMeta() {
+  const particulas = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        angulo: (i / 14) * Math.PI * 2 + Math.random() * 0.4,
+        distancia: 70 + Math.random() * 50,
+        color: COLORES_CONFETI[i % COLORES_CONFETI.length],
+        rotacion: Math.random() * 360,
+        tamano: 5 + Math.random() * 4,
+      })),
+    []
+  );
+  return (
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+      {particulas.map((p, i) => (
+        <motion.span
+          key={i}
+          initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
+          animate={{
+            x: Math.cos(p.angulo) * p.distancia,
+            y: Math.sin(p.angulo) * p.distancia + 40,
+            opacity: 0,
+            rotate: p.rotacion,
+          }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute rounded-[2px]"
+          style={{ width: p.tamano, height: p.tamano * 2.2, backgroundColor: p.color }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function MetasPage() {
   const reducido = useReducedMotion();
   const [montoActual, setMontoActual] = useState(META_AHORRO.montoActual);
   const [celebrar, setCelebrar] = useState(false);
+  const [metaCumplida, setMetaCumplida] = useState(false);
   const [aportando, setAportando] = useState(false);
   const [montoAporte, setMontoAporte] = useState('');
   const [pais, setPais] = useState<string | null>(null);
@@ -68,9 +107,16 @@ export default function MetasPage() {
   const confirmarAporte = () => {
     const valor = Number(montoAporte);
     if (!valor || valor <= 0) return;
+    const pctAntes = pct;
     setMontoActual((m) => Math.min(META_AHORRO.montoObjetivo, m + valor));
     setCelebrar(true);
     setTimeout(() => setCelebrar(false), 900);
+    // El confeti es para el HITO real de completar la meta, no para cualquier aporte — un
+    // aporte normal ya tiene su propio feedback (el pop del %, la barra creciendo).
+    if (pctAntes < 100 && Math.min(100, Math.round(((montoActual + valor) / META_AHORRO.montoObjetivo) * 100)) >= 100) {
+      setMetaCumplida(true);
+      setTimeout(() => setMetaCumplida(false), 1000);
+    }
     setMontoAporte('');
     setAportando(false);
   };
@@ -89,9 +135,10 @@ export default function MetasPage() {
     // espacio disponible en vez de dejar ~40% del viewport en blanco debajo del botón
     // "Nueva meta juntos" (defecto real detectado en la auditoría).
     <div className="flex flex-1 flex-col justify-center gap-5">
-      <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+      <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
 
-      <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-1)]">
+      <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-hero)]">
+        {metaCumplida && <ConfettiMeta />}
         <div className="flex items-center justify-between gap-2">
           {editandoNombre ? (
             <form
@@ -122,7 +169,7 @@ export default function MetasPage() {
               }}
               className="flex items-center gap-1.5 text-left [touch-action:manipulation]"
             >
-              <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{nombreMeta}</h2>
+              <h2 className="text-[19px] font-semibold text-[var(--text-primary)]">{nombreMeta}</h2>
               <Pencil size={13} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
             </button>
           )}
@@ -141,10 +188,10 @@ export default function MetasPage() {
           Meta para el {fechaLarga(META_AHORRO.fechaObjetivo)}
         </p>
 
-        <p className="mt-4 text-[30px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
+        <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
           {formatoMoneda(montoMostrado, pais)}
         </p>
-        <p className="mt-0.5 text-[13px] text-[var(--text-tertiary)]">
+        <p className="mt-0.5 text-[12px] text-[var(--text-tertiary)]">
           de <span className="font-semibold tabular-nums">{formatoMoneda(META_AHORRO.montoObjetivo, pais)}</span> — su meta total
         </p>
 
@@ -210,14 +257,14 @@ export default function MetasPage() {
                     setAportando(false);
                     setMontoAporte('');
                   }}
-                  className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation]"
+                  className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={!montoAporte}
-                  className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                  className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
                 >
                   <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
                   Confirmar aporte
@@ -242,7 +289,7 @@ export default function MetasPage() {
 
       <button
         type="button"
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] text-[14px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] text-[15px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
       >
         <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
         Nueva meta juntos

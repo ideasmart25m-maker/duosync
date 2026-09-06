@@ -6,10 +6,10 @@
 // hasta que AMBOS respondan (revelar coincidencia) — nunca se ve la respuesta del otro antes.
 // Dispositivo ownable: mismo hero-card sólido de onboarding/HeroVisual (FICHA-ARTE.md).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { Flame, Sparkles, Plus, ArrowRight, Pencil } from 'lucide-react';
+import { Fire, Sparkle, Plus, ArrowRight, PencilSimple } from '@phosphor-icons/react';
 import { CATEGORIAS, GASTOS, SALDO_MES, META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { formatoMoneda } from '@/lib/paises';
@@ -18,6 +18,19 @@ import { formatoMoneda } from '@/lib/paises';
 // en cada tap (flash blanco, se pierde el estado de la app) — defecto real detectado por el
 // revisor-visual. `motion.create(Link)` conserva la navegación cliente-a-cliente de Next.
 const MotionLink = motion.create(Link);
+
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+// Mes real visible junto al total (regla 13 del SO: toda vista con datos temporales necesita
+// una fecha real, no solo "este mes") — la navegación entre meses YA existe en Gastos (el link
+// "Ver todo" lleva justo ahí); aquí solo se nombra el mes actual, sin sumar estado nuevo.
+function mesActualLabel(): string {
+  const ahora = new Date();
+  return `${MESES[ahora.getMonth()][0].toUpperCase()}${MESES[ahora.getMonth()].slice(1)} ${ahora.getFullYear()}`;
+}
 
 function saludoDelDia(): string {
   const hora = new Date().getHours();
@@ -56,15 +69,20 @@ function PreguntaDelDia() {
   };
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)]">
+    <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[12px] font-bold uppercase tracking-[0.08em] opacity-80">Pregunta de hoy</p>
-        <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--bg)_18%,transparent)] px-2 py-1 text-[12px] font-bold">
-          <Flame size={11} strokeWidth={2.5} aria-hidden="true" />
+        <p className="text-[12px] font-medium uppercase tracking-[0.08em] opacity-80">Pregunta de hoy</p>
+        <motion.span
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.15 }}
+          className="flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--bg)_18%,transparent)] px-2 py-1 text-[12px] font-semibold"
+        >
+          <Fire size={11} strokeWidth={2.5} aria-hidden="true" />
           {RACHA.dias} días
-        </span>
+        </motion.span>
       </div>
-      <p className="text-balance text-[20px] font-bold leading-snug [font-family:var(--font-display)]">
+      <p className="text-balance text-[28px] font-bold leading-snug [font-family:var(--font-display)]">
         {PREGUNTA_HOY.texto}
       </p>
 
@@ -86,7 +104,7 @@ function PreguntaDelDia() {
         </motion.div>
       ) : respuestaPropia !== null ? (
         <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-[14px] leading-relaxed opacity-85">
+          <p className="text-[15px] leading-relaxed opacity-85">
             Ya respondiste. En cuanto {PAREJA.nombres.m} conteste, se revelan las dos respuestas.
           </p>
           {/* Un typo antes quedaba irrecuperable hasta que ambos respondían — defecto real
@@ -100,7 +118,7 @@ function PreguntaDelDia() {
             aria-label="Editar respuesta"
             className="flex shrink-0 items-center gap-1 text-[12px] font-semibold underline underline-offset-2 opacity-90 [touch-action:manipulation]"
           >
-            <Pencil size={12} strokeWidth={2.2} aria-hidden="true" />
+            <PencilSimple size={12} strokeWidth={2.2} aria-hidden="true" />
             Editar
           </button>
         </div>
@@ -120,6 +138,12 @@ function PreguntaDelDia() {
             }}
             placeholder="Escribe tu respuesta…"
             aria-invalid={vacio}
+            // Sin autoFocus: combinado con el borde propio del input, el anillo de foco se veía
+            // como un doble borde pesado apenas se abría la pantalla (defecto real detectado por
+            // el revisor-visual) — el foco solo aparece cuando el usuario toca el campo, como
+            // cualquier otro input de la app. `--focus-ring` sigue en `--bg` (blanco) para que,
+            // cuando sí aparezca por teclado, no se confunda con el rojo de error.
+            style={{ '--focus-ring': 'var(--bg)' } as CSSProperties}
             className={`h-12 w-full rounded-[var(--radius-button)] border bg-[color-mix(in_oklab,var(--bg)_12%,transparent)] px-4 text-[15px] text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)] ${
               vacio ? 'border-[color-mix(in_oklab,var(--danger)_65%,var(--bg))]' : 'border-[color-mix(in_oklab,var(--bg)_30%,transparent)]'
             }`}
@@ -132,7 +156,7 @@ function PreguntaDelDia() {
           <motion.button
             type="submit"
             whileTap={{ scale: 0.98 }}
-            className="flex h-11 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_45%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation]"
+            className="flex h-11 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_70%,transparent)] bg-[color-mix(in_oklab,var(--bg)_10%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation]"
           >
             Responder
           </motion.button>
@@ -154,8 +178,10 @@ export default function HoyPage() {
   // el real recién después de montar, solo en el cliente.
   const [saludo, setSaludo] = useState('Hola');
   const [pais, setPais] = useState<string | null>(null);
+  const [mesLabel, setMesLabel] = useState('');
   useEffect(() => {
     setSaludo(saludoDelDia());
+    setMesLabel(mesActualLabel());
     // El único dato real de esta pantalla por ahora (el resto sigue en datos de ejemplo,
     // ver ESTADO.md) — para no mostrar pesos colombianos a una pareja que ya eligió otro país.
     (async () => {
@@ -180,24 +206,28 @@ export default function HoyPage() {
   });
 
   return (
-    <div className="flex flex-col gap-5">
+    // gap-4 (no gap-5): la tarjeta de Meta quedaba cortada de golpe contra el velo del nav sin
+    // llegar a mostrar su título ni el % en la vista inicial sin scroll (defecto real detectado
+    // por el revisor-visual) — este ajuste libera ~16px para que se note más de esa tarjeta.
+    <div className="flex flex-col gap-4">
       <motion.div {...entrada(0)} className="flex items-center justify-between">
         <div>
-          <p className="text-[13px] text-[var(--text-tertiary)]">
-            {saludo}, {PAREJA.nombres.s}
-          </p>
-          <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">
+          {/* Antes repetía el nombre en las dos líneas ("Buenas tardes, Sofía" + "Mateo &
+              Sofía") sin sumar información nueva — defecto real detectado por el revisor-visual.
+              El saludo solo, los nombres quedan una única vez, en el título. */}
+          <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>
+          <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
             {PAREJA.nombres.m} &amp; {PAREJA.nombres.s}
           </h1>
         </div>
-        <div className="flex -space-x-2">
+        <Link href="/app/nosotros" aria-label="Ver Nosotros" className="flex -space-x-2 [touch-action:manipulation]">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent-2)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
             M
           </span>
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
             S
           </span>
-        </div>
+        </Link>
       </motion.div>
 
       <motion.div {...entrada(0.06)}>
@@ -206,24 +236,31 @@ export default function HoyPage() {
 
       <motion.div
         {...entrada(0.12)}
-        className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)]"
+        className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
       >
         <div className="flex items-baseline justify-between">
-          <p className="text-[13px] text-[var(--text-tertiary)]">Gastado este mes</p>
+          <p className="text-[12px] font-medium text-[var(--text-tertiary)]">Gastado en {mesLabel || '…'}</p>
           <Link href="/app/gastos" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
             Ver todo
             <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
           </Link>
         </div>
-        <p className="mt-1 text-[28px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+        {/* 20px (título), no 32px (display) — la pregunta de arriba es el dispositivo
+            protagonista de esta pantalla (FICHA-ARTE.md), este monto es secundario. Antes
+            los dos competían al mismo peso visual (defecto real detectado por el revisor). */}
+        <p className="mt-1 text-[20px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
           {formatoMoneda(saldoMostrado, pais)}
         </p>
         {topCategorias.length === 0 ? (
-          <p className="mt-3 text-[13px] text-[var(--text-tertiary)]">Aún no registran gastos este mes.</p>
+          <p className="mt-3 text-[12px] text-[var(--text-tertiary)]">Aún no registran gastos este mes.</p>
         ) : (
           <div className="mt-3 flex flex-col gap-2">
             {topCategorias.map(({ cat, total }) => (
-              <div key={cat.id} className="flex items-center gap-2.5 text-[13px]">
+              // Antes era un <div> con apariencia de fila de lista tappable (ícono en chip +
+              // texto) que no hacía nada al tocarla — defecto real detectado por el revisor-visual
+              // (regla 11: todo elemento con apariencia interactiva debe accionar algo). Lleva al
+              // detalle real de Gastos, mismo destino que "Ver todo".
+              <Link key={cat.id} href="/app/gastos" className="flex items-center gap-2.5 text-[15px] [touch-action:manipulation]">
                 <span
                   className={`flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-button)] ${
                     cat.color === 'accent' ? 'bg-[var(--accent)]' : 'bg-[var(--accent-2)]'
@@ -233,7 +270,7 @@ export default function HoyPage() {
                 </span>
                 <span className="flex-1 text-[var(--text-primary)]">{cat.nombre}</span>
                 <span className="tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(total, pais)}</span>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -256,11 +293,11 @@ export default function HoyPage() {
         className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)] [touch-action:manipulation]"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
-          <Sparkles size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+          <Sparkle size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
         </span>
         <span className="flex-1">
           <span className="flex items-baseline justify-between">
-            <span className="text-[14px] font-semibold text-[var(--text-primary)]">{META_AHORRO.nombre}</span>
+            <span className="text-[15px] font-semibold text-[var(--text-primary)]">{META_AHORRO.nombre}</span>
             <span className="text-[12px] font-semibold tabular-nums text-[var(--accent)]">{pctMeta}%</span>
           </span>
           {/* Barra de progreso animada — antes el % era solo texto, sin señal visual

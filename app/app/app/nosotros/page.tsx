@@ -61,19 +61,25 @@ export default function NosotrosPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">Nosotros</h1>
+      <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Nosotros</h1>
 
-      <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)]">
+      <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
         <div className="flex items-center gap-2">
-          <Flame size={22} strokeWidth={2.4} aria-hidden="true" />
-          <p className="text-[28px] font-bold tabular-nums [font-family:var(--font-display)]">{RACHA.dias} días</p>
+          <motion.span
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          >
+            <Flame size={22} strokeWidth={2.4} aria-hidden="true" />
+          </motion.span>
+          <p className="text-[32px] font-bold tabular-nums [font-family:var(--font-display)]">{RACHA.dias} días</p>
         </div>
-        <p className="mt-1 text-[14px] opacity-85">
+        <p className="mt-1 text-[15px] opacity-85">
           {PAREJA.nombres.m} y {PAREJA.nombres.s} han respondido su pregunta diaria sin cortar la racha.
         </p>
 
         <div className="mt-4 flex flex-col gap-1.5">
-          <div className="flex justify-between text-[11px] font-medium uppercase tracking-[0.04em] opacity-70">
+          <div className="flex justify-between text-[12px] font-medium uppercase tracking-[0.04em] opacity-70">
             {DIAS_SEMANA.map((d, i) => (
               <span key={i} className="w-6 text-center">
                 {d}
@@ -82,15 +88,24 @@ export default function NosotrosPage() {
           </div>
           {semanas.map((semana, i) => (
             <div key={i} className="flex justify-between">
-              {semana.map((activo, j) => (
-                <span
-                  key={j}
-                  className={`flex size-6 items-center justify-center rounded-[8px] ${
-                    activo ? 'bg-[var(--bg)]' : 'bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]'
-                  }`}
-                  aria-label={activo ? 'Día conectado' : 'Día sin registrar'}
-                />
-              ))}
+              {semana.map((activo, j) => {
+                // Índice global del día en la grilla (fila × 7 + columna) — sirve para escalonar
+                // la entrada como si se "dibujara" casilla por casilla, mismo lenguaje de
+                // movimiento que la barra de Metas (FICHA-ARTE: firma de "dibujado").
+                const indiceGlobal = i * 7 + j;
+                return (
+                  <motion.span
+                    key={j}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25, delay: 0.25 + indiceGlobal * 0.015, ease: [0.16, 1, 0.3, 1] }}
+                    className={`flex size-6 items-center justify-center rounded-[8px] ${
+                      activo ? 'bg-[var(--bg)]' : 'bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]'
+                    }`}
+                    aria-label={activo ? 'Día conectado' : 'Día sin registrar'}
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
@@ -99,7 +114,7 @@ export default function NosotrosPage() {
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Sparkles size={16} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
-          <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Catálogo de dinámicas</h2>
+          <h2 className="text-[19px] font-semibold text-[var(--text-primary)]">Catálogo de dinámicas</h2>
         </div>
         <div className="flex flex-col gap-2.5">
           {DINAMICAS.map((d) => (
@@ -112,10 +127,10 @@ export default function NosotrosPage() {
                 <d.icon size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
               </span>
               <span className="flex-1">
-                <span className="block text-[14px] font-semibold text-[var(--text-primary)]">{d.titulo}</span>
+                <span className="block text-[15px] font-semibold text-[var(--text-primary)]">{d.titulo}</span>
                 <span className="block text-[12px] text-[var(--text-tertiary)]">{d.detalle}</span>
               </span>
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] px-2 py-1 text-[11px] font-semibold text-[var(--text-tertiary)]">
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] px-2 py-1 text-[12px] font-semibold text-[var(--text-tertiary)]">
                 <Lock size={11} strokeWidth={2.2} aria-hidden="true" />
                 Próximamente
               </span>
@@ -133,7 +148,7 @@ export default function NosotrosPage() {
           <Globe2 size={16} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
         </span>
         <span className="flex-1 text-left">
-          <span className="block text-[14px] font-medium text-[var(--text-primary)]">País y moneda</span>
+          <span className="block text-[15px] font-medium text-[var(--text-primary)]">País y moneda</span>
           <span className="block text-[12px] text-[var(--text-tertiary)]">{paisPorCodigo(pais)?.nombre ?? 'Sin elegir todavía'}</span>
         </span>
         <ChevronRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
