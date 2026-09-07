@@ -6,12 +6,13 @@
 // hasta que AMBOS respondan (revelar coincidencia) — nunca se ve la respuesta del otro antes.
 // Dispositivo ownable: mismo hero-card sólido de onboarding/HeroVisual (FICHA-ARTE.md).
 
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { Fire, Sparkle, Plus, ArrowRight, PencilSimple } from '@phosphor-icons/react';
-import { CATEGORIAS, GASTOS, SALDO_MES, META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA } from '@/lib/seed-datos';
+import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch } from '@phosphor-icons/react';
+import { META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
+import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
 import { formatoMoneda } from '@/lib/paises';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
@@ -39,17 +40,25 @@ function saludoDelDia(): string {
   return 'Buenas noches';
 }
 
-// Número héroe animado — motion signature de esta pantalla (FICHA-ARTE.md), antes se
-// renderizaba estático (defecto real detectado por el revisor-visual).
+// Número héroe animado — motion signature de esta pantalla (FICHA-ARTE.md). Anima CADA VEZ que
+// cambia `target` (desde el último valor mostrado, no siempre desde 0) — el gastado real llega
+// async (arranca en 0 antes de que responda Supabase, mismo bug ya corregido en Metas: con
+// deps [] solo animaba una vez al montar y se quedaba pegado si el dato llegaba después).
 function useCountUp(target: number): number {
   const reducido = useReducedMotion();
   const [valor, setValor] = useState(reducido ? target : 0);
+  const anteriorRef = useRef(reducido ? target : 0);
   useEffect(() => {
-    if (reducido) return;
-    const controls = animate(0, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(Math.round(v)) });
+    if (reducido) {
+      setValor(target);
+      anteriorRef.current = target;
+      return;
+    }
+    const desde = anteriorRef.current;
+    const controls = animate(desde, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(Math.round(v)) });
+    anteriorRef.current = target;
     return () => controls.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- corre una vez al montar
-  }, []);
+  }, [target, reducido]);
   return valor;
 }
 
@@ -168,7 +177,6 @@ function PreguntaDelDia() {
 
 export default function HoyPage() {
   const reducido = useReducedMotion();
-  const saldoMostrado = useCountUp(SALDO_MES);
   // El saludo depende de la hora LOCAL del navegador, pero este componente también
   // se renderiza en el servidor (Next.js sigue haciendo SSR de 'use client') — el
   // servidor y el navegador pueden estar en zonas horarias distintas y calcular un
@@ -179,24 +187,55 @@ export default function HoyPage() {
   const [saludo, setSaludo] = useState('Hola');
   const [pais, setPais] = useState<string | null>(null);
   const [mesLabel, setMesLabel] = useState('');
+  const [presupuesto, setPresupuesto] = useState<number | null>(null);
+  const [gastado, setGastado] = useState(0);
+  const [editandoPresupuesto, setEditandoPresupuesto] = useState(false);
+  const [borradorPresupuesto, setBorradorPresupuesto] = useState('');
+  const [guardandoPresupuesto, setGuardandoPresupuesto] = useState(false);
+  const [errorPresupuesto, setErrorPresupuesto] = useState<string | null>(null);
+  const gastadoMostrado = useCountUp(gastado);
+
   useEffect(() => {
     setSaludo(saludoDelDia());
     setMesLabel(mesActualLabel());
-    // El único dato real de esta pantalla por ahora (el resto sigue en datos de ejemplo,
-    // ver ESTADO.md) — para no mostrar pesos colombianos a una pareja que ya eligió otro país.
+    // Presupuesto/gastado real de Supabase (pedido real del usuario) — antes esta tarjeta
+    // mostraba "Gastado este mes" con datos de EJEMPLO fijos que nunca coincidían con lo que
+    // de verdad registraban en Gastos, y no había forma de definir un presupuesto.
     (async () => {
       const supabase = crearClienteNavegador();
-      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
-      if (!membresia) return;
-      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
-      setPais(pareja?.pais ?? null);
+      const cid = await obtenerCoupleId(supabase);
+      if (!cid) return;
+      const ahora = new Date();
+      const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+      const [paisPareja, presupuestoReal, gastadoReal] = await Promise.all([
+        obtenerPaisPareja(supabase, cid),
+        obtenerPresupuestoPareja(supabase, cid),
+        obtenerGastadoDelMes(supabase, cid, prefijoMes),
+      ]);
+      setPais(paisPareja);
+      setPresupuesto(presupuestoReal);
+      setGastado(gastadoReal);
     })();
   }, []);
-  const topCategorias = [...CATEGORIAS]
-    .map((c) => ({ cat: c, total: GASTOS.filter((g) => g.categoriaId === c.id).reduce((a, g) => a + g.monto, 0) }))
-    .filter((c) => c.total > 0)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 3);
+
+  const guardarPresupuesto = async () => {
+    const valor = Number(borradorPresupuesto);
+    if (!valor || valor <= 0) return;
+    setGuardandoPresupuesto(true);
+    setErrorPresupuesto(null);
+    try {
+      const supabase = crearClienteNavegador();
+      await actualizarPresupuestoPareja(supabase, valor);
+      setPresupuesto(valor);
+      setEditandoPresupuesto(false);
+    } catch {
+      setErrorPresupuesto('No pudimos guardar el presupuesto. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardandoPresupuesto(false);
+    }
+  };
+
+  const disponible = presupuesto !== null ? presupuesto - gastado : null;
   const pctMeta = Math.round((META_AHORRO.montoActual / META_AHORRO.montoObjetivo) * 100);
 
   const entrada = (delay: number) => ({
@@ -238,41 +277,92 @@ export default function HoyPage() {
         {...entrada(0.12)}
         className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
       >
-        <div className="flex items-baseline justify-between">
-          <p className="text-[12px] font-medium text-[var(--text-tertiary)]">Gastado en {mesLabel || '…'}</p>
-          <Link href="/app/gastos" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
-            Ver todo
-            <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
-          </Link>
-        </div>
-        {/* 20px (título), no 32px (display) — la pregunta de arriba es el dispositivo
-            protagonista de esta pantalla (FICHA-ARTE.md), este monto es secundario. Antes
-            los dos competían al mismo peso visual (defecto real detectado por el revisor). */}
-        <p className="mt-1 text-[20px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {formatoMoneda(saldoMostrado, pais)}
-        </p>
-        {topCategorias.length === 0 ? (
-          <p className="mt-3 text-[12px] text-[var(--text-tertiary)]">Aún no registran gastos este mes.</p>
+        {editandoPresupuesto ? (
+          <form
+            className="flex flex-col gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              guardarPresupuesto();
+            }}
+          >
+            <label className="text-[12px] font-medium text-[var(--text-tertiary)]">Nuestro presupuesto mensual</label>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={borradorPresupuesto}
+              onChange={(e) => setBorradorPresupuesto(e.target.value.replace(/\D/g, ''))}
+              placeholder="¿Cuánto quieren gastar como máximo?"
+              className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            />
+            {errorPresupuesto && <p className="text-[12px] font-medium text-[var(--danger)]">{errorPresupuesto}</p>}
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditandoPresupuesto(false)}
+                disabled={guardandoPresupuesto}
+                className="flex h-10 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={!borradorPresupuesto || guardandoPresupuesto}
+                className="flex h-10 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+              >
+                {guardandoPresupuesto ? <CircleNotch size={15} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Check size={15} strokeWidth={2.4} aria-hidden="true" />}
+                {guardandoPresupuesto ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </form>
         ) : (
-          <div className="mt-3 flex flex-col gap-2">
-            {topCategorias.map(({ cat, total }) => (
-              // Antes era un <div> con apariencia de fila de lista tappable (ícono en chip +
-              // texto) que no hacía nada al tocarla — defecto real detectado por el revisor-visual
-              // (regla 11: todo elemento con apariencia interactiva debe accionar algo). Lleva al
-              // detalle real de Gastos, mismo destino que "Ver todo".
-              <Link key={cat.id} href="/app/gastos" className="flex items-center gap-2.5 text-[15px] [touch-action:manipulation]">
-                <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-button)] ${
-                    cat.color === 'accent' ? 'bg-[var(--accent)]' : 'bg-[var(--accent-2)]'
-                  }`}
-                >
-                  <cat.icono size={14} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
-                </span>
-                <span className="flex-1 text-[var(--text-primary)]">{cat.nombre}</span>
-                <span className="tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(total, pais)}</span>
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setBorradorPresupuesto(presupuesto ? String(presupuesto) : '');
+                setEditandoPresupuesto(true);
+              }}
+              className="flex items-center gap-1.5 [touch-action:manipulation]"
+            >
+              <p className="text-[12px] font-medium text-[var(--text-tertiary)]">Nuestro presupuesto mensual</p>
+              <PencilSimple size={12} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+            </button>
+
+            {presupuesto === null ? (
+              <p className="mt-2 text-[13px] text-[var(--text-tertiary)]">Aún no lo han definido — toquen arriba para ponerlo.</p>
+            ) : (
+              <>
+                {/* 20px (título), no 32px (display) — la pregunta de arriba es el dispositivo
+                    protagonista de esta pantalla (FICHA-ARTE.md), este monto es secundario. */}
+                <p className="mt-1 text-[20px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                  {formatoMoneda(presupuesto, pais)}
+                </p>
+                <div className="mt-3 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-[15px]">
+                    <span className="text-[var(--text-secondary)]">Gastado{mesLabel ? ` en ${mesLabel}` : ''}</span>
+                    <span
+                      className={`tabular-nums font-semibold ${gastado > presupuesto ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
+                    >
+                      {formatoMoneda(gastadoMostrado, pais)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[15px]">
+                    <span className="text-[var(--text-secondary)]">Disponible</span>
+                    <span className={`tabular-nums font-semibold ${(disponible ?? 0) < 0 ? 'text-[var(--danger)]' : 'text-[var(--accent)]'}`}>
+                      {formatoMoneda(disponible ?? 0, pais)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="mt-3">
+              <Link href="/app/gastos" className="flex w-fit items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
+                Ver todo
+                <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
               </Link>
-            ))}
-          </div>
+            </div>
+          </>
         )}
       </motion.div>
 

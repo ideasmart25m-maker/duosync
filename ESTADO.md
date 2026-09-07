@@ -1,6 +1,35 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-07 | Sesión actual: 6
 
+## Hoy: tarjeta rediseñada como "Nuestro presupuesto mensual" (2026-09-07) ✅ — a pedido del usuario
+- Motivo: el usuario reportó (con screenshot) que "$2.140.000" en la tarjeta de Hoy nunca cambiaba
+  y no coincidía con la suma de las categorías visibles. Causa real: esa tarjeta usaba datos de
+  EJEMPLO fijos (`SALDO_MES`/`CATEGORIAS`/`GASTOS` de `seed-datos.ts`) — nunca se conectó a
+  Supabase; el desajuste era porque solo mostraba las 3 categorías más altas de 5 en total.
+- Rediseño pedido por el usuario: la tarjeta ya no muestra "Gastado en [mes]" + top-3 categorías —
+  ahora es "Nuestro presupuesto mensual" (editable, con lápiz), y debajo "Gastado" / "Disponible"
+  (Disponible = Presupuesto − Gastado, en rojo si se pasaron). "Ver todo" bajó de la esquina
+  superior a la parte inferior izquierda.
+- Migración `20260907130000_presupuesto_mensual.sql` (aplicada): `couples.presupuesto_mensual`
+  (nullable) + RPC `actualizar_presupuesto_pareja(p_monto)` — mismo patrón que `actualizar_pais_pareja`
+  (`couples` no tiene política de UPDATE genérica a propósito, se edita solo por RPC con chequeo de
+  pertenencia server-side).
+- `app/lib/gastos.ts`: nuevas `obtenerPresupuestoPareja`, `actualizarPresupuestoPareja`,
+  `obtenerGastadoDelMes` (suma de gastos del mes en la moneda de casa, excluye gastos de viaje).
+- `app/app/app/hoy/page.tsx`: conectada a Supabase de verdad (antes de esto era 100% mock excepto
+  el país); estado vacío si todavía no definieron presupuesto (mensaje + CTA de "toquen para
+  ponerlo"); el número de "Gastado" ahora anima con count-up correctamente incluso cuando el dato
+  real llega después del primer render (mismo bug ya corregido en Metas — `useCountUp` con
+  `useRef` en vez de `useEffect(..., [])`).
+- Verificado: tsc ✓ build ✓ (22 rutas) · migración confirmada contra la base de datos real
+  (columna `presupuesto_mensual` existe en `couples`) · probado sin sesión real: estado vacío
+  correcto, formulario de edición abre bien, manejo de error correcto al fallar el guardado.
+- Pendiente de que el usuario pruebe con sesión real: definir el presupuesto, registrar un gasto
+  en Gastos y confirmar que "Gastado" y "Disponible" se actualizan y cuadran matemáticamente.
+- Alcance deliberado: las categorías (Arriendo/Mercado/Servicios) ya NO se muestran en esta
+  tarjeta — el usuario pidió reemplazarlas por Gastado/Disponible; el desglose por categoría sigue
+  disponible en Gastos.
+
 ## Landing: los 2 planes muestran los mismos beneficios (2026-09-07) ✅ — a pedido del usuario
 - Motivo: el usuario notó (con screenshot) que la tarjeta Mensual listaba menos beneficios que la
   Anual (le faltaban "Catálogo de dinámicas de pareja" y "Metas de ahorro"). Riesgo real: ambos

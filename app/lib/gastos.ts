@@ -28,6 +28,42 @@ export async function obtenerPaisPareja(supabase: SupabaseClient, coupleId: stri
   return data?.pais ?? null;
 }
 
+// Presupuesto mensual que la pareja se puso (tarjeta protagonista de Hoy) — null si todavía no
+// lo definieron.
+export async function obtenerPresupuestoPareja(supabase: SupabaseClient, coupleId: string): Promise<number | null> {
+  const { data, error } = await supabase.from('couples').select('presupuesto_mensual').eq('id', coupleId).maybeSingle();
+  if (error) throw error;
+  return data?.presupuesto_mensual !== undefined && data?.presupuesto_mensual !== null ? Number(data.presupuesto_mensual) : null;
+}
+
+// `couples` no tiene política de UPDATE genérica a propósito (mismo patrón que el país) — se
+// edita solo por esta función RPC, que verifica server-side que quien llama pertenece a la pareja.
+export async function actualizarPresupuestoPareja(supabase: SupabaseClient, monto: number): Promise<void> {
+  const { error } = await supabase.rpc('actualizar_presupuesto_pareja', { p_monto: monto });
+  if (error) throw error;
+}
+
+// Suma de TODOS los gastos del mes (sin importar categoría) — a diferencia de `listarGastosDelMes`
+// (que trae las filas para mostrarlas), esto es solo el total que necesita la tarjeta de Hoy.
+// Excluye los gastos de viaje (`moneda` no nula): mezclar monedas distintas en un solo total no
+// tendría sentido (mismo criterio ya usado en Gastos).
+export async function obtenerGastadoDelMes(supabase: SupabaseClient, coupleId: string, prefijoMes: string): Promise<number> {
+  const [anio, mes] = prefijoMes.split('-').map(Number);
+  const desde = `${prefijoMes}-01`;
+  const hastaFecha = new Date(Date.UTC(anio, mes, 1));
+  const hasta = hastaFecha.toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('monto')
+    .eq('couple_id', coupleId)
+    .is('moneda', null)
+    .gte('fecha', desde)
+    .lt('fecha', hasta);
+  if (error) throw error;
+  return (data ?? []).reduce((acc, g) => acc + Number(g.monto), 0);
+}
+
 function mapCategoria(c: {
   id: string;
   nombre: string;
