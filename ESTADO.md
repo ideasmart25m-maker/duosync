@@ -1,6 +1,17 @@
 # ESTADO — DuoSync Wallet
 Última actualización: 2026-09-07 | Sesión actual: 6
 
+## Landing: los 2 planes muestran los mismos beneficios (2026-09-07) ✅ — a pedido del usuario
+- Motivo: el usuario notó (con screenshot) que la tarjeta Mensual listaba menos beneficios que la
+  Anual (le faltaban "Catálogo de dinámicas de pareja" y "Metas de ahorro"). Riesgo real: ambos
+  planes dan acceso al MISMO Premium completo — no hay ninguna diferencia de funciones entre pagar
+  mensual o anual, solo cambia el precio. Dejar la lista más corta en el mensual daba a entender que
+  tenía menos funciones, que es información engañosa (mismo tipo de riesgo ya corregido antes con el
+  aviso de IA) — no una técnica válida de "efecto señuelo" (esa técnica es aceptable para resaltar
+  precio/ahorro, nunca para insinuar una diferencia de producto que no existe).
+- `app/app/page.tsx`: la tarjeta Mensual ahora lista los mismos 5 beneficios que la Anual.
+- Verificado: tsc ✓ build ✓ · revisado a 375px, ambas tarjetas con la misma lista.
+
 ## Metas conectada a datos reales (2026-09-07) ✅ — a pedido del usuario
 - Motivo: el usuario reportó (con screenshot) que solo el nombre de la meta era editable, no la fecha
   ni el monto objetivo, y que "+ Nueva meta juntos" no hacía nada. Causa real: Metas nunca se conectó

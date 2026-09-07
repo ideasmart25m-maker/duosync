@@ -135,11 +135,15 @@ export default function DuoSyncLanding() {
           descomposicionDia: 'menos de $0.20 al día',
           ctaLabel: CTA_LABEL,
           ctaHref: CTA_HREF,
+          // Mismos 5 beneficios que el plan anual (defecto real detectado por el usuario: la
+          // lista más corta daba a entender que el mensual tenía menos funciones — ambos planes
+          // dan acceso al mismo Premium completo, solo cambia el precio/frecuencia de pago).
           features: [
             '[b]Historial ilimitado[/b] de gastos compartidos',
-            '[b]Escaneo de recibos con IA[/b]',
+            '[b]Escaneo de recibos con IA[/b], sin teclear',
             '[b]Categorías propias[/b] e ilimitadas',
-            'Cancelan cuando quieran',
+            'Catálogo completo de [b]dinámicas de pareja[/b]',
+            '[b]Metas de ahorro[/b] en conjunto',
           ],
         }}
       />
