@@ -1,5 +1,62 @@
 # ESTADO — DuoSync Wallet
-Última actualización: 2026-09-07 | Sesión actual: 6
+Última actualización: 2026-09-08 | Sesión actual: 6
+
+## Auditoría senior 2026-09-08 (vulnerabilidades y pulido) — 3 de 4 hallazgos críticos resueltos ✅
+Reporte completo entregado y aprobado por el usuario. Hallazgo crítico #2 (conectar Hotmart de
+verdad) sigue pendiente — necesita que el usuario cree la cuenta/producto en su panel de Hotmart,
+no es solo código; se retoma cuando el usuario tenga ese paso listo.
+
+**1) "Pregunta de hoy" conectada a datos reales** (antes 100% de ejemplo — nombres, pregunta,
+racha y la respuesta "del otro" fijos en el código, nunca se guardaban):
+- Migración `20260908120000_pregunta_real_y_topes_ia.sql` (aplicada): `pregunta_de_hoy()` (misma
+  pregunta para toda la pareja, cambia una vez al día) · `responder_pregunta_hoy()` (guarda la
+  respuesta y actualiza la racha server-side SOLO cuando ambos ya respondieron ese día) ·
+  `respuestas_de_hoy()` (revela la respuesta del otro SOLO cuando ambos respondieron — RLS no
+  puede ocultar selectivamente el contenido de una fila ya visible, por eso esto vive en una
+  función, tal como ya lo advertía la nota dejada en el esquema inicial) · política nueva en
+  `profiles` para poder ver el nombre real de tu pareja (antes solo se podía ver el propio).
+- `app/lib/preguntas.ts` (nuevo): `obtenerPreguntaDeHoy`, `obtenerRespuestasDeHoy`,
+  `responderPreguntaHoy`, `obtenerRachaPareja`, `obtenerHistorialConexion` (reconstruye los 28
+  días de Nosotros a partir de `daily_answers`, ya que `streaks` solo guarda el número de días,
+  no el historial día a día), `obtenerNombresPareja`.
+- `app/app/app/hoy/page.tsx` y `app/app/app/nosotros/page.tsx`: ya no usan `PAREJA`/`RACHA` de
+  `seed-datos.ts` — nombres, racha, pregunta y respuestas son reales.
+- Verificado: tsc ✓ build ✓ · confirmado contra la base de datos real (`pregunta_de_hoy()` devuelve
+  una fila real) · probado sin sesión: ambas pantallas muestran su estado de carga/vacío honesto,
+  sin romperse.
+- Pendiente de que el usuario pruebe con su pareja real: responder la pregunta cada uno por su
+  lado y confirmar que la respuesta del otro solo se revela cuando ambos ya contestaron, y que la
+  racha sube un día.
+
+**2) Topes de uso de IA** (cifras dadas por el usuario: 3 de por vida en el plan gratis, 50/mes
+en el plan pago):
+- Misma migración: tabla `ai_usage` + función `registrar_uso_ia(p_tipo)` — verifica Y registra el
+  uso en un solo paso atómico en el servidor (nunca "contar en el cliente y luego insertar").
+- `app/lib/ia-uso.ts` (nuevo). Conectado en `api/recibos/procesar` y `api/asistente`: si se llega
+  al tope, no se llama a Anthropic (ahorra el costo) y se muestra un mensaje claro en vez de un
+  error genérico.
+- Verificado: tsc ✓ build ✓.
+- ⚠️ Alcance deliberado: el tope se aplica según `couples.plan` — hoy TODAS las parejas están en
+  `'gratis'` porque Hotmart todavía no está conectado (nada las pasa a `'premium'` aún), así que
+  por ahora el tope real que aplica a todos es 3 de por vida, hasta que se conecte el cobro.
+
+**3) Código de invitación: cerrado el hueco de fuerza bruta de largo plazo**:
+- Mismo problema ya conocido (4 dígitos = 10.000 combinaciones, el límite de intentos es por
+  cuenta) — ahora el código deja de aceptarse a los 30 días SI la pareja sigue con un solo
+  integrante (nadie se unió todavía), sin afectar el uso real (la otra persona normalmente se une
+  en minutos/horas).
+- Verificado: tsc ✓ build ✓.
+
+## Auditoría senior 2026-09-08 — hallazgos que quedaron documentados, no resueltos aún
+- 🔴 Crítico: no existe integración de Hotmart — el botón "pagar" del paywall solo redirige a
+  `/login`, nunca cobra de verdad. Necesita que el usuario cree el producto en su panel de
+  Hotmart y pegue la clave Hottok en Vercel antes de que se pueda construir el webhook.
+- 🟠 Importante: la tarjeta de "Meta" (vista previa) en Hoy sigue mostrando el dato de ejemplo
+  fijo ("Viaje a Cartagena", 31%) — ya no coincide con las metas reales de la pareja (Metas sí
+  está conectada desde el 2026-09-07). Pendiente de conectar cuando el usuario lo pida.
+- 🟡 Pulido: subida de fotos de recibos sin validar el tipo real del archivo en el servidor
+  (magic bytes) — riesgo bajo (bucket privado por pareja), pendiente de endurecer antes de escalar.
+- 🟡 Pulido: CSP con `'unsafe-inline'` en scripts — línea base de Next.js sin nonces, no urgente.
 
 ## Hoy: tarjeta rediseñada como "Nuestro presupuesto mensual" (2026-09-07) ✅ — a pedido del usuario
 - Motivo: el usuario reportó (con screenshot) que "$2.140.000" en la tarjeta de Hoy nunca cambiaba

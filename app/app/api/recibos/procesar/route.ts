@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { crearClienteServidor } from '@/lib/supabase/server';
 import { crearClienteAdmin } from '@/lib/supabase/admin';
 import { leerRecibo } from '@/lib/ai/receipt-scan';
+import { verificarYRegistrarUsoIA } from '@/lib/ia-uso';
 
 // BFF (09-SEGURIDAD.md): el navegador nunca llama a Anthropic directo — sube la foto a Storage,
 // crea la fila `receipt_scans`, y avisa a ESTA ruta para que el servidor (con la clave de IA y
@@ -32,6 +33,18 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = crearClienteAdmin();
+
+  // Tope de uso de IA (verificado y registrado atómico en el servidor, nunca contado en el
+  // cliente) — 3 escaneos de por vida en el plan gratis, 50 al mes en el plan pago.
+  const tope = await verificarYRegistrarUsoIA(supabase, 'escaneo');
+  if (!tope.permitido) {
+    await admin
+      .from('receipt_scans')
+      .update({ estado: 'error', error_mensaje: 'Llegaron al límite de escaneos con IA de su plan.', procesado_at: new Date().toISOString() })
+      .eq('id', scanId);
+    return NextResponse.json({ error: 'LIMITE_ALCANZADO', usados: tope.usados, limite: tope.limite }, { status: 403 });
+  }
+
   await admin.from('receipt_scans').update({ estado: 'procesando' }).eq('id', scanId);
 
   try {

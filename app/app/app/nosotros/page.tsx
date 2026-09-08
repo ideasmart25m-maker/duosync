@@ -7,8 +7,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, Globe2, ChevronRight } from 'lucide-react';
-import { PAREJA, RACHA } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
+import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
+import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja } from '@/lib/preguntas';
 import { paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 
@@ -20,33 +21,53 @@ const DINAMICAS = [
 ];
 
 export default function NosotrosPage() {
-  // Últimos 28 días, hoy primero — se muestran en 4 filas de 7 (semanas), más reciente arriba.
-  const semanas: boolean[][] = [];
-  for (let i = 0; i < 4; i++) {
-    semanas.push(RACHA.historial.slice(i * 7, i * 7 + 7));
-  }
-
-  // País/moneda de la pareja (SelectorPais) — el único dato real de esta pantalla por ahora;
-  // el resto sigue en datos de ejemplo (racha/dinámicas, ver ESTADO.md). Se puede reabrir aquí
-  // para corregirlo si se eligió mal la primera vez (pedido real del usuario).
   const [pais, setPais] = useState<string | null>(null);
   const [cambiandoPais, setCambiandoPais] = useState(false);
   const [guardandoPais, setGuardandoPais] = useState(false);
+  const [racha, setRacha] = useState(0);
+  const [historial, setHistorial] = useState<boolean[]>(Array(28).fill(false));
+  const [nombrePropio, setNombrePropio] = useState('Tú');
+  const [nombreOtro, setNombreOtro] = useState<string | null>(null);
 
   const supabase = useMemo(() => crearClienteNavegador(), []);
 
   useEffect(() => {
     let cancelado = false;
     (async () => {
-      const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
-      if (!membresia || cancelado) return;
-      const { data: pareja } = await supabase.from('couples').select('pais').eq('id', membresia.couple_id).maybeSingle();
-      if (!cancelado) setPais(pareja?.pais ?? null);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelado) return;
+
+      const cid = await obtenerCoupleId(supabase);
+      if (!cid || cancelado) return;
+
+      // Racha, historial de 28 días y nombres reales — antes eran datos de ejemplo fijos
+      // (hallazgo de la auditoría 2026-09-08: "X y Y llevan N días" nunca reflejaba lo que la
+      // pareja de verdad hacía).
+      const [paisPareja, rachaReal, historialReal, nombres] = await Promise.all([
+        obtenerPaisPareja(supabase, cid),
+        obtenerRachaPareja(supabase, cid),
+        obtenerHistorialConexion(supabase, cid),
+        obtenerNombresPareja(supabase, cid, user.id),
+      ]);
+      if (cancelado) return;
+      setPais(paisPareja);
+      setRacha(rachaReal);
+      setHistorial(historialReal);
+      setNombrePropio(nombres.propio);
+      setNombreOtro(nombres.otro);
     })();
     return () => {
       cancelado = true;
     };
   }, [supabase]);
+
+  // Últimos 28 días, hoy primero — se muestran en 4 filas de 7 (semanas), más reciente arriba.
+  const semanas: boolean[][] = [];
+  for (let i = 0; i < 4; i++) {
+    semanas.push(historial.slice(i * 7, i * 7 + 7));
+  }
 
   const cambiarPais = async (codigo: string) => {
     setGuardandoPais(true);
@@ -72,10 +93,10 @@ export default function NosotrosPage() {
           >
             <Flame size={22} strokeWidth={2.4} aria-hidden="true" />
           </motion.span>
-          <p className="text-[32px] font-bold tabular-nums [font-family:var(--font-display)]">{RACHA.dias} días</p>
+          <p className="text-[32px] font-bold tabular-nums [font-family:var(--font-display)]">{racha} días</p>
         </div>
         <p className="mt-1 text-[15px] opacity-85">
-          {PAREJA.nombres.m} y {PAREJA.nombres.s} han respondido su pregunta diaria sin cortar la racha.
+          {nombreOtro ? `${nombrePropio} y ${nombreOtro} han` : `${nombrePropio} ha`} respondido su pregunta diaria sin cortar la racha.
         </p>
 
         <div className="mt-4 flex flex-col gap-1.5">

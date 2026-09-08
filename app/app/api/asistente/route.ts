@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { crearClienteServidor } from '@/lib/supabase/server';
 import { streamRespuestaAsistente, type MensajeChat } from '@/lib/ai/asistente';
+import { verificarYRegistrarUsoIA } from '@/lib/ia-uso';
 
 // BFF (09-SEGURIDAD.md): el navegador nunca llama a Anthropic directo. Esta ruta arma el
 // contexto con los gastos REALES de la pareja (vía RLS, con la sesión del usuario — nunca la
@@ -20,6 +21,13 @@ export async function POST(request: NextRequest) {
 
   const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
   if (!membresia) return NextResponse.json({ error: 'Todavía no tienen una pareja vinculada.' }, { status: 400 });
+
+  // Tope de uso de IA (verificado y registrado atómico en el servidor) — 3 preguntas de por
+  // vida en el plan gratis, 50 al mes en el plan pago.
+  const tope = await verificarYRegistrarUsoIA(supabase, 'asistente');
+  if (!tope.permitido) {
+    return NextResponse.json({ error: 'LIMITE_ALCANZADO', usados: tope.usados, limite: tope.limite }, { status: 403 });
+  }
 
   // Todo el historial, no solo el mes actual (pedido real del usuario: no podía responder
   // sobre meses anteriores) — el volumen de gastos de UN hogar es bajo, así que el costo en

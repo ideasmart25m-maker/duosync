@@ -10,10 +10,19 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
 import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch } from '@phosphor-icons/react';
-import { META_AHORRO, PAREJA, PREGUNTA_HOY, RACHA } from '@/lib/seed-datos';
+import { META_AHORRO } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
+import {
+  obtenerPreguntaDeHoy,
+  obtenerRespuestasDeHoy,
+  responderPreguntaHoy,
+  obtenerRachaPareja,
+  obtenerNombresPareja,
+  type PreguntaDB,
+} from '@/lib/preguntas';
 import { formatoMoneda } from '@/lib/paises';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
 // en cada tap (flash blanco, se pierde el estado de la app) — defecto real detectado por el
@@ -62,19 +71,73 @@ function useCountUp(target: number): number {
   return valor;
 }
 
-function PreguntaDelDia() {
+function PreguntaDelDia({
+  supabase,
+  miUserId,
+  nombreOtro,
+  racha,
+  onRachaActualizada,
+}: {
+  supabase: SupabaseClient;
+  miUserId: string;
+  nombreOtro: string | null;
+  racha: number;
+  onRachaActualizada: (dias: number) => void;
+}) {
+  const [cargando, setCargando] = useState(true);
+  const [pregunta, setPregunta] = useState<PreguntaDB | null>(null);
   const [respuestaPropia, setRespuestaPropia] = useState<string | null>(null);
+  const [respuestaOtro, setRespuestaOtro] = useState<string | null>(null);
   const [borrador, setBorrador] = useState('');
   const [vacio, setVacio] = useState(false);
-  const ambosRespondieron = respuestaPropia !== null && PREGUNTA_HOY.respuestaM !== null;
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ambosRespondieron = respuestaOtro !== null;
 
-  const enviar = () => {
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const p = await obtenerPreguntaDeHoy(supabase);
+        if (cancelado) return;
+        setPregunta(p);
+        const respuestas = await obtenerRespuestasDeHoy(supabase, p.id);
+        if (cancelado) return;
+        setRespuestaPropia(respuestas.find((r) => r.userId === miUserId)?.respuesta ?? null);
+        setRespuestaOtro(respuestas.find((r) => r.userId !== miUserId)?.respuesta ?? null);
+      } catch {
+        setError('No pudimos cargar la pregunta de hoy.');
+      } finally {
+        if (!cancelado) setCargando(false);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [supabase, miUserId]);
+
+  const enviar = async () => {
     if (!borrador.trim()) {
       setVacio(true);
       return;
     }
+    if (!pregunta || enviando) return;
     setVacio(false);
-    setRespuestaPropia(borrador.trim());
+    setError(null);
+    setEnviando(true);
+    try {
+      const resultado = await responderPreguntaHoy(supabase, pregunta.id, borrador.trim());
+      setRespuestaPropia(borrador.trim());
+      onRachaActualizada(resultado.rachaDias);
+      if (resultado.ambosRespondieron) {
+        const respuestas = await obtenerRespuestasDeHoy(supabase, pregunta.id);
+        setRespuestaOtro(respuestas.find((r) => r.userId !== miUserId)?.respuesta ?? null);
+      }
+    } catch {
+      setError('No pudimos guardar tu respuesta. Intenten de nuevo en un momento.');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -88,88 +151,100 @@ function PreguntaDelDia() {
           className="flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--bg)_18%,transparent)] px-2 py-1 text-[12px] font-semibold"
         >
           <Fire size={11} strokeWidth={2.5} aria-hidden="true" />
-          {RACHA.dias} días
+          {racha} días
         </motion.span>
       </div>
-      <p className="text-balance text-[28px] font-bold leading-snug [font-family:var(--font-display)]">
-        {PREGUNTA_HOY.texto}
-      </p>
 
-      {ambosRespondieron ? (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-4 flex flex-col gap-2"
-        >
-          <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">{PAREJA.nombres.m}</p>
-            <p className="mt-0.5 text-[15px] leading-snug">{PREGUNTA_HOY.respuestaM}</p>
-          </div>
-          <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">{PAREJA.nombres.s}</p>
-            <p className="mt-0.5 text-[15px] leading-snug">{respuestaPropia}</p>
-          </div>
-        </motion.div>
-      ) : respuestaPropia !== null ? (
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-[15px] leading-relaxed opacity-85">
-            Ya respondiste. En cuanto {PAREJA.nombres.m} conteste, se revelan las dos respuestas.
-          </p>
-          {/* Un typo antes quedaba irrecuperable hasta que ambos respondían — defecto real
-              detectado por el revisor-visual. */}
-          <button
-            type="button"
-            onClick={() => {
-              setBorrador(respuestaPropia);
-              setRespuestaPropia(null);
-            }}
-            aria-label="Editar respuesta"
-            className="flex shrink-0 items-center gap-1 text-[12px] font-semibold underline underline-offset-2 opacity-90 [touch-action:manipulation]"
-          >
-            <PencilSimple size={12} strokeWidth={2.2} aria-hidden="true" />
-            Editar
-          </button>
-        </div>
+      {cargando || !pregunta ? (
+        <div className="mt-1 h-16 animate-pulse rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]" />
       ) : (
-        <form
-          className="mt-4 flex flex-col gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            enviar();
-          }}
-        >
-          <input
-            value={borrador}
-            onChange={(e) => {
-              setBorrador(e.target.value);
-              if (vacio) setVacio(false);
-            }}
-            placeholder="Escribe tu respuesta…"
-            aria-invalid={vacio}
-            // Sin autoFocus: combinado con el borde propio del input, el anillo de foco se veía
-            // como un doble borde pesado apenas se abría la pantalla (defecto real detectado por
-            // el revisor-visual) — el foco solo aparece cuando el usuario toca el campo, como
-            // cualquier otro input de la app. `--focus-ring` sigue en `--bg` (blanco) para que,
-            // cuando sí aparezca por teclado, no se confunda con el rojo de error.
-            style={{ '--focus-ring': 'var(--bg)' } as CSSProperties}
-            className={`h-12 w-full rounded-[var(--radius-button)] border bg-[color-mix(in_oklab,var(--bg)_12%,transparent)] px-4 text-[15px] text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)] ${
-              vacio ? 'border-[color-mix(in_oklab,var(--danger)_65%,var(--bg))]' : 'border-[color-mix(in_oklab,var(--bg)_30%,transparent)]'
-            }`}
-          />
-          {vacio && <p className="text-[12px] font-medium opacity-90">Escriban algo antes de enviar.</p>}
-          {/* Outline, no relleno sólido: "Registrar gasto" es la acción primaria de TODA la
-              pantalla — dos CTAs con el mismo peso visual competían por atención (defecto
-              real detectado por el revisor-visual). Nunca disabled/opacity-50 por defecto:
-              el botón queda siempre tapable, la validación se muestra al intentar enviar. */}
-          <motion.button
-            type="submit"
-            whileTap={{ scale: 0.98 }}
-            className="flex h-11 items-center justify-center rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_70%,transparent)] bg-[color-mix(in_oklab,var(--bg)_10%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation]"
-          >
-            Responder
-          </motion.button>
-        </form>
+        <p className="text-balance text-[28px] font-bold leading-snug [font-family:var(--font-display)]">{pregunta.texto}</p>
+      )}
+
+      {error && <p className="mt-2 text-[12px] font-medium opacity-90">{error}</p>}
+
+      {!cargando && pregunta && (
+        <>
+          {ambosRespondieron ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-4 flex flex-col gap-2"
+            >
+              <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">{nombreOtro ?? 'Tu pareja'}</p>
+                <p className="mt-0.5 text-[15px] leading-snug">{respuestaOtro}</p>
+              </div>
+              <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">Tú</p>
+                <p className="mt-0.5 text-[15px] leading-snug">{respuestaPropia}</p>
+              </div>
+            </motion.div>
+          ) : respuestaPropia !== null ? (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p className="text-[15px] leading-relaxed opacity-85">
+                Ya respondiste. En cuanto {nombreOtro ?? 'tu pareja'} conteste, se revelan las dos respuestas.
+              </p>
+              {/* Un typo antes quedaba irrecuperable hasta que ambos respondían — defecto real
+                  detectado por el revisor-visual. Editar reescribe la misma fila (la función
+                  `responder_pregunta_hoy` hace upsert), no crea una respuesta duplicada. */}
+              <button
+                type="button"
+                onClick={() => {
+                  setBorrador(respuestaPropia);
+                  setRespuestaPropia(null);
+                }}
+                aria-label="Editar respuesta"
+                className="flex shrink-0 items-center gap-1 text-[12px] font-semibold underline underline-offset-2 opacity-90 [touch-action:manipulation]"
+              >
+                <PencilSimple size={12} strokeWidth={2.2} aria-hidden="true" />
+                Editar
+              </button>
+            </div>
+          ) : (
+            <form
+              className="mt-4 flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                enviar();
+              }}
+            >
+              <input
+                value={borrador}
+                onChange={(e) => {
+                  setBorrador(e.target.value);
+                  if (vacio) setVacio(false);
+                }}
+                placeholder="Escribe tu respuesta…"
+                aria-invalid={vacio}
+                // Sin autoFocus: combinado con el borde propio del input, el anillo de foco se veía
+                // como un doble borde pesado apenas se abría la pantalla (defecto real detectado por
+                // el revisor-visual) — el foco solo aparece cuando el usuario toca el campo, como
+                // cualquier otro input de la app. `--focus-ring` sigue en `--bg` (blanco) para que,
+                // cuando sí aparezca por teclado, no se confunda con el rojo de error.
+                style={{ '--focus-ring': 'var(--bg)' } as CSSProperties}
+                className={`h-12 w-full rounded-[var(--radius-button)] border bg-[color-mix(in_oklab,var(--bg)_12%,transparent)] px-4 text-[15px] text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)] ${
+                  vacio ? 'border-[color-mix(in_oklab,var(--danger)_65%,var(--bg))]' : 'border-[color-mix(in_oklab,var(--bg)_30%,transparent)]'
+                }`}
+              />
+              {vacio && <p className="text-[12px] font-medium opacity-90">Escriban algo antes de enviar.</p>}
+              {/* Outline, no relleno sólido: "Registrar gasto" es la acción primaria de TODA la
+                  pantalla — dos CTAs con el mismo peso visual competían por atención (defecto
+                  real detectado por el revisor-visual). Nunca disabled/opacity-50 por defecto:
+                  el botón queda siempre tapable, la validación se muestra al intentar enviar. */}
+              <motion.button
+                type="submit"
+                whileTap={{ scale: 0.98 }}
+                disabled={enviando}
+                className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_70%,transparent)] bg-[color-mix(in_oklab,var(--bg)_10%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation] disabled:opacity-70"
+              >
+                {enviando && <CircleNotch size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                {enviando ? 'Enviando…' : 'Responder'}
+              </motion.button>
+            </form>
+          )}
+        </>
       )}
     </div>
   );
@@ -195,6 +270,14 @@ export default function HoyPage() {
   const [errorPresupuesto, setErrorPresupuesto] = useState<string | null>(null);
   const gastadoMostrado = useCountUp(gastado);
 
+  // Identidad real de la pareja (pedido real del usuario, hallazgo de la auditoría 2026-09-08):
+  // antes "Mateo & Sofía" y la racha eran datos de ejemplo fijos en el código.
+  const [supabase] = useState(() => crearClienteNavegador());
+  const [userId, setUserId] = useState<string | null>(null);
+  const [nombrePropio, setNombrePropio] = useState('Tú');
+  const [nombreOtro, setNombreOtro] = useState<string | null>(null);
+  const [racha, setRacha] = useState(0);
+
   useEffect(() => {
     setSaludo(saludoDelDia());
     setMesLabel(mesActualLabel());
@@ -202,21 +285,31 @@ export default function HoyPage() {
     // mostraba "Gastado este mes" con datos de EJEMPLO fijos que nunca coincidían con lo que
     // de verdad registraban en Gastos, y no había forma de definir un presupuesto.
     (async () => {
-      const supabase = crearClienteNavegador();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
       const cid = await obtenerCoupleId(supabase);
       if (!cid) return;
       const ahora = new Date();
       const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
-      const [paisPareja, presupuestoReal, gastadoReal] = await Promise.all([
+      const [paisPareja, presupuestoReal, gastadoReal, nombres, rachaReal] = await Promise.all([
         obtenerPaisPareja(supabase, cid),
         obtenerPresupuestoPareja(supabase, cid),
         obtenerGastadoDelMes(supabase, cid, prefijoMes),
+        obtenerNombresPareja(supabase, cid, user.id),
+        obtenerRachaPareja(supabase, cid),
       ]);
       setPais(paisPareja);
       setPresupuesto(presupuestoReal);
       setGastado(gastadoReal);
+      setNombrePropio(nombres.propio);
+      setNombreOtro(nombres.otro);
+      setRacha(rachaReal);
     })();
-  }, []);
+  }, [supabase]);
 
   const guardarPresupuesto = async () => {
     const valor = Number(borradorPresupuesto);
@@ -224,7 +317,6 @@ export default function HoyPage() {
     setGuardandoPresupuesto(true);
     setErrorPresupuesto(null);
     try {
-      const supabase = crearClienteNavegador();
       await actualizarPresupuestoPareja(supabase, valor);
       setPresupuesto(valor);
       setEditandoPresupuesto(false);
@@ -256,21 +348,27 @@ export default function HoyPage() {
               El saludo solo, los nombres quedan una única vez, en el título. */}
           <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>
           <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
-            {PAREJA.nombres.m} &amp; {PAREJA.nombres.s}
+            {nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}
           </h1>
         </div>
         <Link href="/app/nosotros" aria-label="Ver Nosotros" className="flex -space-x-2 [touch-action:manipulation]">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent-2)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
-            M
+            {nombrePropio[0]?.toUpperCase() ?? '?'}
           </span>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
-            S
-          </span>
+          {nombreOtro && (
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
+              {nombreOtro[0]?.toUpperCase() ?? '?'}
+            </span>
+          )}
         </Link>
       </motion.div>
 
       <motion.div {...entrada(0.06)}>
-        <PreguntaDelDia />
+        {userId ? (
+          <PreguntaDelDia supabase={supabase} miUserId={userId} nombreOtro={nombreOtro} racha={racha} onRachaActualizada={setRacha} />
+        ) : (
+          <div className="h-[220px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
+        )}
       </motion.div>
 
       <motion.div

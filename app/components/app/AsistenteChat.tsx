@@ -41,6 +41,7 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pregunta: texto, historial }),
       });
+      if (respuesta.status === 403) throw new Error('limite');
       if (!respuesta.ok || !respuesta.body) throw new Error('fallo');
 
       const lector = respuesta.body.getReader();
@@ -57,8 +58,12 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
           return copia;
         });
       }
-    } catch {
-      setError('No pudimos responder. Intenten de nuevo en un momento.');
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message === 'limite'
+          ? 'Llegaron al límite de preguntas al asistente de su plan este mes.'
+          : 'No pudimos responder. Intenten de nuevo en un momento.'
+      );
       setMensajes((prev) => prev.slice(0, -1));
     } finally {
       setEnviando(false);
