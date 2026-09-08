@@ -51,9 +51,11 @@ en el plan pago):
 - 🔴 Crítico: no existe integración de Hotmart — el botón "pagar" del paywall solo redirige a
   `/login`, nunca cobra de verdad. Necesita que el usuario cree el producto en su panel de
   Hotmart y pegue la clave Hottok en Vercel antes de que se pueda construir el webhook.
-- 🟠 Importante: la tarjeta de "Meta" (vista previa) en Hoy sigue mostrando el dato de ejemplo
-  fijo ("Viaje a Cartagena", 31%) — ya no coincide con las metas reales de la pareja (Metas sí
-  está conectada desde el 2026-09-07). Pendiente de conectar cuando el usuario lo pida.
+- ✅ RESUELTO (2026-09-08): la tarjeta de "Meta" (vista previa) en Hoy ya muestra la primera meta
+  real de la pareja (`listarMetas()[0]`), no el dato de ejemplo fijo. Si todavía no crearon
+  ninguna meta, muestra un estado vacío honesto ("Pongan su primera meta juntos") en vez de
+  datos falsos. Verificado: tsc ✓ build ✓ · probado sin sesión (queda en su estado de carga,
+  no rompe).
 - 🟡 Pulido: subida de fotos de recibos sin validar el tipo real del archivo en el servidor
   (magic bytes) — riesgo bajo (bucket privado por pareja), pendiente de endurecer antes de escalar.
 - 🟡 Pulido: CSP con `'unsafe-inline'` en scripts — línea base de Next.js sin nonces, no urgente.

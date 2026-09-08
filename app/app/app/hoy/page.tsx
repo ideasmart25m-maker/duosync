@@ -10,7 +10,6 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
 import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch } from '@phosphor-icons/react';
-import { META_AHORRO } from '@/lib/seed-datos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
 import {
@@ -21,6 +20,7 @@ import {
   obtenerNombresPareja,
   type PreguntaDB,
 } from '@/lib/preguntas';
+import { listarMetas, type MetaDB } from '@/lib/metas';
 import { formatoMoneda } from '@/lib/paises';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -278,6 +278,13 @@ export default function HoyPage() {
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
   const [racha, setRacha] = useState(0);
 
+  // Meta real (primera de la pareja) para la tarjeta de vista previa — antes mostraba siempre
+  // el dato de ejemplo fijo "Viaje a Cartagena, 31%" (defecto real reportado por el usuario:
+  // ya no coincidía con las metas reales de Metas, conectada desde el 2026-09-07). `null` =
+  // todavía no crearon ninguna meta.
+  const [metaPrincipal, setMetaPrincipal] = useState<MetaDB | null>(null);
+  const [cargandoMeta, setCargandoMeta] = useState(true);
+
   useEffect(() => {
     setSaludo(saludoDelDia());
     setMesLabel(mesActualLabel());
@@ -295,12 +302,13 @@ export default function HoyPage() {
       if (!cid) return;
       const ahora = new Date();
       const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
-      const [paisPareja, presupuestoReal, gastadoReal, nombres, rachaReal] = await Promise.all([
+      const [paisPareja, presupuestoReal, gastadoReal, nombres, rachaReal, metas] = await Promise.all([
         obtenerPaisPareja(supabase, cid),
         obtenerPresupuestoPareja(supabase, cid),
         obtenerGastadoDelMes(supabase, cid, prefijoMes),
         obtenerNombresPareja(supabase, cid, user.id),
         obtenerRachaPareja(supabase, cid),
+        listarMetas(supabase, cid),
       ]);
       setPais(paisPareja);
       setPresupuesto(presupuestoReal);
@@ -308,6 +316,8 @@ export default function HoyPage() {
       setNombrePropio(nombres.propio);
       setNombreOtro(nombres.otro);
       setRacha(rachaReal);
+      setMetaPrincipal(metas[0] ?? null);
+      setCargandoMeta(false);
     })();
   }, [supabase]);
 
@@ -328,7 +338,7 @@ export default function HoyPage() {
   };
 
   const disponible = presupuesto !== null ? presupuesto - gastado : null;
-  const pctMeta = Math.round((META_AHORRO.montoActual / META_AHORRO.montoObjetivo) * 100);
+  const pctMeta = metaPrincipal ? Math.min(100, Math.round((metaPrincipal.montoActual / metaPrincipal.montoObjetivo) * 100)) : 0;
 
   const entrada = (delay: number) => ({
     initial: reducido ? { opacity: 0 } : { opacity: 0, y: 12 },
@@ -474,33 +484,53 @@ export default function HoyPage() {
         Registrar gasto
       </MotionLink>
 
-      <MotionLink
-        {...entrada(0.24)}
-        whileTap={{ scale: 0.98 }}
-        href="/app/metas"
-        className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)] [touch-action:manipulation]"
-      >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
-          <Sparkle size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
-        </span>
-        <span className="flex-1">
-          <span className="flex items-baseline justify-between">
-            <span className="text-[15px] font-semibold text-[var(--text-primary)]">{META_AHORRO.nombre}</span>
-            <span className="text-[12px] font-semibold tabular-nums text-[var(--accent)]">{pctMeta}%</span>
+      {cargandoMeta ? (
+        <div className="h-[72px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
+      ) : metaPrincipal ? (
+        <MotionLink
+          {...entrada(0.24)}
+          whileTap={{ scale: 0.98 }}
+          href="/app/metas"
+          className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)] [touch-action:manipulation]"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
+            <Sparkle size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
           </span>
-          {/* Barra de progreso animada — antes el % era solo texto, sin señal visual
-              (defecto real detectado por el revisor-visual, contradice FICHA-ARTE). */}
-          <span className="mt-1.5 block h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]">
-            <motion.span
-              className="block h-full rounded-full bg-[var(--accent)]"
-              initial={{ width: reducido ? `${pctMeta}%` : 0 }}
-              animate={{ width: `${pctMeta}%` }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            />
+          <span className="flex-1">
+            <span className="flex items-baseline justify-between">
+              {/* Meta real (la primera de la pareja) — antes era el dato de ejemplo fijo
+                  "Viaje a Cartagena, 31%", que ya no coincidía con las metas reales creadas en
+                  Metas (defecto real reportado por el usuario). */}
+              <span className="text-[15px] font-semibold text-[var(--text-primary)]">{metaPrincipal.nombre}</span>
+              <span className="text-[12px] font-semibold tabular-nums text-[var(--accent)]">{pctMeta}%</span>
+            </span>
+            {/* Barra de progreso animada — antes el % era solo texto, sin señal visual
+                (defecto real detectado por el revisor-visual, contradice FICHA-ARTE). */}
+            <span className="mt-1.5 block h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]">
+              <motion.span
+                className="block h-full rounded-full bg-[var(--accent)]"
+                initial={{ width: reducido ? `${pctMeta}%` : 0 }}
+                animate={{ width: `${pctMeta}%` }}
+                transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </span>
           </span>
-        </span>
-        <ArrowRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
-      </MotionLink>
+          <ArrowRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+        </MotionLink>
+      ) : (
+        <MotionLink
+          {...entrada(0.24)}
+          whileTap={{ scale: 0.98 }}
+          href="/app/metas"
+          className="flex items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] p-4 [touch-action:manipulation]"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
+            <Sparkle size={18} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+          </span>
+          <span className="flex-1 text-[14px] font-semibold text-[var(--accent)]">Pongan su primera meta juntos</span>
+          <ArrowRight size={16} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
+        </MotionLink>
+      )}
     </div>
   );
 }
