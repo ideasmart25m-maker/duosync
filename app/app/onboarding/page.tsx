@@ -1,6 +1,6 @@
 'use client';
 
-// Onboarding de DuoSync Wallet — 8 pasos de alto rendimiento (categoría "consumo personalizado/
+// Onboarding de Fairsy — 8 pasos de alto rendimiento (categoría "consumo personalizado/
 // finanzas del hogar" de 02B: 4-8 pasos). Cada pregunta traza a un dolor/deseo de
 // FICHA-AVATAR.md (ver docs/copy/onboarding.md). Modelo onboarding-first (02C): el registro
 // llega DESPUÉS de la primera victoria (vincular con el código de pareja), nunca antes.
@@ -441,7 +441,7 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en DuoSync Wallet (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí: ${
+              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí: ${
                 typeof window !== 'undefined' ? window.location.origin : ''
               }`
             )}`}

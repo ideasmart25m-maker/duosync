@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logEvent } from '@/lib/eventos';
 
 export interface MetaDB {
   id: string;
@@ -41,6 +42,10 @@ export async function crearMeta(
     .select(COLUMNAS_META)
     .single();
   if (error) throw error;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) logEvent(supabase, 'meta_creada', user.id, coupleId, { metaId: data.id });
   return mapMeta(data);
 }
 

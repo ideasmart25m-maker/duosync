@@ -1,13 +1,13 @@
 'use client';
 
-// Login de DuoSync Wallet — magic link real (Supabase Auth), decidido en Sesión 1: sin contraseña
+// Login de Fairsy — magic link real (Supabase Auth), decidido en Sesión 1: sin contraseña
 // que olvidar. Conectado de verdad en la auditoría de Sesión 6 (antes simulaba el envío con
 // estado local — hallazgo crítico: nada persistía). El plan, el modo de vinculación (crear
 // pareja / unirse con código) y el código mismo viajan por la URL desde el onboarding y el
 // paywall — recién aquí, al confirmar el correo, hay una sesión real para guardarlos.
 // El registro NUNCA pide más que el email (52, hallazgo del 70%).
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -25,6 +25,16 @@ function LoginInner() {
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // El enlace mágico llega desde /auth/callback con ?error= cuando venció o ya se usó — antes
+  // este error se perdía en silencio y la pantalla solo parecía "no hacer nada" (bug real
+  // encontrado al diagnosticar con el usuario por qué el login no quedaba).
+  useEffect(() => {
+    if (params.get('error') === 'enlace_invalido') {
+      setError('Ese enlace ya venció o ya se usó. Pide uno nuevo abajo y ábrelo apenas te llegue.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo se lee una vez al cargar
+  }, []);
 
   const esGratis = plan === 'free' || !plan;
 
@@ -53,8 +63,8 @@ function LoginInner() {
     <FunnelShell>
       <div className="flex h-11 items-center">
         <Link href="/" className="flex items-center gap-2 text-[16px] font-semibold text-[var(--accent)]">
-          <Image src="/logo-duosync.png" alt="" width={233} height={128} className="h-6 w-auto" />
-          DuoSync Wallet
+          <Image src="/logo-fairsy.png" alt="" width={233} height={128} className="h-6 w-auto" />
+          Fairsy
         </Link>
       </div>
 

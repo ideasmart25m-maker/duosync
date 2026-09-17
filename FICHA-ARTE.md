@@ -1,4 +1,4 @@
-# FICHA DE DIRECCIÓN DE ARTE — DuoSync
+# FICHA DE DIRECCIÓN DE ARTE — Fairsy
 
 ## Referencia del usuario (CONTRATO)
 - ¿Hay imagen(es) de referencia del usuario?: NO — el usuario pidió que el agente propusiera 3 direcciones (protocolo A/B/C sin referencia, 16 PASO 0.2bis + 54).

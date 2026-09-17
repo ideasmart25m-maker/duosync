@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { crearClienteServidor } from '@/lib/supabase/server';
+import { crearClienteAdmin } from '@/lib/supabase/admin';
 import { streamRespuestaAsistente, type MensajeChat } from '@/lib/ai/asistente';
 import { verificarYRegistrarUsoIA } from '@/lib/ia-uso';
+import { registrarCostoIA } from '@/lib/ai/costo-ia';
+import { AI_MODEL } from '@/lib/ai/anthropic';
 
 // BFF (09-SEGURIDAD.md): el navegador nunca llama a Anthropic directo. Esta ruta arma el
 // contexto con los gastos REALES de la pareja (vía RLS, con la sesión del usuario — nunca la
@@ -64,6 +67,21 @@ export async function POST(request: NextRequest) {
         // gracia en vez de un error crudo — el cierre del stream basta, no hace falta más.
       } finally {
         controller.close();
+        // Costo REAL (no estimado) — el mensaje final del stream trae el conteo real de
+        // tokens de Anthropic. Se registra después de cerrar, nunca bloquea la respuesta.
+        try {
+          const final = await stream.finalMessage();
+          const admin = crearClienteAdmin();
+          await registrarCostoIA(admin, {
+            coupleId: membresia.couple_id,
+            tipo: 'asistente',
+            modelo: AI_MODEL,
+            tokensEntrada: final.usage.input_tokens,
+            tokensSalida: final.usage.output_tokens,
+          });
+        } catch {
+          // silencioso — un costo no registrado no debe afectar nada más
+        }
       }
     },
   });

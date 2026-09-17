@@ -3,6 +3,8 @@ import { crearClienteServidor } from '@/lib/supabase/server';
 import { crearClienteAdmin } from '@/lib/supabase/admin';
 import { leerRecibo } from '@/lib/ai/receipt-scan';
 import { verificarYRegistrarUsoIA } from '@/lib/ia-uso';
+import { registrarCostoIA } from '@/lib/ai/costo-ia';
+import { AI_MODEL } from '@/lib/ai/anthropic';
 
 // BFF (09-SEGURIDAD.md): el navegador nunca llama a Anthropic directo — sube la foto a Storage,
 // crea la fila `receipt_scans`, y avisa a ESTA ruta para que el servidor (con la clave de IA y
@@ -59,6 +61,13 @@ export async function POST(request: NextRequest) {
     const mediaType = archivo.type === 'image/png' ? 'image/png' : archivo.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
 
     const resultado = await leerRecibo(base64, mediaType, categorias ?? []);
+    await registrarCostoIA(admin, {
+      coupleId: scan.couple_id,
+      tipo: 'escaneo',
+      modelo: AI_MODEL,
+      tokensEntrada: resultado.tokensEntrada,
+      tokensSalida: resultado.tokensSalida,
+    });
 
     if (!resultado.esRecibo) {
       await admin

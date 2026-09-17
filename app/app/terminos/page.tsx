@@ -7,14 +7,14 @@ export default function TerminosPage() {
       <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-        DuoSync Wallet es un servicio operado por Gloria Alvarado, persona natural, desde Colombia. Al
+        Fairsy es un servicio operado por Gloria Alvarado, persona natural, desde Colombia. Al
         crear una cuenta aceptan estos términos y nuestra{' '}
         <a href="/privacidad" className="underline">Política de privacidad</a>.
       </p>
 
-      <h2 className="text-lg font-semibold mb-2">Qué es DuoSync Wallet (y qué no es)</h2>
+      <h2 className="text-lg font-semibold mb-2">Qué es Fairsy (y qué no es)</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        DuoSync Wallet es una app para que una pareja registre y organice sus gastos compartidos y
+        Fairsy es una app para que una pareja registre y organice sus gastos compartidos y
         mantenga una dinámica diaria de conexión. Es una herramienta de registro y organización:
         no es un producto financiero regulado, no da asesoría financiera, y no se conecta a sus
         cuentas bancarias ni mueve su dinero.
@@ -38,7 +38,7 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Licencia de uso</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Les damos permiso personal, no comercial y no transferible para usar DuoSync Wallet mientras su
+        Les damos permiso personal, no comercial y no transferible para usar Fairsy mientras su
         suscripción esté activa. No pueden revender el acceso ni usarlo para operar un servicio
         propio.
       </p>
@@ -55,7 +55,7 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Responsabilidad</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        DuoSync Wallet los ayuda a llevar el registro de sus gastos, pero no garantiza que esté libre de
+        Fairsy los ayuda a llevar el registro de sus gastos, pero no garantiza que esté libre de
         errores; revisen los montos que registran (a mano o, más adelante, con ayuda de IA) antes
         de tomar decisiones importantes con esa información. No respondemos por decisiones
         financieras que tomen basándose únicamente en la app.
@@ -75,8 +75,8 @@ export default function TerminosPage() {
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
         ¿Dudas ahora mismo? Escríbannos a{' '}
-        <a href="mailto:legal@duosyncwallet.app" className="underline">
-          legal@duosyncwallet.app
+        <a href="mailto:legal@fairsy.lat" className="underline">
+          legal@fairsy.lat
         </a>
         .
       </p>

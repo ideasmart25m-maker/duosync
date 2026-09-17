@@ -9,4 +9,4 @@ export function crearClienteResend(): Resend {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-export const REMITENTE = 'DuoSync Wallet <onboarding@resend.dev>';
+export const REMITENTE = 'Fairsy <hola@fairsy.lat>';

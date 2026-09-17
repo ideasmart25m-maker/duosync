@@ -11,6 +11,8 @@ export interface ResultadoScan {
   monto: number;
   categoriaId: string | null;
   esRecibo: boolean;
+  tokensEntrada: number;
+  tokensSalida: number;
 }
 
 // Salida forzada por esquema (tool use) — nunca se le pide "responde en JSON" a la libre: el
@@ -69,6 +71,11 @@ export async function leerRecibo(imagenBase64: string, mediaType: 'image/jpeg' |
     },
   ];
 
+  // Suma tokens de TODOS los intentos (el costo real es el de todas las llamadas hechas, no
+  // solo la última) — se le pasa al panel de administración para el costo real por escaneo.
+  let tokensEntrada = 0;
+  let tokensSalida = 0;
+
   for (let intento = 0; intento <= 1; intento++) {
     const res = await anthropic.messages.create({
       model: AI_MODEL,
@@ -77,6 +84,8 @@ export async function leerRecibo(imagenBase64: string, mediaType: 'image/jpeg' |
       tool_choice: { type: 'tool', name: tool.name },
       messages,
     });
+    tokensEntrada += res.usage.input_tokens;
+    tokensSalida += res.usage.output_tokens;
 
     const usoDeTool = res.content.find((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
     const parseado = EsquemaResultado.safeParse(usoDeTool?.input);
@@ -88,6 +97,8 @@ export async function leerRecibo(imagenBase64: string, mediaType: 'image/jpeg' |
         esRecibo: es_recibo,
         monto: monto_total,
         categoriaId: categoriaValida ? categoria_id : null,
+        tokensEntrada,
+        tokensSalida,
       };
     }
 

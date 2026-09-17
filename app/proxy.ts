@@ -33,6 +33,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Panel de administración: primera capa de defensa (21-BACKOFFICE.md — "verificado en el
+  // servidor, no solo ocultando la ruta"). Esto NO basta solo: el layout de /admin vuelve a
+  // verificar el rol server-side, y RLS bloquea las tablas aunque alguien se saltara las dos
+  // capas de arriba. A quien no es admin se le devuelve 404 (no login/403) — no se le confirma
+  // ni que la ruta existe.
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      return NextResponse.rewrite(new URL('/404', request.url));
+    }
+    const { data: perfil } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    if (perfil?.role !== 'admin') {
+      return NextResponse.rewrite(new URL('/404', request.url));
+    }
+  }
+
   return respuesta;
 }
 

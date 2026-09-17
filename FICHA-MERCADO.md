@@ -1,4 +1,4 @@
-# FICHA DE MERCADO — DuoSync
+# FICHA DE MERCADO — Fairsy
 
 ## Alcance de esta ficha
 - Nicho/categoría exacta: apps de gestión de gastos compartidos del hogar para parejas (con capa de conexión afectiva) en LATAM
@@ -11,7 +11,7 @@
 - Agape: ~$15 USD/año o freemium (dato original del docx del usuario, sin re-verificar hoy — revisar antes de citarlo en copy)
 - Splitwise/Monefy: gratis con anuncios o ~$9.99 USD/año (dato original del docx del usuario)
 - **Precio elegido para esta app (ajustado por el usuario 2026-08-14):** $5.99 USD/mes o $35.94 USD/año ($2.99/mes, ahorro >50% vs. mensual) por pareja · **Desvío respecto a Paired (la referencia más fuerte, uso interno — NO se nombra en el copy público):** entre 40% y 60% más barato
-- El desvío está justificado: apps globales cobran en USD sin ajuste LATAM; DuoSync cobra en moneda local vía Hotmart y apunta a poder adquisitivo medio de la región (no es un desvío que necesite "razón especial" — es la esencia del posicionamiento de arbitraje LATAM)
+- El desvío está justificado: apps globales cobran en USD sin ajuste LATAM; Fairsy cobra en moneda local vía Hotmart y apunta a poder adquisitivo medio de la región (no es un desvío que necesite "razón especial" — es la esencia del posicionamiento de arbitraje LATAM)
 
 ## 2. CICLO DE DECISIÓN
 - NO ENCONTRADO — se decide por criterio y se revisa el 2026-09-12 (con datos propios de campaña cuando haya tráfico real)

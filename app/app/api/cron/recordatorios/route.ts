@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
           from: REMITENTE,
           to: email,
           subject: `Mañana vence: ${cat.nombre}`,
-          html: `<p>Hola,</p><p>Mañana (día ${diaVence}) vence el pago de <strong>${cat.nombre}</strong>. Entren a DuoSync Wallet para registrarlo apenas lo paguen.</p>`,
+          html: `<p>Hola,</p><p>Mañana (día ${diaVence}) vence el pago de <strong>${cat.nombre}</strong>. Entren a Fairsy para registrarlo apenas lo paguen.</p>`,
         });
         enviados++;
       } catch (e) {

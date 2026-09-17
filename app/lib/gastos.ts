@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CategoriaDB } from '@/lib/categorias';
+import { logEvent } from '@/lib/eventos';
 
 export interface GastoDB {
   id: string;
@@ -231,6 +232,7 @@ export async function crearGasto(
     .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
     .single();
   if (error) throw error;
+  logEvent(supabase, 'gasto_registrado', user.id, coupleId, { categoriaId: gasto.categoriaId, moneda: gasto.moneda ?? null });
   return {
     id: data.id,
     categoriaId: data.category_id,

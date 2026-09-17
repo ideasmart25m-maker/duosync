@@ -1,11 +1,11 @@
-# Copy marcado — Landing DuoSync
+# Copy marcado — Landing Fairsy
 
 > Cada pieza se traza a un campo de `FICHA-AVATAR.md`. Marcadores: `[acento]…[/acento]` (la palabra
 > que vende, color de acento) · `[b]…[/b]` (énfasis semibold). Fuente de precios: `FICHA-MERCADO.md`.
 
 ## 1. Hero
 - H1: `Dejen de ser [acento]socios de una empresa en quiebra[/acento]` — traza a IDENTIDAD ("Parecemos más socios de una empresa quebrada que pareja") y dolor #1.
-- Subtítulo: `DuoSync ordena el gasto del hogar [b]sin pelear[/b] y sin dos suscripciones` — traza a deseo #1 y a la objeción #1 (suscripción doble).
+- Subtítulo: `Fairsy ordena el gasto del hogar [b]sin pelear[/b] y sin dos suscripciones` — traza a deseo #1 y a la objeción #1 (suscripción doble).
 - CTA: "Vincular con mi pareja gratis" → `/onboarding` (modelo onboarding-first, decidido en Sesión 1)
 - Social proof: "Un pago cubre a los dos — hasta 60% más barato que otras apps para parejas" (fuente: FICHA-MERCADO.md §1; sin nombrar competidores por decisión del usuario 2026-08-14)
 - Sugerencia de visual: pantalla "Hoy" con la pregunta del día y el saldo — mientras no hay screenshot real, el kit usa el placeholder honesto
@@ -61,8 +61,8 @@
 - H2: `Vuelvan a ser [acento]pareja, no administradores[/acento]`
 - Future pacing: "Mañana registran un gasto en 2 toques, ven el mismo saldo los dos, y les queda tiempo para lo que sí importa."
 - Recap: "7 días gratis · Un solo pago para los dos"
-- PS: "PS: DuoSync une el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin pelear."
+- PS: "PS: Fairsy une el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin pelear."
 
 ## 10. Footer legal
-- appName: DuoSync · soporte: soporte@duosync.app (dominio provisional — se actualiza cuando el usuario compre el dominio real)
+- appName: Fairsy · soporte: soporte@fairsy.lat
 - Enlaces: Privacidad · Términos y Condiciones · Reembolsos · Aviso de IA — páginas stub creadas, contenido legal completo pendiente de `47-LEGAL-FISCAL-Y-PRIVACIDAD.md`

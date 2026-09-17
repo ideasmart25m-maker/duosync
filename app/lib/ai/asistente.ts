@@ -13,7 +13,7 @@ export interface MensajeChat {
   texto: string;
 }
 
-const SYSTEM_BASE = `Eres el asistente de DuoSync Wallet, una app para que una pareja lleve sus gastos
+const SYSTEM_BASE = `Eres el asistente de Fairsy, una app para que una pareja lleve sus gastos
 compartidos. Respondes preguntas SOLO sobre los gastos reales que se te dan abajo — nunca
 inventas montos ni categorías que no estén en la lista. Si la pregunta no se puede responder
 con esos datos, dilo con honestidad. Respondes en español, corto y claro, tratando a la pareja

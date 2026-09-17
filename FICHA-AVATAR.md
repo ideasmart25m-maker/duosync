@@ -1,4 +1,4 @@
-# FICHA DE AVATAR — DuoSync
+# FICHA DE AVATAR — Fairsy
 
 - Estado: APROBADA (construida desde la investigación que el usuario ya trajo — DUOSYNC.docx, 2026-08-10 — más la corrección del usuario del 2026-08-12 ampliando edad y precisando qué esperan de la app. Tiene ≥10 frases VoC con fuente.)
 
@@ -59,7 +59,7 @@
 1. "Es otra suscripción más en dólares que voy a terminar pagando solo yo" → respuesta: precio fijo por pareja en moneda local, 50-65% más barato que Paired (la app más parecida), sin importar cómo facture la competencia → vive en: pricing table de la landing
 2. "A mi pareja le va a dar pereza usarla y la vamos a abandonar como el Excel" → respuesta: primera victoria en <5 min (vincular con código de 4 dígitos) + registro de gasto en 2 toques → vive en: onboarding
 3. "Nos da miedo meter nuestros datos financieros por seguridad" → respuesta: registro manual, sin vincular cuentas bancarias, RLS por pareja → vive en: FAQ + microcopy del registro de gastos
-4. "¿Por qué pagar si puedo usar WhatsApp y Splitwise gratis?" → respuesta: Splitwise es frío y solo de deudas; DuoSync conecta y organiza en un solo lugar por el precio de un café al mes → vive en: sección de diferenciación de la landing
+4. "¿Por qué pagar si puedo usar WhatsApp y Splitwise gratis?" → respuesta: Splitwise es frío y solo de deudas; Fairsy conecta y organiza en un solo lugar por el precio de un café al mes → vive en: sección de diferenciación de la landing
 5. Pago/checkout LATAM ("¿es seguro poner mi tarjeta?") → respuesta: plantilla estándar de confianza de checkout (18) → vive en: microcopy bajo el CTA de compra
 6. "Mi pareja va a dejar de usar la app a los pocos días" → respuesta: notificaciones asincrónicas que no requieren presencia simultánea, mecánica no penaliza al que responde primero → vive en: onboarding + paywall
 

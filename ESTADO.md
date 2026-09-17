@@ -1,5 +1,94 @@
-# ESTADO — DuoSync Wallet
-Última actualización: 2026-09-08 | Sesión actual: 6
+# ESTADO — Fairsy
+Última actualización: 2026-09-16 | Sesión actual: 6
+
+## Cambio de marca: DuoSync Wallet → Fairsy (2026-09-16) ✅
+- El dominio `duosyncwallet.app` no se pudo comprar; el usuario compró **`fairsy.lat`** y pidió renombrar
+  la app completa a **Fairsy** (no solo el dominio — logo, textos, correos, todo).
+- Logo nuevo: el usuario trajo su propio diseño (ícono "F" en verde/naranja con signo de peso + palabra
+  "Fairsy"). Se extrajo el ícono solo (sin el texto, igual que el logo anterior) con un script propio
+  (Node + sharp, temporal, instalado y desinstalado fuera de `app/`): detección automática de los
+  bloques de contenido por fila para separar ícono de wordmark, recorte a bounding box, y fondo vuelto
+  transparente con chroma-key suave (sin franja blanca en los bordes). Archivo original conservado en
+  `docs/assets/logo/fairsy-logo-original.png`. Assets finales: `app/public/logo-fairsy.png` (para
+  headers), `app/app/icon.png` (512×512), `app/app/apple-icon.png` (180×180) — reemplazan a los de
+  DuoSync, que se borraron. También se borró `app/app/favicon.ico` (el ícono por defecto de Next.js que
+  había quedado sin actualizar desde el scaffold inicial — nunca se había notado); ahora el favicon sale
+  solo de `icon.png`.
+- Texto "DuoSync Wallet" → "Fairsy" en TODO lo visible: landing (título, metadata, subtítulo, PS, footer),
+  onboarding (comentario + mensaje de WhatsApp), paywall, login, panel de administración, las 4 páginas
+  legales, el asistente de IA, el correo remitente (Resend) y el recordatorio de pago por correo.
+  `legal@duosyncwallet.app` / `soporte@duosyncwallet.app` → `legal@fairsy.lat` / `soporte@fairsy.lat` en
+  las 4 páginas legales y el footer. FICHA-ARTE.md, FICHA-AVATAR.md, FICHA-MERCADO.md y
+  `docs/copy/landing.md` actualizados igual (se dejó intacta la mención a `DUOSYNC.docx`, el nombre real
+  del archivo de investigación que el usuario trajo — eso no es texto de marca, es un nombre de archivo
+  histórico). Verificado tsc ✓ build ✓ y renderizado en vivo (landing, login, onboarding) — el nombre y
+  el logo nuevo aparecen correctos en las 3 pantallas probadas.
+- Decisión técnica ya tomada de antes que ayudó aquí: el código nunca tuvo la URL del sitio
+  hardcodeada (usa `window.location.origin` en todos lados), así que cambiar de dominio no exige tocar
+  código además de lo de marca — solo configuración externa (Vercel, Supabase Auth, Resend), que queda
+  pendiente de que el usuario la haga con guía paso a paso (ver Pendientes del usuario).
+- ⚠️ Pendiente de decisión/acción del usuario: mientras no se conecte `fairsy.lat` en Vercel y se
+  actualicen las URLs en Supabase Auth, el sitio publicado sigue siendo `duosync-jfr5.vercel.app` — no
+  es urgente (nadie compra todavía), pero hay que cerrarlo antes de anunciar la app públicamente.
+
+## Panel de administración /admin (2026-09-10) ✅ — a pedido del usuario, siguiendo 21-BACKOFFICE.md
+- Panel privado, solo para el dueño (cuenta `ideasmart.25m@gmail.com`, marcada `profiles.role='admin'`),
+  con 7 pantallas: Resumen, Ventas, Negocio (LTV/CAC/canales, separado de Ventas), Usuarios, Uso,
+  Costo de IA (separado de Resumen/Uso), Salud.
+- Ronda de mejora 2026-09-10 (pedido explícito del usuario: "está un poco básica, mejórala"):
+  instalado Recharts (`^3.10.1`, cero conflictos de peer deps con React 19); `GraficoSerie.tsx`
+  (línea de tendencia temática con tokens de la app, tooltip propio, alternativa en tabla sr-only,
+  estado honesto "Sin datos suficientes" cuando no hay historia — nunca una gráfica vacía fingida)
+  usado en Costo de IA (gasto/día), Usuarios (altas/día) y Salud (errores/día), 14 días cada una;
+  `InfoTooltip.tsx` (ícono "i" con la explicación de cada métrica, en TODAS las tarjetas del panel);
+  `DiagnosticoSeccion.tsx` ("qué está bien / qué está mal" por sección, semáforo con ícono+color,
+  nunca solo color — regla de daltonismo del 17) en las 7 pantallas + un resumen consolidado de
+  las 4 áreas más importantes arriba de Resumen. Verificado tsc+build+dev limpios; las 7 pantallas
+  se vieron renderizadas a 1280px con datos reales (screenshots en `docs/revisiones/admin-*.png`,
+  2026-09-10) — NO se relanzó el revisor-visual en esta ronda (ya llevaba 5 rondas de rendimientos
+  decrecientes documentadas abajo; este cambio es aditivo — nuevas secciones/gráficos/tooltips —
+  no una reescritura de lo que el revisor ya evaluó). Pendiente si el usuario lo pide: ronda 6 del
+  revisor sobre el Resumen rediseñado.
+- **Seguridad en 2 capas server-side** (nunca solo ocultar el enlace): `proxy.ts` verifica sesión+rol y
+  devuelve 404 (no login/403 — no revela que la ruta existe) antes de que cargue nada; el layout de
+  `/admin` vuelve a verificar con `requireAdmin()` (`app/lib/admin.ts`); las rutas de API bajo
+  `/api/admin/*` usan `requireAdminApi()` por separado (el layout no las protege). Probado en vivo:
+  sin sesión, `/admin` da 404 real.
+- Migraciones `20260910120000_backoffice.sql` + `20260910121500_eventos_en_pregunta_hoy.sql`
+  (aplicadas): `profiles.role`/`profiles.source`, función `es_admin()`, 4 tablas nuevas —
+  `event_log` (activación/retención/acción principal), `error_log` (errores reales), `ai_calls`
+  (costo REAL de cada llamada a la IA, en dólares, no un conteo), `acquisition_spend` (el dueño
+  anota a mano el gasto por canal). RLS: cada usuario inserta solo sus propios eventos/errores,
+  SOLO el admin lee. `ai_calls`/`acquisition_spend` no tienen insert para clientes — se escriben
+  server-side (con `es_admin()` o con la clave de servicio).
+- **Costo real de IA**: `app/lib/ai/precios.ts` (precios reales de Haiku 4.5 verificados por
+  búsqueda web 2026-09: $1/millón tokens entrada, $5/millón salida) + `app/lib/ai/costo-ia.ts`
+  (registra tokens y costo real después de cada llamada exitosa a Anthropic, en
+  `api/recibos/procesar` y `api/asistente` — este último usa `stream.finalMessage()` para el
+  conteo real de tokens del streaming).
+- **Eventos de uso real**: `app/lib/eventos.ts` (`logEvent`/`logError`) conectado a: registro
+  (`signup`, desde el trigger `handle_new_user`), responder la pregunta del día (dentro de la
+  función `responder_pregunta_hoy`, server-side), aportar a una meta (`aportar_a_meta`), crear
+  meta y registrar gasto (client-side, en `metas.ts`/`gastos.ts`). Con esto el panel calcula
+  activación y retención D1/D7 sin herramientas externas.
+- **Agregar usuario manualmente** (pedido explícito del usuario): `app/app/api/admin/usuarios/crear/route.ts`
+  usa la API de administración de Supabase (`auth.admin.inviteUserByEmail`) — crea la cuenta y le
+  manda un correo real de acceso (mismo Resend de siempre), sin tocar la base de datos a mano. Si
+  el correo ya existe, avisa que esa persona ya puede entrar por el login normal, en vez de fallar.
+- **Error Boundary global**: `app/app/error.tsx` registra cualquier error de render en `error_log`
+  (con el usuario si hay sesión) y muestra un mensaje humano en vez de pantalla blanca.
+- Verificado: tsc ✓ build ✓ · sin sesión `/admin` da 404 real (probado) · con el gate
+  desactivado temporalmente en local (mismo protocolo ya usado en esta sesión, restaurado de
+  inmediato después) se vieron las 5 pantallas renderizadas a 1280px con datos REALES de la
+  base de datos (1 pareja de prueba, sin ventas — "Sin datos" en vez de números inventados,
+  exactamente como se pidió) · revisor-visual lanzado sobre la pantalla Resumen.
+- ⚠️ Honesto de frente: Ventas/Ingresos/Ganancia real/Churn/LTV/CAC dicen "Sin datos" porque
+  Hotmart todavía no está conectado — ningún número ahí es inventado, la estructura ya está
+  lista y se llena sola en cuanto exista el webhook (pendiente ya conocido, ver más abajo).
+- Alcance deliberado (no se hizo en esta pasada, para no inflar el diff): NO se retrofitó
+  `logError()` dentro de cada `catch` ya existente en la app — solo el Error Boundary global.
+  Nuevos catches que se agreguen de aquí en más pueden llamarlo directamente si hace falta más
+  detalle de errores puntuales.
 
 ## Auditoría senior 2026-09-08 (vulnerabilidades y pulido) — 3 de 4 hallazgos críticos resueltos ✅
 Reporte completo entregado y aprobado por el usuario. Hallazgo crítico #2 (conectar Hotmart de
@@ -531,9 +620,9 @@ App móvil para parejas en LATAM que combina finanzas compartidas (gastos, saldo
 - Legal: `legal@duosync.app` está escrito en las páginas legales pero el dominio `duosync.app` todavía no está comprado (mismo pendiente que `soporte@duosync.app`, ver nota de Landing más abajo) — confirmar que ambas bandejas reciben correo real antes de anunciar el correo legal a usuarios.
 - Legal: paywall y landing venden "Escaneo de recibos con IA" como beneficio Premium activo; la función no existe en el código todavía (ver Auditoría legal arriba). Pendiente decisión del usuario antes de vender de verdad.
 
-- Veredicto landing: docs/revisiones/landing-veredicto.md dice "Veredicto: NO LISTA" (30/40 · 14/20 · 15/20, 2026-08-15). Pospuesto a propósito: el usuario vio el resumen de esta ronda y decidió avanzar a Sesión 5 en vez de seguir iterando (rendimientos decrecientes tras 7+ rondas). Los defectos que quedan son de pulido visual, no bugs — quedan listados abajo y se retoman en Sesión 7.
-- Veredicto onboarding: docs/revisiones/onboarding-veredicto.md dice "Veredicto: NO LISTA" (28/40 · 14/20, 2026-08-15). Mismo pospuesto por decisión del usuario — defectos de pulido visual listados abajo, se retoman en Sesión 7.
-- Veredicto paywall: docs/revisiones/paywall-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 12/20 · 15/20, 2026-08-15). Mismo pospuesto por decisión del usuario — el único bug funcional real que encontró esa ronda (CTA fuera de la pantalla a 375×812) SÍ se corrigió antes de posponer; lo que queda es pulido visual, listado abajo, se retoma en Sesión 7.
+- PENDIENTE landing: docs/revisiones/landing-veredicto.md dice "Veredicto: NO LISTA" (30/40 · 14/20 · 15/20, 2026-08-15). Pospuesto a propósito: el usuario vio el resumen de esta ronda y decidió avanzar a Sesión 5 en vez de seguir iterando (rendimientos decrecientes tras 7+ rondas). Los defectos que quedan son de pulido visual, no bugs — quedan listados abajo y se retoman cuando el usuario lo pida.
+- PENDIENTE onboarding: docs/revisiones/onboarding-veredicto.md dice "Veredicto: NO LISTA" (28/40 · 14/20, 2026-08-15). Mismo pospuesto por decisión del usuario — defectos de pulido visual listados abajo, se retoman cuando el usuario lo pida.
+- PENDIENTE paywall: docs/revisiones/paywall-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 12/20 · 15/20, 2026-08-15). Mismo pospuesto por decisión del usuario — el único bug funcional real que encontró esa ronda (CTA fuera de la pantalla a 375×812) SÍ se corrigió antes de posponer; lo que queda es pulido visual, listado abajo, se retoma cuando el usuario lo pida.
 - Veredicto app-hoy: docs/revisiones/app-hoy-veredicto.md dice "Veredicto: NO LISTA" (29/40 · 14/20, 2026-08-16, 2ª ronda). Los 2 bugs reales de esa ronda (navegación con `<a>` nativo rompiendo la app-feel, botón "Responder" compitiendo con el CTA principal) ya se corrigieron. Lo que queda (heurística 9 sin estado de error modelado) se pospone a propósito: sin backend real todavía, un "error" sería artificial — se aborda en Sesión 6 cuando el envío de la respuesta pase por una llamada de verdad.
 - Veredicto Hoy (rescate de diseño premium, 2026-09-06): docs/revisiones/hoy-veredicto.md dice "Veredicto: NO LISTA" — 5 rondas corridas (32/40·13/20 → 31/40·15/20 → 31/40·15/20 → 31/40·14/20 → 29/40·13/20, la última ronda bajó el puntaje). POSPUESTO A PROPÓSITO por decisión explícita del usuario tras ver que 4 rondas no cerraban la brecha y pedir una 5ª "a ver si pasa" — al empeorar, se acordó no seguir iterando en automático (mismo patrón de rendimientos decrecientes ya documentado arriba para landing/onboarding/paywall). Bugs reales SÍ corregidos en el camino (quedan en el código, no se revirtieron): foco coral que se leía como error falso, doble borde del input, filas de categoría sin acción, encabezado con nombre repetido, causa raíz del solape nav/tarjeta (`overflow-hidden` en las 2 direcciones en vez de solo horizontal), transición entre pestañas ausente. Lo que queda sin resolver es más subjetivo que bug: profundidad de fondo que el revisor sigue viendo plana pese a 2 subidas de intensidad, densidad de elementos tappables (7-8, contradice el propio pedido de la ronda 3 de hacer tappables las categorías), y falta de un atajo tipo "recordar última categoría" para el usuario recurrente — esto último exigiría sumar lógica nueva, fuera del alcance que el usuario fijó ("rescate SOLO visual, no tocar lógica ni datos").
 
@@ -550,8 +639,24 @@ Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funci
 - App interna: en Gastos se corrigió un bug real (no solo pulido) el 2026-08-16 — el gasto del día 1 de cada mes desaparecía del total por parsear fechas ISO con `new Date()` (se interpreta como UTC y en timezones detrás de UTC cae en el mes anterior); ahora compara por prefijo de string, verificado con los 8 gastos semilla mostrando el total correcto ($2.140.000, igual que en Hoy).
 - App interna: Metas y Nosotros no pasaron por revisor-visual (pantallas secundarias del mismo tipo que Hoy, ya aprobado — doctrina: solo la primera de cada tipo nuevo lo requiere); verificadas a mano y consistentes en tokens/spacing con Hoy.
 
+- Panel de administración (`/admin`, 2026-09-10): construido completo y funcional — Resumen, Ventas y negocio, Usuarios, Uso, Salud. Acceso protegido en 2 capas server-side (`app/proxy.ts` + `app/lib/admin.ts`, verificado con protocolo de bypass temporal + restauración confirmada por `git diff`), RLS en las 4 tablas nuevas (`event_log`, `error_log`, `ai_calls`, `acquisition_spend`), costo real de IA por token/dólar (precios de Haiku 4.5 verificados por web, no inventados), evento de activación/retención sin herramienta externa, alta manual de usuario vía email de invitación real de Supabase. `docs/revisiones/admin-resumen-veredicto.md`: 5 rondas — 27/40·9/20 → 30/40·14/20 → 26/40·12/20 → 28/40·15/20 → 26/40·13/20, todas NO LISTA (gate ≥36/40·≥16/20). Bugs reales de cada ronda SÍ corregidos en el camino: sin salida del panel (se agregó "Volver a la app"), datos de proporción solo en texto (se agregaron barras de progreso animadas), sin dato héroe visual (tarjeta "destacada" en Gastado del mes), encabezados de sección inconsistentes entre las 5 pantallas (unificados con `TituloSeccion.tsx`), emoji como ícono en Salud (reemplazado por Lucide), conteo animado que solo reconocía enteros (extendido a decimales/%). Lo que queda pesando en el puntaje es más de alcance que de bug: selector de rango de fechas y orden de columnas en tablas (heurística de "flexibilidad de experto") — decisión de alcance mayor (toca las funciones de datos, no solo visual) que se está consultando con el usuario en vez de construirse sin avisar. PAUSADO A PROPÓSITO tras 5 rondas con rendimientos decrecientes (mismo patrón ya documentado para landing/onboarding/paywall/Hoy) — pendiente que el usuario decida si seguir iterando o aceptar el panel como está (seguro, funcional, con datos reales) y anotar como deuda de pulido.
+
 ## Pendientes del usuario (acciones que el usuario debe hacer)
-- [ ] Ninguno todavía — se avisa cuando lleguemos a servicios externos (cuentas de Supabase, Vercel, Hotmart, dominio).
+- [x] Conectar `fairsy.lat` (comprado en Namecheap) al proyecto de Vercel (2026-09-16-17) — hecho: registro
+      A (`@` → `216.198.79.1`) y CNAME (`www` → `342a1e3725bfa521.vercel-dns-017.com`) agregados en
+      Namecheap Advanced DNS; Vercel muestra `fairsy.lat` y `www.fairsy.lat` con check verde
+      (apex hace redirect 308 a `www`, que es el que sirve la app).
+- [x] Actualizado Supabase Authentication → URL Configuration: **Site URL** = `https://fairsy.lat`
+      (guardado con "Save changes"); **Redirect URLs** ahora tiene `https://fairsy.lat/auth/callback`
+      AGREGADA (no se borró la de `duosync-jfr5.vercel.app/auth/callback` ni las de `localhost`, por
+      seguridad — se pueden limpiar más adelante una vez confirmado que todo funciona bien con el
+      dominio nuevo).
+- [ ] **PRÓXIMO PASO (mañana, a pedido del usuario):** verificar `fairsy.lat` en Resend (Authentication
+      → Domains) para que los correos (enlace de acceso, recordatorios de pago) lleguen a CUALQUIER
+      cliente, no solo a la cuenta del propio usuario (limitación ya conocida del modo de prueba) —
+      retomar desde aquí con `/retomar` o pidiendo seguir con Resend.
+- [ ] Probar el login real end-to-end en `https://fairsy.lat` una vez el certificado SSL termine de
+      generarse (estaba "Generating SSL Certificate" al cerrar esta sesión, normal, tarda minutos).
 
 ## Notas para la próxima sesión
 - El usuario ya trajo una investigación de mercado propia y completa (guardada en DUOSYNC.docx) — no repetirla desde cero, solo re-validar con datos actuales y llenar FICHA-MERCADO.md con fuentes verificables antes de fijar precio/garantía en definitivo.

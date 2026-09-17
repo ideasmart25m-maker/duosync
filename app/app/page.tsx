@@ -1,6 +1,6 @@
 'use client';
 
-// Landing de DuoSync Wallet — compuesta desde el kit canónico (plantillas-codigo/landing).
+// Landing de Fairsy — compuesta desde el kit canónico (plantillas-codigo/landing).
 // Copy marcado en docs/copy/landing.md, trazado a FICHA-AVATAR.md.
 // Modelo onboarding-first (02C, decidido en Sesión 1): el CTA lleva a /onboarding.
 
@@ -22,7 +22,7 @@ import { StickyCtaMobile } from '@/components/landing/ui';
 const CTA_HREF = '/onboarding';
 const CTA_LABEL = 'Empieza a simplificar tus cuentas';
 
-export default function DuoSyncLanding() {
+export default function FairsyLanding() {
   return (
     <div className="min-h-dvh bg-[var(--bg)] text-[var(--text-primary)] [font-family:var(--font-body)]">
       <a
@@ -33,11 +33,11 @@ export default function DuoSyncLanding() {
       </a>
       {/* 1. HERO */}
       <Hero
-        appName="DuoSync Wallet"
-        logo={<Image src="/logo-duosync.png" alt="" width={233} height={128} priority className="h-7 w-auto" />}
+        appName="Fairsy"
+        logo={<Image src="/logo-fairsy.png" alt="" width={233} height={128} priority className="h-7 w-auto" />}
         loginHref="/login"
         h1Marked="Gestión de gastos juntos, sin hojas de cálculo ni [acento]momentos incómodos[/acento]"
-        subtitleMarked="DuoSync Wallet automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
+        subtitleMarked="Fairsy automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         socialProof={<span>Un pago cubre a los dos — hasta 60% más barato que otras apps para parejas</span>}
@@ -198,14 +198,14 @@ export default function DuoSyncLanding() {
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         recap="7 días gratis · Un solo pago para los dos"
-        psMarked="PS: DuoSync Wallet une el gasto y su conexión diaria en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin discutir."
+        psMarked="PS: Fairsy une el gasto y su conexión diaria en un solo lugar, con un pago que cubre a los dos. Empiecen hoy con 7 días gratis y sientan lo que es ver las cuentas claras sin discutir."
       />
 
       {/* 10. FOOTER LEGAL */}
       <FooterLegal
-        appName="DuoSync Wallet"
-        logo={<Image src="/logo-duosync.png" alt="" width={233} height={128} className="h-5 w-auto opacity-80" />}
-        soporteEmail="soporte@duosyncwallet.app"
+        appName="Fairsy"
+        logo={<Image src="/logo-fairsy.png" alt="" width={233} height={128} className="h-5 w-auto opacity-80" />}
+        soporteEmail="soporte@fairsy.lat"
         enlaces={[
           { label: 'Privacidad', href: '/privacidad' },
           { label: 'Términos y Condiciones', href: '/terminos' },

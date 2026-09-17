@@ -14,7 +14,7 @@ import { ChevronLeft, X, Check } from 'lucide-react';
 export function FunnelHeader({
   onBack,
   progreso,
-  appName = 'DuoSync Wallet',
+  appName = 'Fairsy',
   contador,
   salida = true,
 }: {
@@ -42,7 +42,7 @@ export function FunnelHeader({
         </button>
       ) : (
         <Link href="/" className="flex size-11 shrink-0 items-center justify-center">
-          <Image src="/logo-duosync.png" alt="DuoSync Wallet" width={233} height={128} className="h-6 w-auto" />
+          <Image src="/logo-fairsy.png" alt="Fairsy" width={233} height={128} className="h-6 w-auto" />
         </Link>
       )}
       {progreso !== undefined ? (

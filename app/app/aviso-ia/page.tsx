@@ -7,7 +7,7 @@ export default function AvisoIaPage() {
       <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 5 de septiembre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        El plan Premium de DuoSync Wallet incluye dos funciones con inteligencia artificial: lectura
+        El plan Premium de Fairsy incluye dos funciones con inteligencia artificial: lectura
         automática de recibos (sugiere el monto y la categoría del gasto a partir de una foto) y un
         asistente dentro de la app para resolver dudas sobre sus gastos. Ambas ya están activas.
       </p>
@@ -28,8 +28,8 @@ export default function AvisoIaPage() {
 
       <p className="text-[var(--text-secondary)] leading-relaxed">
         ¿Dudas ahora mismo? Escríbannos a{' '}
-        <a href="mailto:legal@duosyncwallet.app" className="underline">
-          legal@duosyncwallet.app
+        <a href="mailto:legal@fairsy.lat" className="underline">
+          legal@fairsy.lat
         </a>
         .
       </p>
