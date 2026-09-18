@@ -651,12 +651,48 @@ Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funci
       AGREGADA (no se borró la de `duosync-jfr5.vercel.app/auth/callback` ni las de `localhost`, por
       seguridad — se pueden limpiar más adelante una vez confirmado que todo funciona bien con el
       dominio nuevo).
-- [ ] **PRÓXIMO PASO (mañana, a pedido del usuario):** verificar `fairsy.lat` en Resend (Authentication
-      → Domains) para que los correos (enlace de acceso, recordatorios de pago) lleguen a CUALQUIER
-      cliente, no solo a la cuenta del propio usuario (limitación ya conocida del modo de prueba) —
-      retomar desde aquí con `/retomar` o pidiendo seguir con Resend.
-- [ ] Probar el login real end-to-end en `https://fairsy.lat` una vez el certificado SSL termine de
-      generarse (estaba "Generating SSL Certificate" al cerrar esta sesión, normal, tarda minutos).
+- [x] `fairsy.lat` verificado en Resend (Authentication → Domains) 2026-09-17: DKIM + SPF con ✓ verde,
+      dominio "Verified" — los correos ya llegan a cualquier cliente, no solo al usuario. Remitente
+      actualizado en código (`app/lib/email/resend.ts`: `Fairsy <hola@fairsy.lat>`) y en Supabase SMTP
+      Settings (Sender email `hola@fairsy.lat`, Sender name `Fairsy`).
+- [x] Login real end-to-end probado y funcionando en `https://fairsy.lat` (2026-09-17) — verificado
+      entrando de verdad y llegando a `/app/hoy` con sesión iniciada. Costó varias rondas de diagnóstico
+      porque **`window.location.origin` en el navegador real es `https://www.fairsy.lat` (con "www"),
+      no `https://fairsy.lat`** — la barra de direcciones de Chrome no siempre muestra el "www" a simple
+      vista, lo que llevó a confirmar erróneamente varias veces que estaba en el dominio sin "www". El
+      dato real solo apareció revisando la pestaña Network → Payload de la solicitud `otp` en DevTools.
+      Arreglo real: agregar `https://www.fairsy.lat/**` a Supabase Redirect URLs (antes solo estaba
+      `https://fairsy.lat/**` y `https://fairsy.lat/auth/callback`, ninguna con "www"). Sin ese comodín
+      con "www", Supabase rechazaba en silencio el `redirect_to` completo y usaba el Site URL genérico
+      como respaldo — sin ningún error visible ni en la app ni en la consola, lo que hizo el diagnóstico
+      largo. Lección para la próxima vez que se conecte un dominio nuevo: agregar SIEMPRE ambas
+      versiones (con y sin "www") a Redirect URLs desde el principio, no solo una.
+- [x] Limpieza de Redirect URLs en Supabase hecha (2026-09-18): borradas `duosync-jfr5.vercel.app/auth/callback`
+      y `fairsy.lat/auth/callback` (redundante). Quedan 4: `localhost:3000/auth/callback`,
+      `localhost:3000/**`, `https://fairsy.lat/**`, `https://www.fairsy.lat/**`. Verificado por foto del usuario.
+- [x] Proyecto Vercel duplicado `duosync` (`duosync-lake.vercel.app`) borrado por el usuario (2026-09-18)
+      tras verificar que solo tenía ese dominio (sin `fairsy.lat`) y que mostraba 404. El canónico es
+      `duosync-jfr5`. Verificado con curl después: `fairsy.lat` → 308 a `www.fairsy.lat`; `www.fairsy.lat`
+      y `/login` responden 200. Ahora cada push despliega una sola vez.
+- [x] Recorrido de cliente nuevo en el sitio real (2026-09-18, 375px, `www.fairsy.lat`): landing →
+      onboarding (5 preguntas + plan + código de pareja) → paywall → login con plan gratis y código, 0 errores
+      de consola; las 4 páginas legales responden 200 y ya no queda "DuoSync" en ninguna página pública;
+      `/app/hoy` sin sesión redirige a login; `/admin` sin sesión no muestra nada del panel; `/api/asistente`
+      sin sesión → 401 antes de llamar a la IA. Screenshots en `docs/revisiones/recorrido-*.png`.
+      NO probado (requiere al usuario/bandeja o cuentas): recibir el correo con un correo NUEVO, unirse con el
+      código desde una segunda cuenta, y pago real (Hotmart no está conectado: el botón "Empezar nuestro Plan"
+      todavía no puede cobrar).
+      Tres hallazgos menores ARREGLADOS el mismo día (verificados con curl contra dev, tsc ✓ build ✓):
+      (1) `/admin` sin sesión daba HTTP 200 con la página "no encontrada" (soft-404, sin filtrar contenido) →
+      ahora 404 real (`proxy.ts`, `rewrite(..., { status: 404 })`; el camino de admin permitido no cambió);
+      (2) el onboarding decía "ella se conecta con este mismo código" (asumía pareja mujer) → "tu pareja se
+      conecta"; (3) `/api/asistente` con cuerpo no-JSON daba 500 → ahora 400 (`request.json().catch`); sin
+      sesión sigue dando 401 antes de llamar a la IA.
+- [x] `SUPABASE_SECRET_KEY` y `ANTHROPIC_API_KEY` pasadas de tipo "Config" a "Secret" en Vercel
+      (2026-09-18); el aviso "Needs Attention" desapareció (verificado por foto). Se guardó con el mismo
+      valor (Vercel avisó "Unchanged Value"; se aceptó porque el proyecto lo maneja una sola persona).
+      Rotar ambas claves en Supabase/Anthropic queda como mejora opcional, solo si el usuario sospecha que
+      alguien las vio. Sitio verificado con curl después del cambio (200 en `/` y `/login`).
 
 ## Notas para la próxima sesión
 - El usuario ya trajo una investigación de mercado propia y completa (guardada en DUOSYNC.docx) — no repetirla desde cero, solo re-validar con datos actuales y llenar FICHA-MERCADO.md con fuentes verificables antes de fijar precio/garantía en definitivo.

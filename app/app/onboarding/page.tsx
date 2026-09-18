@@ -457,8 +457,8 @@ function PasoVinculacion({
               un bloqueo — defecto real detectado al comparar contra el manejo async de
               Splitwise/Honeydue (no forzar a esperar). */}
           <p className="mt-4 text-center text-[12px] leading-relaxed text-[var(--text-tertiary)]">
-            No hace falta esperar a que se una para seguir: pueden armar su plan ahora y ella se
-            conecta con este mismo código cuando quiera.
+            No hace falta esperar a que se una para seguir: pueden armar su plan ahora y tu pareja
+            se conecta con este mismo código cuando quiera.
           </p>
 
           {/* Diferenciado del párrafo informativo de arriba: es la ruta ALTERNA, real y

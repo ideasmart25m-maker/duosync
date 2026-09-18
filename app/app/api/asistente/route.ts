@@ -11,7 +11,9 @@ import { AI_MODEL } from '@/lib/ai/anthropic';
 // clave secreta, no hace falta saltarse RLS para leer datos que igual son suyos) y transmite
 // la respuesta en vivo con streaming (30-INTEGRACION-IA.md).
 export async function POST(request: NextRequest) {
-  const { pregunta, historial } = (await request.json()) as { pregunta?: string; historial?: MensajeChat[] };
+  const entrada = (await request.json().catch(() => null)) as { pregunta?: string; historial?: MensajeChat[] } | null;
+  const pregunta = entrada?.pregunta;
+  const historial = entrada?.historial;
   if (!pregunta || typeof pregunta !== 'string' || pregunta.length > 500) {
     return NextResponse.json({ error: 'Pregunta inválida.' }, { status: 400 });
   }

@@ -40,11 +40,11 @@ export async function proxy(request: NextRequest) {
   // ni que la ruta existe.
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
-      return NextResponse.rewrite(new URL('/404', request.url));
+      return NextResponse.rewrite(new URL('/404', request.url), { status: 404 });
     }
     const { data: perfil } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
     if (perfil?.role !== 'admin') {
-      return NextResponse.rewrite(new URL('/404', request.url));
+      return NextResponse.rewrite(new URL('/404', request.url), { status: 404 });
     }
   }
 
