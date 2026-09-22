@@ -639,6 +639,23 @@ Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funci
 - App interna: en Gastos se corrigió un bug real (no solo pulido) el 2026-08-16 — el gasto del día 1 de cada mes desaparecía del total por parsear fechas ISO con `new Date()` (se interpreta como UTC y en timezones detrás de UTC cae en el mes anterior); ahora compara por prefijo de string, verificado con los 8 gastos semilla mostrando el total correcto ($2.140.000, igual que en Hoy).
 - App interna: Metas y Nosotros no pasaron por revisor-visual (pantallas secundarias del mismo tipo que Hoy, ya aprobado — doctrina: solo la primera de cada tipo nuevo lo requiere); verificadas a mano y consistentes en tokens/spacing con Hoy.
 
+- Ajustes de copy a pedido del usuario (2026-09-21) tras leer las páginas legales y la landing con ojos frescos:
+  (1) plan Mensual de la landing: quitado "Historial ilimitado" de la lista de beneficios (el Anual la conserva) —
+  el usuario no dio motivo, se ejecutó tal cual pidió; (2) FAQ "¿Es seguro poner nuestros gastos ahí?" ahora
+  responde primero con "Sí, es seguro porque..." antes de explicar; (3) FAQ de gastos compartidos: el paréntesis
+  de ejemplos pasó de "(compañero de cuarto, un viaje, un proyecto)" a "(compañero de cuarto, familia, amigo)";
+  (4) Términos → "Cómo cancelar": se agregó la advertencia en negrita de que borrar la app no cancela la
+  suscripción, había quedado sin escribir en una edición anterior; (5) Términos → sección de IA: ya no dice
+  "en construcción" (el escaneo de recibos y el asistente llevan semanas activos en producción — verificado en
+  código que `app/app/gastos/page.tsx` y `AsistenteChat.tsx` sí los usan; `aviso-ia/page.tsx` ya decía
+  "Ambas ya están activas", solo Términos se había quedado desactualizado); (6) Reembolsos: se separó en un
+  párrafo aparte que el primer cobro ocurre automáticamente al terminar el día 7 (no antes) y que los 15 días
+  de garantía cuentan desde ESE cobro — el usuario asumía que había un pago previo que "quedaba en firme" el
+  día 8; se le explicó que no es así, Hotmart no cobra nada hasta que termina el trial (confirmado contra la
+  investigación ya citada en `FICHA-MERCADO.md` §4). Fechas de "Última actualización" de Términos y Reembolsos
+  puestas al día (21 de septiembre). Verificado tsc ✓ build ✓ y las 4 páginas tocadas leídas completas en el
+  navegador tras el cambio.
+
 - Panel de administración (`/admin`, 2026-09-10): construido completo y funcional — Resumen, Ventas y negocio, Usuarios, Uso, Salud. Acceso protegido en 2 capas server-side (`app/proxy.ts` + `app/lib/admin.ts`, verificado con protocolo de bypass temporal + restauración confirmada por `git diff`), RLS en las 4 tablas nuevas (`event_log`, `error_log`, `ai_calls`, `acquisition_spend`), costo real de IA por token/dólar (precios de Haiku 4.5 verificados por web, no inventados), evento de activación/retención sin herramienta externa, alta manual de usuario vía email de invitación real de Supabase. `docs/revisiones/admin-resumen-veredicto.md`: 5 rondas — 27/40·9/20 → 30/40·14/20 → 26/40·12/20 → 28/40·15/20 → 26/40·13/20, todas NO LISTA (gate ≥36/40·≥16/20). Bugs reales de cada ronda SÍ corregidos en el camino: sin salida del panel (se agregó "Volver a la app"), datos de proporción solo en texto (se agregaron barras de progreso animadas), sin dato héroe visual (tarjeta "destacada" en Gastado del mes), encabezados de sección inconsistentes entre las 5 pantallas (unificados con `TituloSeccion.tsx`), emoji como ícono en Salud (reemplazado por Lucide), conteo animado que solo reconocía enteros (extendido a decimales/%). Lo que queda pesando en el puntaje es más de alcance que de bug: selector de rango de fechas y orden de columnas en tablas (heurística de "flexibilidad de experto") — decisión de alcance mayor (toca las funciones de datos, no solo visual) que se está consultando con el usuario en vez de construirse sin avisar. PAUSADO A PROPÓSITO tras 5 rondas con rendimientos decrecientes (mismo patrón ya documentado para landing/onboarding/paywall/Hoy) — pendiente que el usuario decida si seguir iterando o aceptar el panel como está (seguro, funcional, con datos reales) y anotar como deuda de pulido.
 
 ## Pendientes del usuario (acciones que el usuario debe hacer)
@@ -687,7 +704,10 @@ Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funci
       ahora 404 real (`proxy.ts`, `rewrite(..., { status: 404 })`; el camino de admin permitido no cambió);
       (2) el onboarding decía "ella se conecta con este mismo código" (asumía pareja mujer) → "tu pareja se
       conecta"; (3) `/api/asistente` con cuerpo no-JSON daba 500 → ahora 400 (`request.json().catch`); sin
-      sesión sigue dando 401 antes de llamar a la IA.
+      sesión sigue dando 401 antes de llamar a la IA. Publicados (commit `b69b44e`) y verificados con curl en
+      `www.fairsy.lat`: `/admin` y `/admin/ventas` sin sesión → 404, sin contenido del panel; asistente con
+      cuerpo inválido → 400; sin sesión → 401; `/` y `/login` → 200. El usuario confirmó (2026-09-18) que
+      `https://www.fairsy.lat/admin` abre normal con su sesión de admin.
 - [x] `SUPABASE_SECRET_KEY` y `ANTHROPIC_API_KEY` pasadas de tipo "Config" a "Secret" en Vercel
       (2026-09-18); el aviso "Needs Attention" desapareció (verificado por foto). Se guardó con el mismo
       valor (Vercel avisó "Unchanged Value"; se aceptó porque el proyecto lo maneja una sola persona).

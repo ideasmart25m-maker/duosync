@@ -135,11 +135,9 @@ export default function FairsyLanding() {
           descomposicionDia: 'menos de $0.20 al día',
           ctaLabel: CTA_LABEL,
           ctaHref: CTA_HREF,
-          // Mismos 5 beneficios que el plan anual (defecto real detectado por el usuario: la
-          // lista más corta daba a entender que el mensual tenía menos funciones — ambos planes
-          // dan acceso al mismo Premium completo, solo cambia el precio/frecuencia de pago).
+          // El plan mensual da acceso al mismo Premium completo que el anual (mismos beneficios
+          // salvo "Historial ilimitado", que el usuario pidió quitar de este recuadro).
           features: [
-            '[b]Historial ilimitado[/b] de gastos compartidos',
             '[b]Escaneo de recibos con IA[/b], sin teclear',
             '[b]Categorías propias[/b] e ilimitadas',
             'Catálogo completo de [b]dinámicas de pareja[/b]',
@@ -167,7 +165,7 @@ export default function FairsyLanding() {
           {
             pregunta: '¿Es seguro poner nuestros gastos ahí?',
             respuestaMarked:
-              'No guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros están [b]100% seguros y bajo su control[/b].',
+              'Sí, es seguro porque no guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros están [b]100% seguros y bajo su control[/b].',
           },
           {
             pregunta: '¿Y si mi pareja deja de usarla a los pocos días?',
@@ -184,7 +182,7 @@ export default function FairsyLanding() {
             respuestaMarked: 'Cancelan cuando quieran desde el área de miembros de Hotmart, sin llamadas ni trámites.',
           },
           {
-            pregunta: '¿Puedo usarla para gastos compartidos con cualquier persona (compañero de cuarto, un viaje, un proyecto)?',
+            pregunta: '¿Puedo usarla para gastos compartidos con cualquier persona (compañero de cuarto, familia, amigo)?',
             respuestaMarked:
               'Sí, la pueden usar dos personas con gastos compartidos que quieran [b]tener las cuentas claras y en tiempo real[/b].',
           },

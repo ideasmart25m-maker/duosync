@@ -4,7 +4,7 @@ export default function TerminosPage() {
       <h1 className="text-2xl font-bold [font-family:var(--font-display)] mb-2">
         Términos y condiciones
       </h1>
-      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
+      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 21 de septiembre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
         Fairsy es un servicio operado por Gloria Alvarado, persona natural, desde Colombia. Al
@@ -32,8 +32,10 @@ export default function TerminosPage() {
       <h2 className="text-lg font-semibold mb-2">Cómo cancelar</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
         Pueden cancelar cuando quieran desde el área de miembros de Hotmart (el mismo lugar donde
-        hicieron el pago) — no queda ningún cobro después de la fecha en que cancelen. Si tienen
-        problemas para encontrarla, escríbannos y los ayudamos.
+        hicieron el pago) — no queda ningún cobro después de la fecha en que cancelen. <strong>Tengan
+        en cuenta que eliminar la aplicación no es suficiente para cancelar la suscripción; deben
+        tramitar la cancelación directamente en Hotmart para evitar cobros posteriores.</strong> Si
+        tienen problemas para encontrarla, escríbannos y los ayudamos.
       </p>
 
       <h2 className="text-lg font-semibold mb-2">Licencia de uso</h2>
@@ -45,12 +47,10 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Sobre las funciones con inteligencia artificial</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        El plan Premium incluirá escaneo de recibos y un asistente con inteligencia artificial.
-        Mientras estas funciones estén en construcción, no forman parte de lo que reciben hoy — ver
-        el detalle en el{' '}
-        <a href="/aviso-ia" className="underline">Aviso de IA</a>. Cuando estén activas: los
-        gastos, montos y demás datos que ustedes ingresan siguen siendo suyos; solo los usamos para
-        darles el resultado que piden.
+        El plan Premium incluye escaneo de recibos y un asistente con inteligencia artificial, ambos
+        ya activos — ver el detalle en el{' '}
+        <a href="/aviso-ia" className="underline">Aviso de IA</a>. Los gastos, montos y demás datos
+        que ustedes ingresan siguen siendo suyos; solo los usamos para darles el resultado que piden.
       </p>
 
       <h2 className="text-lg font-semibold mb-2">Responsabilidad</h2>

@@ -4,14 +4,18 @@ export default function ReembolsosPage() {
       <h1 className="text-2xl font-bold [font-family:var(--font-display)] mb-2">
         Cancelaciones y reembolsos
       </h1>
-      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
+      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 21 de septiembre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Tienen 7 días de prueba gratis y no se les cobra nada si cancelan antes de que termine ese
-        plazo, desde el área de miembros de Hotmart.
+        Tienen 7 días de prueba gratis, sin ningún cobro. Si cancelan antes de que termine ese plazo,
+        no se les cobra nada — la cancelación se hace desde el área de miembros de Hotmart.
       </p>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Si ya pagaron y no era para ustedes, tienen 15 días desde el primer cobro para pedir su
+        Si no cancelan, al terminar el día 7 se hace automáticamente el primer cobro, al precio del
+        plan que hayan elegido (mensual o anual), y ahí empieza su suscripción activa.
+      </p>
+      <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+        Si ya les cobraron y no era para ustedes, tienen 15 días desde ese primer cobro para pedir su
         dinero de vuelta a través de Hotmart, nuestra pasarela de pago — sin necesidad de explicar
         el motivo. Hotmart procesa la devolución al mismo medio de pago que usaron.
       </p>
