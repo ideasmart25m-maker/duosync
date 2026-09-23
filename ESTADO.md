@@ -1,6 +1,17 @@
 # ESTADO — Fairsy
 Última actualización: 2026-09-22 | Sesión actual: 7
 
+## ⏸️ PENDIENTE DE DISEÑO (2026-09-23): valor mensual de gastos fijos + "cuánto le toca a cada uno"
+La usuaria quiere registrar el valor TOTAL del mes de arriendo/servicios/recurrentes en
+"Editar reparto y recurrencia" y ver ahí lo que le corresponde a cada uno según el %. Propuesta
+hecha (sin construir): campo `monto_mensual` por categoría + botón "Registrar pago" de un toque en el
+recordatorio (crea el gasto prellenado) + valor propio por factura en Servicios públicos. Ella decidió
+NO cerrar todavía "quién paga" (fijo por categoría vs. quien toque el botón): cada pareja paga distinto
+y quiere una solución general que sirva a todas. Al retomar: proponer un diseño único y flexible (p. ej.
+"quién paga" opcional por categoría, con valor por defecto = quien registra) y esperar su OK antes de
+construir. No tocar `calcular_saldo_pareja`/`liquidar_saldo` sin necesidad.
+También pendiente (de antes): revisar con ella la sección de VIAJES en Gastos.
+
 ## Ajustes de Inicio/Hoy, Gastos y Metas pedidos por el usuario (2026-09-22) ✅
 Pedido con 7 capturas: foto de perfil en Inicio, mover el selector de país/moneda, cambiar íconos
 del nav y del asistente, separar visualmente gastos locales de viajes en Gastos (con viajes con
