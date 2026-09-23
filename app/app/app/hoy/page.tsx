@@ -313,7 +313,10 @@ export default function HoyPage() {
       if (!cid) return;
       const ahora = new Date();
       const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
-      const [paisPareja, presupuestoReal, gastadoReal, nombres, rachaReal, metas] = await Promise.all([
+      // Cada dato carga por separado: antes un solo fallo (por ejemplo la foto o la racha)
+      // tumbaba TODA la tarjeta y parecía que el presupuesto y los gastos no se habían guardado
+      // (reporte real de la usuaria, 2026-09-23).
+      const [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas] = await Promise.allSettled([
         obtenerPaisPareja(supabase, cid),
         obtenerPresupuestoPareja(supabase, cid),
         obtenerGastadoDelMes(supabase, cid, prefijoMes),
@@ -321,15 +324,17 @@ export default function HoyPage() {
         obtenerRachaPareja(supabase, cid),
         listarMetas(supabase, cid),
       ]);
-      setPais(paisPareja);
-      setPresupuesto(presupuestoReal);
-      setGastado(gastadoReal);
-      setNombrePropio(nombres.propio);
-      setNombreOtro(nombres.otro);
-      setAvatarPropio(nombres.avatarPropio);
-      setAvatarOtro(nombres.avatarOtro);
-      setRacha(rachaReal);
-      setMetaPrincipal(metas[0] ?? null);
+      if (rPais.status === 'fulfilled') setPais(rPais.value);
+      if (rPresupuesto.status === 'fulfilled') setPresupuesto(rPresupuesto.value);
+      if (rGastado.status === 'fulfilled') setGastado(rGastado.value);
+      if (rNombres.status === 'fulfilled') {
+        setNombrePropio(rNombres.value.propio);
+        setNombreOtro(rNombres.value.otro);
+        setAvatarPropio(rNombres.value.avatarPropio);
+        setAvatarOtro(rNombres.value.avatarOtro);
+      }
+      if (rRacha.status === 'fulfilled') setRacha(rRacha.value);
+      if (rMetas.status === 'fulfilled') setMetaPrincipal(rMetas.value[0] ?? null);
       setCargandoMeta(false);
     })();
   }, [supabase]);
@@ -469,7 +474,7 @@ export default function HoyPage() {
           </span>
           <span className="flex-1 text-left">
             <span className="block text-[12px] font-medium text-[var(--text-tertiary)]">País y moneda</span>
-            <span className="block text-[13px] font-medium text-[var(--text-primary)]">{paisPorCodigo(pais)?.nombre ?? 'Sin elegir todavía'}</span>
+            <span className="block text-[13px] font-medium text-[var(--text-primary)]">{paisPorCodigo(pais) ? `${paisPorCodigo(pais)?.nombre} · ${paisPorCodigo(pais)?.moneda}` : 'Sin elegir todavía'}</span>
           </span>
           <CaretRight size={14} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
         </button>
