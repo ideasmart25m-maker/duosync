@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Send, Sparkles, Loader2 } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 
 interface Mensaje {
   rol: 'user' | 'assistant';
@@ -80,7 +80,10 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
       >
         <div className="flex items-center justify-between border-b border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] p-4">
           <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--text-primary)]">
-            <Sparkles size={16} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
+            <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-2)]">
+              {/* eslint-disable-next-line @next/next/no-img-element -- ícono propio del asistente */}
+              <img src="/icons/robot-asistente.png" alt="" className="size-full object-cover" />
+            </span>
             Asistente
           </span>
           <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex size-9 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]">

@@ -8,7 +8,7 @@
 // el estado del componente), la fecha y el monto objetivo estaban fijos en el código, y
 // "+ Nueva meta juntos" no tenía ninguna acción conectada.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
 import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles } from 'lucide-react';
@@ -49,7 +49,7 @@ function fechaLarga(iso: string): string {
 // una decena de partículas salen desde el centro y caen con gravedad + rotación, SOLO al
 // llegar al 100% de la meta (hito real, no cualquier aporte — 11-DISENO-EMOCIONAL: celebrar
 // solo lo que de verdad se ganó). Colores de la propia marca, nunca confeti multicolor genérico.
-const COLORES_CONFETI = ['var(--accent)', 'var(--accent-2)', 'var(--cat-amber)'];
+const COLORES_CONFETI = ['var(--bg)', 'var(--accent)', 'var(--cat-amber)'];
 function ConfettiMeta() {
   const particulas = useMemo(
     () =>
@@ -89,12 +89,16 @@ function FormularioMeta({
   inicial,
   guardando,
   textoBoton,
+  sobreVerde,
   onGuardar,
   onCancelar,
 }: {
   inicial?: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null };
   guardando: boolean;
   textoBoton: string;
+  // true cuando el formulario vive DENTRO de la tarjeta verde (editar meta existente) — el botón
+  // "Cancelar" necesita texto claro en vez del gris pensado para fondo blanco (poco contraste ahí).
+  sobreVerde?: boolean;
   onGuardar: (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => void;
   onCancelar: () => void;
 }) {
@@ -138,14 +142,18 @@ function FormularioMeta({
           type="button"
           onClick={onCancelar}
           disabled={guardando}
-          className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
+          className={`flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium disabled:opacity-50 [touch-action:manipulation] ${
+            sobreVerde ? 'text-[var(--bg)] opacity-80' : 'text-[var(--text-tertiary)]'
+          }`}
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={!nombre.trim() || !montoObjetivo || guardando}
-          className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+          className={`flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] text-[15px] font-semibold disabled:opacity-50 [touch-action:manipulation] ${
+            sobreVerde ? 'bg-[var(--bg)] text-[var(--accent-2)]' : 'bg-[var(--accent)] text-[var(--bg)]'
+          }`}
         >
           {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
           {guardando ? 'Guardando…' : textoBoton}
@@ -230,7 +238,7 @@ function TarjetaMeta({
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-5 shadow-[var(--shadow-hero)]">
+    <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
       {metaCumplida && <ConfettiMeta />}
 
       {editando ? (
@@ -238,6 +246,7 @@ function TarjetaMeta({
           inicial={{ nombre: meta.nombre, montoObjetivo: meta.montoObjetivo, fechaObjetivo: meta.fechaObjetivo }}
           guardando={guardandoEdicion}
           textoBoton="Guardar cambios"
+          sobreVerde
           onGuardar={guardarEdicion}
           onCancelar={() => setEditando(false)}
         />
@@ -249,39 +258,39 @@ function TarjetaMeta({
               onClick={() => setEditando(true)}
               className="flex items-center gap-1.5 text-left [touch-action:manipulation]"
             >
-              <h2 className="text-[19px] font-semibold text-[var(--text-primary)]">{meta.nombre}</h2>
-              <Pencil size={13} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+              <h2 className="text-[19px] font-semibold">{meta.nombre}</h2>
+              <Pencil size={13} strokeWidth={2.2} className="opacity-70" aria-hidden="true" />
             </button>
             <motion.span
               key={celebrar ? 'on' : 'off'}
               animate={celebrar ? { scale: [1, 1.15, 1] } : { scale: 1 }}
               transition={{ duration: 0.4 }}
-              className="text-[15px] font-bold tabular-nums text-[var(--accent)]"
+              className="flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--bg)_18%,transparent)] px-2 py-1 text-[12px] font-bold tabular-nums"
             >
               {pct}%
             </motion.span>
           </div>
 
           {meta.fechaObjetivo && (
-            <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--text-tertiary)]">
+            <p className="mt-1 flex items-center gap-1.5 text-[12px] opacity-80">
               <CalendarDays size={13} strokeWidth={2} aria-hidden="true" />
               Meta para el {fechaLarga(meta.fechaObjetivo)}
             </p>
           )}
 
-          <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">
+          <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight [font-family:var(--font-display)]">
             {formatoMoneda(montoMostrado, pais)}
           </p>
-          <p className="mt-0.5 text-[12px] text-[var(--text-tertiary)]">
+          <p className="mt-0.5 text-[12px] opacity-80">
             de <span className="font-semibold tabular-nums">{formatoMoneda(meta.montoObjetivo, pais)}</span> — su meta total
           </p>
 
           {/* La semilla que siembran hoy se vuelve el árbol de su meta cumplida — misma
               metáfora del Hero de la landing, ahora con más espacio y detalle. */}
           <div className="relative mt-6 flex h-9 items-center justify-between">
-            <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]" />
+            <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[color-mix(in_oklab,var(--bg)_20%,transparent)]" />
             <motion.div
-              className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--accent)]"
+              className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--bg)]"
               initial={{ width: reducido ? `${pct}%` : 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -291,22 +300,20 @@ function TarjetaMeta({
                 key={i}
                 className={`relative z-10 flex size-9 items-center justify-center rounded-full ${
                   n.activo
-                    ? i === nodos.length - 1
-                      ? 'bg-[var(--accent-2)]'
-                      : 'bg-[var(--accent)]'
-                    : 'border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] bg-[var(--surface)] opacity-60'
+                    ? 'bg-[var(--bg)]'
+                    : 'border border-[color-mix(in_oklab,var(--bg)_35%,transparent)] bg-[color-mix(in_oklab,var(--bg)_14%,transparent)] opacity-70'
                 }`}
               >
-                <n.icono size={17} strokeWidth={2.2} color={n.activo ? 'var(--bg)' : 'var(--text-tertiary)'} aria-hidden="true" />
+                <n.icono size={17} strokeWidth={2.2} color={n.activo ? 'var(--accent-2)' : 'var(--bg)'} aria-hidden="true" />
               </span>
             ))}
           </div>
-          <div className="mt-1.5 flex justify-between text-[12px] text-[var(--text-tertiary)]">
+          <div className="mt-1.5 flex justify-between text-[12px] opacity-80">
             <span>Hoy siembran</span>
             <span>Su meta, cumplida</span>
           </div>
 
-          {error && <p className="mt-3 text-[12px] font-medium text-[var(--danger)]">{error}</p>}
+          {error && <p className="mt-3 text-[12px] font-medium">{error}</p>}
 
           <AnimatePresence initial={false} mode="wait">
             {aportando ? (
@@ -331,7 +338,8 @@ function TarjetaMeta({
                     if (e.key === 'Enter') e.preventDefault();
                   }}
                   placeholder="¿Cuánto van a aportar?"
-                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                  style={{ '--focus-ring': 'var(--bg)' } as CSSProperties}
+                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_30%,transparent)] bg-[color-mix(in_oklab,var(--bg)_12%,transparent)] px-4 text-[16px] tabular-nums text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)]"
                 />
                 <div className="mt-2 flex gap-2">
                   <button
@@ -341,14 +349,14 @@ function TarjetaMeta({
                       setMontoAporte('');
                     }}
                     disabled={guardandoAporte}
-                    className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
+                    className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[15px] font-medium opacity-80 disabled:opacity-50 [touch-action:manipulation]"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={!montoAporte || guardandoAporte}
-                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--bg)] text-[15px] font-semibold text-[var(--accent-2)] disabled:opacity-50 [touch-action:manipulation]"
                   >
                     {guardandoAporte ? <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Plus size={16} strokeWidth={2.4} aria-hidden="true" />}
                     {guardandoAporte ? 'Guardando…' : 'Confirmar aporte'}
@@ -362,7 +370,7 @@ function TarjetaMeta({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setAportando(true)}
                 disabled={pct >= 100}
-                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--bg)] text-[15px] font-semibold text-[var(--accent-2)] disabled:opacity-50 [touch-action:manipulation]"
               >
                 <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
                 {pct >= 100 ? 'Meta cumplida' : 'Aportar a la meta'}

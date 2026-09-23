@@ -1,5 +1,48 @@
 # ESTADO — Fairsy
-Última actualización: 2026-09-16 | Sesión actual: 6
+Última actualización: 2026-09-22 | Sesión actual: 7
+
+## Ajustes de Inicio/Hoy, Gastos y Metas pedidos por el usuario (2026-09-22) ✅
+Pedido con 7 capturas: foto de perfil en Inicio, mover el selector de país/moneda, cambiar íconos
+del nav y del asistente, separar visualmente gastos locales de viajes en Gastos (con viajes con
+NOMBRE propio, no solo "gastos en otra moneda"), letras en las fechas de Servicios públicos, y la
+tarjeta de Metas con el mismo verde de "Pregunta de hoy". Usuario aprobó el plan con "Si".
+
+**Inicio/Hoy** (`app/app/app/hoy/page.tsx`, `app/app/app/nosotros/page.tsx`, `app/lib/preguntas.ts`):
+foto de pareja subible (bucket público nuevo `avatares`, migración `20260922120000_avatar_pareja.sql`
+— `profiles.avatar_url` + RLS `usuario_sube_su_avatar`/`usuario_reemplaza_su_avatar`); selector de
+país/moneda se movió de Nosotros al tope de la tarjeta "Nuestro presupuesto mensual", con las
+etiquetas renombradas a "Gastado a hoy"/"Saldo"; nav inferior e ícono del asistente reemplazados por
+los íconos propios del usuario (`app/public/icons/`, extraídos y con fondo transparente de su hoja
+de íconos). Recomendé NO usar una foto de stock antes/después en Inicio (se lo dije, no lo construí).
+
+**Gastos** (`app/app/app/gastos/page.tsx`, `app/lib/viajes.ts` nuevo, `app/lib/gastos.ts`): se agregó
+la tabla `viajes` (migración `20260922130000_viajes.sql`, RLS igual al resto) para que un viaje tenga
+NOMBRE propio ("Viaje New York") además de su moneda — antes un "viaje" era solo "gastos en dólares",
+sin nombre. Diseño deliberadamente liviano: `viaje_id` es columna nueva en `expenses`, SOLO para
+agrupar/nombrar en pantalla — `calcular_saldo_pareja`/`liquidar_saldo` NO se tocaron, siguen
+calculando por `expenses.moneda` como siempre (alto riesgo tocar esas funciones sin necesidad).
+Cambios visuales: categorías pasaron de chips horizontales a una lista vertical con barra de
+progreso (% del mes) y total por categoría; "Total del mes" separado en tarjetas: una para la casa,
+una aparte (con borde punteado, para que se note que es otra plata) por cada viaje con nombre; la
+lista de gastos del mes también se partió en secciones "En casa" / cada viaje, nunca mezclados en
+una sola lista. Ícono del asistente de IA cambiado al robot propio del usuario.
+
+**Metas** (`app/app/app/metas/page.tsx`): la tarjeta de meta pasó de fondo blanco a
+`bg-[var(--accent-2)]` (el mismo verde de la tarjeta "Pregunta de hoy" en Inicio), con todo el texto
+e inputs internos adaptados a fondo oscuro (mismo patrón de `color-mix(in_oklab,var(--bg)_X%,...)`
+que ya usaba Hoy) para que las dos tarjetas hero de la app se sientan de la misma familia visual.
+
+Verificado: `tsc --noEmit` ✓ y `npm run build` ✓ (30 rutas) después de cada bloque de cambios, dev
+server sin errores en consola. ⚠️ Verificación visual pendiente del lado del usuario: Gastos/Metas
+exigen sesión real con datos de pareja (RLS), no se pueden ver renderizadas en local sin login real
+— mismo límite ya documentado varias veces abajo para estas pantallas. Falta que Gloria confirme en
+el sitio publicado que las 3 pantallas se ven bien y que crear un viaje con nombre funciona de punta
+a punta (crear viaje → registrar gasto en él → verlo separado de la casa).
+⚠️ Pendiente de decisión del usuario (se le preguntó, no se decidió sola): si además de la foto de
+perfil quiere una imagen de stock "antes/después" en Inicio — recomendé que no, a la espera de su
+respuesta.
+Commit preparado, sin push (el usuario hace push desde su propia terminal, como siempre en este
+proyecto).
 
 ## Cambio de marca: DuoSync Wallet → Fairsy (2026-09-16) ✅
 - El dominio `duosyncwallet.app` no se pudo comprar; el usuario compró **`fairsy.lat`** y pidió renombrar

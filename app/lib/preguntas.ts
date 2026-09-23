@@ -84,15 +84,43 @@ export async function obtenerHistorialConexion(supabase: SupabaseClient, coupleI
 export interface NombresPareja {
   propio: string;
   otro: string | null; // null si todavía no se ha unido nadie más
+  avatarPropio: string | null;
+  avatarOtro: string | null;
 }
 
 // Nombre real de los dos integrantes (antes "Mateo & Sofía" fijos en el código) — necesita el
 // permiso nuevo de `profiles` (ver perfil de tu pareja) agregado en la misma migración.
 export async function obtenerNombresPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<NombresPareja> {
-  const { data, error } = await supabase.from('couple_members').select('user_id, profiles(nombre)').eq('couple_id', coupleId);
+  const { data, error } = await supabase.from('couple_members').select('user_id, profiles(nombre, avatar_url)').eq('couple_id', coupleId);
   if (error) throw error;
-  const filas = (data ?? []) as unknown as { user_id: string; profiles: { nombre: string } | null }[];
-  const propio = filas.find((f) => f.user_id === miUserId)?.profiles?.nombre ?? 'Tú';
-  const otro = filas.find((f) => f.user_id !== miUserId)?.profiles?.nombre ?? null;
-  return { propio, otro };
+  const filas = (data ?? []) as unknown as { user_id: string; profiles: { nombre: string; avatar_url: string | null } | null }[];
+  const mio = filas.find((f) => f.user_id === miUserId);
+  const suyo = filas.find((f) => f.user_id !== miUserId);
+  return {
+    propio: mio?.profiles?.nombre ?? 'Tú',
+    otro: suyo?.profiles?.nombre ?? null,
+    avatarPropio: mio?.profiles?.avatar_url ?? null,
+    avatarOtro: suyo?.profiles?.avatar_url ?? null,
+  };
+}
+
+// Sube/reemplaza la foto de perfil del usuario actual (bucket público "avatares", un archivo
+// por persona en su propia carpeta — política RLS lo garantiza) y guarda la URL en su perfil.
+export async function subirAvatar(supabase: SupabaseClient, userId: string, archivo: File): Promise<string> {
+  const extension = archivo.name.split('.').pop() ?? 'jpg';
+  const ruta = `${userId}/foto.${extension}`;
+  const { error: errorSubida } = await supabase.storage.from('avatares').upload(ruta, archivo, { upsert: true, cacheControl: '3600' });
+  if (errorSubida) throw errorSubida;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('avatares').getPublicUrl(ruta);
+  // Cache-buster en la URL guardada: si la pareja ya había cargado la foto anterior, el navegador
+  // la tenía en caché bajo la misma URL — sin esto, la foto nueva no se veía hasta refrescar fuerte.
+  const urlConVersion = `${publicUrl}?v=${Date.now()}`;
+
+  const { error: errorPerfil } = await supabase.from('profiles').update({ avatar_url: urlConVersion }).eq('id', userId);
+  if (errorPerfil) throw errorPerfil;
+
+  return urlConVersion;
 }

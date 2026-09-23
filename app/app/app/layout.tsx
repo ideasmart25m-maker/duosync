@@ -8,18 +8,19 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sun, Receipt, Target, Heart, type Icon as PhosphorIcon } from '@phosphor-icons/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { SelectorPais } from '@/components/app/SelectorPais';
 
-// Phosphor (no Lucide) SOLO para el nav — un mismo set de íconos que pasa de trazo (inactivo)
-// a relleno sólido (activo) cambiando un solo prop `weight`, en vez de mezclar dos librerías
-// distintas para el mismo ícono según el estado (22-LIBRERIAS-Y-CRAFT.md).
-const DESTINOS: { href: string; label: string; icon: PhosphorIcon }[] = [
-  { href: '/app/hoy', label: 'Hoy', icon: Sun },
-  { href: '/app/gastos', label: 'Gastos', icon: Receipt },
-  { href: '/app/metas', label: 'Metas', icon: Target },
-  { href: '/app/nosotros', label: 'Nosotros', icon: Heart },
+// Set de íconos propio (pedido del usuario) en vez del set de Phosphor genérico — cada ícono
+// ya trae su propio color (naranja Inicio, verde azulado Gastos/Metas/Nosotros), así que el
+// estado activo/inactivo ya no se resuelve cambiando de color: el ícono siempre se ve a color
+// completo, y lo que cambia es la opacidad + el fondo detrás (mismo lenguaje del resto de la
+// app: pill neutro detrás del elemento en foco, nunca un color de acento distinto por pestaña).
+const DESTINOS = [
+  { href: '/app/hoy', label: 'Hoy', icono: '/icons/nav-inicio.png' },
+  { href: '/app/gastos', label: 'Gastos', icono: '/icons/nav-gastos.png' },
+  { href: '/app/metas', label: 'Metas', icono: '/icons/nav-metas.png' },
+  { href: '/app/nosotros', label: 'Nosotros', icono: '/icons/nav-nosotros.png' },
 ];
 
 export default function AppInternaLayout({ children }: { children: ReactNode }) {
@@ -121,13 +122,14 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
               <motion.span
                 whileTap={{ scale: 0.9 }}
                 className={`flex size-12 items-center justify-center rounded-full transition-colors duration-150 ${
-                  activo ? 'bg-[var(--accent)] shadow-[0_4px_12px_color-mix(in_oklab,var(--accent)_40%,transparent)]' : ''
+                  activo ? 'bg-[var(--surface-2)] shadow-[var(--shadow-1)]' : ''
                 }`}
               >
-                <d.icon
-                  size={20}
-                  weight={activo ? 'fill' : 'regular'}
-                  color={activo ? 'var(--bg)' : 'var(--text-tertiary)'}
+                {/* eslint-disable-next-line @next/next/no-img-element -- set de íconos propio, archivo estático fijo */}
+                <img
+                  src={d.icono}
+                  alt=""
+                  className={`size-6 object-contain transition-opacity duration-150 ${activo ? 'opacity-100' : 'opacity-45'}`}
                   aria-hidden="true"
                 />
               </motion.span>

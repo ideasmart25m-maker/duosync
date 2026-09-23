@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch } from '@phosphor-icons/react';
+import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch, Camera, GlobeHemisphereWest, CaretRight } from '@phosphor-icons/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
 import {
@@ -18,10 +18,12 @@ import {
   responderPreguntaHoy,
   obtenerRachaPareja,
   obtenerNombresPareja,
+  subirAvatar,
   type PreguntaDB,
 } from '@/lib/preguntas';
 import { listarMetas, type MetaDB } from '@/lib/metas';
-import { formatoMoneda } from '@/lib/paises';
+import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
+import { SelectorPais } from '@/components/app/SelectorPais';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
@@ -276,7 +278,16 @@ export default function HoyPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [nombrePropio, setNombrePropio] = useState('Tú');
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
+  const [avatarPropio, setAvatarPropio] = useState<string | null>(null);
+  const [avatarOtro, setAvatarOtro] = useState<string | null>(null);
+  const [subiendoAvatar, setSubiendoAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [racha, setRacha] = useState(0);
+
+  // País/moneda — antes vivía solo al fondo de Nosotros; el usuario pidió subirlo a esta
+  // tarjeta, donde de verdad se usa (define en qué moneda se ven presupuesto/gastado/saldo).
+  const [cambiandoPais, setCambiandoPais] = useState(false);
+  const [guardandoPais, setGuardandoPais] = useState(false);
 
   // Meta real (primera de la pareja) para la tarjeta de vista previa — antes mostraba siempre
   // el dato de ejemplo fijo "Viaje a Cartagena, 31%" (defecto real reportado por el usuario:
@@ -315,11 +326,37 @@ export default function HoyPage() {
       setGastado(gastadoReal);
       setNombrePropio(nombres.propio);
       setNombreOtro(nombres.otro);
+      setAvatarPropio(nombres.avatarPropio);
+      setAvatarOtro(nombres.avatarOtro);
       setRacha(rachaReal);
       setMetaPrincipal(metas[0] ?? null);
       setCargandoMeta(false);
     })();
   }, [supabase]);
+
+  const cambiarPais = async (codigo: string) => {
+    setGuardandoPais(true);
+    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
+    setGuardandoPais(false);
+    if (!error) {
+      setPais(codigo);
+      setCambiandoPais(false);
+    }
+  };
+
+  const elegirFotoDePerfil = async (archivo: File | undefined) => {
+    if (!archivo || !userId) return;
+    setSubiendoAvatar(true);
+    try {
+      const url = await subirAvatar(supabase, userId, archivo);
+      setAvatarPropio(url);
+    } catch {
+      // Silencioso a propósito: no es una acción crítica, y el usuario ve que la foto
+      // simplemente no cambió — puede intentar de nuevo cuando quiera.
+    } finally {
+      setSubiendoAvatar(false);
+    }
+  };
 
   const guardarPresupuesto = async () => {
     const valor = Number(borradorPresupuesto);
@@ -361,16 +398,51 @@ export default function HoyPage() {
             {nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}
           </h1>
         </div>
-        <Link href="/app/nosotros" aria-label="Ver Nosotros" className="flex -space-x-2 [touch-action:manipulation]">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent-2)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
-            {nombrePropio[0]?.toUpperCase() ?? '?'}
-          </span>
+        <div className="flex -space-x-2">
+          {/* Burbuja propia: sube/cambia la foto de perfil real (pedido del usuario) — antes
+              solo mostraba la inicial, sin forma de ponerle una foto de verdad. */}
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            aria-label="Cambiar tu foto de perfil"
+            disabled={subiendoAvatar}
+            className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bg)] bg-[var(--accent-2)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)] [touch-action:manipulation] disabled:opacity-70"
+          >
+            {avatarPropio ? (
+              // eslint-disable-next-line @next/next/no-img-element -- URL pública dinámica del bucket, no un asset local
+              <img src={avatarPropio} alt="" className="size-full object-cover" />
+            ) : (
+              nombrePropio[0]?.toUpperCase() ?? '?'
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-[color-mix(in_oklab,black_35%,transparent)] opacity-0 hover:opacity-100">
+              {subiendoAvatar ? (
+                <CircleNotch size={13} strokeWidth={2.4} className="animate-spin" color="var(--bg)" aria-hidden="true" />
+              ) : (
+                <Camera size={13} strokeWidth={2.4} color="var(--bg)" aria-hidden="true" />
+              )}
+            </span>
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              elegirFotoDePerfil(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
           {nombreOtro && (
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
-              {nombreOtro[0]?.toUpperCase() ?? '?'}
+            <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[12px] font-bold text-[var(--bg)] shadow-[var(--shadow-1)]">
+              {avatarOtro ? (
+                // eslint-disable-next-line @next/next/no-img-element -- URL pública dinámica del bucket
+                <img src={avatarOtro} alt="" className="size-full object-cover" />
+              ) : (
+                nombreOtro[0]?.toUpperCase() ?? '?'
+              )}
             </span>
           )}
-        </Link>
+        </div>
       </motion.div>
 
       <motion.div {...entrada(0.06)}>
@@ -385,6 +457,23 @@ export default function HoyPage() {
         {...entrada(0.12)}
         className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
       >
+        {/* País/moneda — antes vivía al fondo de Nosotros, lejos de donde de verdad se usa
+            (define en qué moneda se ven presupuesto/gastado/saldo, justo debajo). */}
+        <button
+          type="button"
+          onClick={() => setCambiandoPais(true)}
+          className="mb-3 flex w-full items-center gap-2 border-b border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] pb-3 [touch-action:manipulation]"
+        >
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]">
+            <GlobeHemisphereWest size={14} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
+          </span>
+          <span className="flex-1 text-left">
+            <span className="block text-[12px] font-medium text-[var(--text-tertiary)]">País y moneda</span>
+            <span className="block text-[13px] font-medium text-[var(--text-primary)]">{paisPorCodigo(pais)?.nombre ?? 'Sin elegir todavía'}</span>
+          </span>
+          <CaretRight size={14} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
+        </button>
+
         {editandoPresupuesto ? (
           <form
             className="flex flex-col gap-2"
@@ -447,7 +536,7 @@ export default function HoyPage() {
                 </p>
                 <div className="mt-3 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-[15px]">
-                    <span className="text-[var(--text-secondary)]">Gastado{mesLabel ? ` en ${mesLabel}` : ''}</span>
+                    <span className="text-[var(--text-secondary)]">Gastado a hoy{mesLabel ? ` (${mesLabel})` : ''}</span>
                     <span
                       className={`tabular-nums font-semibold ${gastado > presupuesto ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
                     >
@@ -455,7 +544,7 @@ export default function HoyPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[15px]">
-                    <span className="text-[var(--text-secondary)]">Disponible</span>
+                    <span className="text-[var(--text-secondary)]">Saldo</span>
                     <span className={`tabular-nums font-semibold ${(disponible ?? 0) < 0 ? 'text-[var(--danger)]' : 'text-[var(--accent)]'}`}>
                       {formatoMoneda(disponible ?? 0, pais)}
                     </span>
@@ -530,6 +619,10 @@ export default function HoyPage() {
           <span className="flex-1 text-[14px] font-semibold text-[var(--accent)]">Pongan su primera meta juntos</span>
           <ArrowRight size={16} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
         </MotionLink>
+      )}
+
+      {cambiandoPais && (
+        <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />
       )}
     </div>
   );

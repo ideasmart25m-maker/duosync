@@ -11,6 +11,7 @@ export interface GastoDB {
   nota: string | null;
   splitPercent: number | null; // override puntual del % de la categoría; null = usa el de la categoría
   moneda: string | null; // 'USD'/'EUR'/'GBP' si es un gasto de viaje; null = moneda normal de la casa
+  viajeId: string | null; // a qué viaje con nombre propio pertenece (null = sin viaje asignado, aunque tenga moneda)
 }
 
 // Toda pantalla conectada necesita saber a qué pareja pertenece el usuario antes de
@@ -135,7 +136,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
 
   const { data, error } = await supabase
     .from('expenses')
-    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda, viaje_id')
     .eq('couple_id', coupleId)
     .gte('fecha', desde)
     .lt('fecha', hasta)
@@ -150,6 +151,7 @@ export async function listarGastosDelMes(supabase: SupabaseClient, coupleId: str
     nota: g.nota,
     splitPercent: g.split_percent,
     moneda: g.moneda,
+    viajeId: g.viaje_id,
   }));
 }
 
@@ -210,7 +212,7 @@ export async function consultarEscaneoRecibo(supabase: SupabaseClient, scanId: s
 export async function crearGasto(
   supabase: SupabaseClient,
   coupleId: string,
-  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string; splitPercent?: number; moneda?: string | null }
+  gasto: { categoriaId: string; monto: number; nota?: string; receiptScanId?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }
 ): Promise<GastoDB> {
   const {
     data: { user },
@@ -228,8 +230,9 @@ export async function crearGasto(
       receipt_scan_id: gasto.receiptScanId ?? null,
       split_percent: gasto.splitPercent ?? null,
       moneda: gasto.moneda ?? null,
+      viaje_id: gasto.viajeId ?? null,
     })
-    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda, viaje_id')
     .single();
   if (error) throw error;
   logEvent(supabase, 'gasto_registrado', user.id, coupleId, { categoriaId: gasto.categoriaId, moneda: gasto.moneda ?? null });
@@ -242,6 +245,7 @@ export async function crearGasto(
     nota: data.nota,
     splitPercent: data.split_percent,
     moneda: data.moneda,
+    viajeId: data.viaje_id,
   };
 }
 
@@ -256,7 +260,7 @@ export interface SaldoPorMoneda {
 export async function actualizarGasto(
   supabase: SupabaseClient,
   gastoId: string,
-  cambios: { categoriaId?: string; monto?: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null }
+  cambios: { categoriaId?: string; monto?: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null; viajeId?: string | null }
 ): Promise<GastoDB> {
   const patch: Record<string, unknown> = {};
   if (cambios.categoriaId !== undefined) patch.category_id = cambios.categoriaId;
@@ -264,12 +268,13 @@ export async function actualizarGasto(
   if (cambios.nota !== undefined) patch.nota = cambios.nota || null;
   if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
   if (cambios.moneda !== undefined) patch.moneda = cambios.moneda;
+  if (cambios.viajeId !== undefined) patch.viaje_id = cambios.viajeId;
 
   const { data, error } = await supabase
     .from('expenses')
     .update(patch)
     .eq('id', gastoId)
-    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda')
+    .select('id, category_id, monto, fecha, registrado_por, nota, split_percent, moneda, viaje_id')
     .single();
   if (error) throw error;
   return {
@@ -281,6 +286,7 @@ export async function actualizarGasto(
     nota: data.nota,
     splitPercent: data.split_percent,
     moneda: data.moneda,
+    viajeId: data.viaje_id,
   };
 }
 

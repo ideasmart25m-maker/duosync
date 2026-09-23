@@ -12,6 +12,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { actualizarCategoria } from '@/lib/gastos';
 
+// Orden fijo pensado para "Servicios públicos": Acueducto, Energía, Gas, Internet — el usuario
+// agrega las fechas en ese orden y cada una se identifica con su letra (no hay forma de saber
+// desde la base de datos cuál factura es cuál, así que esto es solo una guía visual de orden).
+const LETRAS_SERVICIOS = ['A', 'E', 'G', 'I'];
+const NOMBRES_SERVICIOS = ['Acueducto', 'Energía', 'Gas', 'Internet'];
+
 function FilaCategoria({
   categoria,
   supabase,
@@ -107,17 +113,42 @@ function FilaCategoria({
               ? 'Un día por cada factura (acueducto, energía, gas…)'
               : 'Vence el día de cada mes'}
           </span>
+          {categoria.nombre === 'Servicios públicos' && (categoria.diasVencimiento?.length ?? 0) > 1 && (
+            <p className="text-[11px] text-[var(--text-tertiary)]">
+              {LETRAS_SERVICIOS.slice(0, categoria.diasVencimiento?.length ?? 0)
+                .map((letra, i) => `${letra} = ${NOMBRES_SERVICIOS[i]}`)
+                .join(' · ')}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {(categoria.diasVencimiento ?? [1]).map((dia, indice) => (
               <div
                 key={indice}
                 className="flex items-center gap-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] pl-2 pr-1"
               >
+                {/* Letra que identifica cada factura (Acueducto/Energía/Gas/Internet…) — antes
+                    eran solo números sueltos, sin forma de saber a cuál servicio correspondía
+                    cada fecha (pedido real del usuario). Solo aplica a Servicios públicos, que
+                    es la única categoría pensada para agrupar varias facturas distintas. */}
+                {categoria.nombre === 'Servicios públicos' && (categoria.diasVencimiento?.length ?? 0) > 1 && (
+                  <span
+                    className="flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[var(--bg)]"
+                    style={{ backgroundColor: color }}
+                    aria-hidden="true"
+                  >
+                    {LETRAS_SERVICIOS[indice] ?? indice + 1}
+                  </span>
+                )}
                 <input
                   type="number"
                   min={1}
                   max={31}
                   value={dia}
+                  aria-label={
+                    categoria.nombre === 'Servicios públicos' && (categoria.diasVencimiento?.length ?? 0) > 1
+                      ? `Día de vencimiento de ${NOMBRES_SERVICIOS[indice] ?? `factura ${indice + 1}`}`
+                      : 'Día de vencimiento'
+                  }
                   onChange={(e) => {
                     const nuevoDia = Math.min(31, Math.max(1, Number(e.target.value) || 1));
                     const dias = [...(categoria.diasVencimiento ?? [1])];

@@ -6,12 +6,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, Globe2, ChevronRight } from 'lucide-react';
+import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
-import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
+import { obtenerCoupleId } from '@/lib/gastos';
 import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja } from '@/lib/preguntas';
-import { paisPorCodigo } from '@/lib/paises';
-import { SelectorPais } from '@/components/app/SelectorPais';
 
 const DIAS_SEMANA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -21,9 +19,6 @@ const DINAMICAS = [
 ];
 
 export default function NosotrosPage() {
-  const [pais, setPais] = useState<string | null>(null);
-  const [cambiandoPais, setCambiandoPais] = useState(false);
-  const [guardandoPais, setGuardandoPais] = useState(false);
   const [racha, setRacha] = useState(0);
   const [historial, setHistorial] = useState<boolean[]>(Array(28).fill(false));
   const [nombrePropio, setNombrePropio] = useState('Tú');
@@ -45,14 +40,12 @@ export default function NosotrosPage() {
       // Racha, historial de 28 días y nombres reales — antes eran datos de ejemplo fijos
       // (hallazgo de la auditoría 2026-09-08: "X y Y llevan N días" nunca reflejaba lo que la
       // pareja de verdad hacía).
-      const [paisPareja, rachaReal, historialReal, nombres] = await Promise.all([
-        obtenerPaisPareja(supabase, cid),
+      const [rachaReal, historialReal, nombres] = await Promise.all([
         obtenerRachaPareja(supabase, cid),
         obtenerHistorialConexion(supabase, cid),
         obtenerNombresPareja(supabase, cid, user.id),
       ]);
       if (cancelado) return;
-      setPais(paisPareja);
       setRacha(rachaReal);
       setHistorial(historialReal);
       setNombrePropio(nombres.propio);
@@ -68,17 +61,6 @@ export default function NosotrosPage() {
   for (let i = 0; i < 4; i++) {
     semanas.push(historial.slice(i * 7, i * 7 + 7));
   }
-
-  const cambiarPais = async (codigo: string) => {
-    setGuardandoPais(true);
-    const supabase = crearClienteNavegador();
-    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
-    setGuardandoPais(false);
-    if (!error) {
-      setPais(codigo);
-      setCambiandoPais(false);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -160,24 +142,6 @@ export default function NosotrosPage() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setCambiandoPais(true)}
-        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 [touch-action:manipulation]"
-      >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]">
-          <Globe2 size={16} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
-        </span>
-        <span className="flex-1 text-left">
-          <span className="block text-[15px] font-medium text-[var(--text-primary)]">País y moneda</span>
-          <span className="block text-[12px] text-[var(--text-tertiary)]">{paisPorCodigo(pais)?.nombre ?? 'Sin elegir todavía'}</span>
-        </span>
-        <ChevronRight size={16} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
-      </button>
-
-      {cambiandoPais && (
-        <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />
-      )}
     </div>
   );
 }

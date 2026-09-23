@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Bot, Check, Scale, Minus, Tag, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, MapPin, Home } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -27,6 +27,7 @@ import {
   type GastoDB,
   type SaldoPorMoneda,
 } from '@/lib/gastos';
+import { listarViajes, crearViaje, type ViajeDB } from '@/lib/viajes';
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
@@ -46,27 +47,35 @@ function formatoFecha(iso: string): string {
 
 function FormularioGasto({
   categorias,
+  viajes,
   guardando,
+  creandoViaje,
   inicial,
   esEdicion,
   creandoCategoria,
   onGuardar,
   onCerrar,
   onCrearCategoria,
+  onCrearViaje,
 }: {
   categorias: CategoriaDB[];
+  viajes: ViajeDB[];
   guardando: boolean;
-  inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null };
+  creandoViaje: boolean;
+  inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null; viajeId?: string | null };
   esEdicion?: boolean;
   creandoCategoria: boolean;
-  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => void;
+  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => void;
   onCerrar: () => void;
   onCrearCategoria: (nombre: string) => void;
+  onCrearViaje: (nombre: string, moneda: string) => Promise<ViajeDB | null>;
 }) {
   const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState(inicial?.nota ?? '');
   const [moneda, setMoneda] = useState<string | null>(inicial?.moneda ?? null);
+  const [viajeId, setViajeId] = useState<string | null>(inicial?.viajeId ?? null);
+  const [nuevoViajeNombre, setNuevoViajeNombre] = useState<string | null>(null);
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
   const [reparto, setReparto] = useState(inicial?.splitPercent ?? categoriaActual?.splitPercent ?? 50);
@@ -94,7 +103,7 @@ function FormularioGasto({
         e.preventDefault();
         const valor = Number(monto);
         if (!valor || valor <= 0 || !categoriaId || guardando) return;
-        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto, moneda });
+        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto, moneda, viajeId: moneda ? viajeId : null });
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
@@ -206,7 +215,12 @@ function FormularioGasto({
             <button
               key={m.codigo}
               type="button"
-              onClick={() => setMoneda(m.codigo)}
+              onClick={() => {
+                setMoneda(m.codigo);
+                // Si la moneda cambia, el viaje elegido antes puede ser de otra — evita
+                // guardar un gasto en dólares dentro de un viaje que en realidad es en euros.
+                if (moneda !== m.codigo) setViajeId(null);
+              }}
               className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
                 moneda === m.codigo
                   ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
@@ -218,9 +232,67 @@ function FormularioGasto({
           ))}
         </div>
         {moneda !== null && (
-          <p className="mt-1.5 text-[12px] text-[var(--text-secondary)]">
-            Gasto de viaje — se guarda en {nombreMoneda(moneda)}, sin convertir, y se reparte aparte de las cuentas de la casa.
-          </p>
+          <div className="mt-3 rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
+            <p className="text-[12px] text-[var(--text-secondary)]">
+              Gasto de viaje en {nombreMoneda(moneda)}, sin convertir — se reparte y se ve aparte de las cuentas de la casa.
+            </p>
+            {/* Elegir a qué viaje pertenece (o crear uno nuevo) — pedido real del usuario:
+                antes un "viaje" era solo "gastos en esta moneda", sin nombre propio. */}
+            <p className="mt-2 text-[12px] font-medium text-[var(--text-tertiary)]">¿A qué viaje pertenece?</p>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {viajes
+                .filter((v) => v.moneda === moneda)
+                .map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setViajeId(v.id)}
+                    className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
+                      viajeId === v.id
+                        ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
+                        : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {v.nombre}
+                  </button>
+                ))}
+              {nuevoViajeNombre === null ? (
+                <button
+                  type="button"
+                  onClick={() => setNuevoViajeNombre('')}
+                  className="flex items-center gap-1 rounded-full border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_35%,transparent)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] [touch-action:manipulation]"
+                >
+                  <Plus size={12} strokeWidth={2.4} aria-hidden="true" />
+                  Nuevo viaje
+                </button>
+              ) : (
+                <div className="flex w-full items-center gap-2">
+                  <input
+                    autoFocus
+                    value={nuevoViajeNombre}
+                    onChange={(e) => setNuevoViajeNombre(e.target.value)}
+                    placeholder="Ej. Viaje New York"
+                    maxLength={60}
+                    className="h-9 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-3 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                  />
+                  <button
+                    type="button"
+                    disabled={!nuevoViajeNombre.trim() || creandoViaje}
+                    onClick={async () => {
+                      const nombre = nuevoViajeNombre.trim();
+                      const nuevo = await onCrearViaje(nombre, moneda);
+                      if (nuevo) setViajeId(nuevo.id);
+                      setNuevoViajeNombre(null);
+                    }}
+                    aria-label="Crear viaje"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                  >
+                    {creandoViaje ? <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Check size={14} strokeWidth={2.4} aria-hidden="true" />}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         )}
         {!ajustandoReparto ? (
           <button
@@ -292,6 +364,96 @@ function FormularioGasto({
   );
 }
 
+// Una fila de gasto — extraída para reusarla tanto en la lista de "En casa" como en la de cada
+// viaje, sin duplicar el JSX de edición/eliminación.
+function FilaGasto({
+  g,
+  categoriaPorId,
+  pais,
+  userId,
+  confirmandoEliminar,
+  eliminando,
+  onEditar,
+  onPedirEliminar,
+  onEliminar,
+}: {
+  g: GastoDB;
+  categoriaPorId: (id: string) => CategoriaDB | undefined;
+  pais: string | null;
+  userId: string | null;
+  confirmandoEliminar: string | null;
+  eliminando: string | null;
+  onEditar: (g: GastoDB) => void;
+  onPedirEliminar: (id: string | null) => void;
+  onEliminar: (id: string) => void;
+}) {
+  const cat = categoriaPorId(g.categoriaId);
+  const Icono = cat ? iconoDeCategoria(cat.icono) : iconoDeCategoria('circle');
+  return (
+    <li className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] bg-[var(--surface)] p-3">
+      <div className="flex items-center gap-3">
+        <span
+          className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
+          style={{ backgroundColor: cat ? colorDeCategoria(cat.color) : 'var(--cat-gray)' }}
+        >
+          <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block truncate text-[15px] font-medium text-[var(--text-primary)]">{g.nota || cat?.nombre || 'Gasto'}</span>
+          <span className="block text-[12px] text-[var(--text-tertiary)]">
+            {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
+          </span>
+        </span>
+        <span className="shrink-0 tabular-nums text-[15px] font-semibold text-[var(--text-primary)]">
+          {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
+        </span>
+      </div>
+
+      {confirmandoEliminar === g.id ? (
+        <div className="mt-2 flex items-center justify-end gap-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-2">
+          <span className="mr-auto text-[12px] text-[var(--text-secondary)]">¿Eliminar este gasto?</span>
+          <button
+            type="button"
+            onClick={() => onPedirEliminar(null)}
+            disabled={eliminando === g.id}
+            className="flex h-9 items-center justify-center rounded-[var(--radius-button)] px-3 text-[12px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => onEliminar(g.id)}
+            disabled={eliminando === g.id}
+            className="flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_12%,transparent)] px-3 text-[12px] font-semibold text-[var(--danger)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            {eliminando === g.id && <Loader2 size={13} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+            {eliminando === g.id ? 'Eliminando…' : 'Sí, eliminar'}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-1 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => onEditar(g)}
+            aria-label="Editar gasto"
+            className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
+          >
+            <Pencil size={14} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onPedirEliminar(g.id)}
+            aria-label="Eliminar gasto"
+            className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
+          >
+            <Trash2 size={14} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 function GastosInner() {
   const params = useSearchParams();
   const supabase = useMemo(() => crearClienteNavegador(), []);
@@ -303,6 +465,8 @@ function GastosInner() {
   const [pais, setPais] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
+  const [viajes, setViajes] = useState<ViajeDB[]>([]);
+  const [creandoViaje, setCreandoViaje] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [saldos, setSaldos] = useState<SaldoPorMoneda[] | null>(null);
@@ -340,6 +504,23 @@ function GastosInner() {
     [supabase]
   );
 
+  const crearViajePropio = useCallback(
+    async (nombre: string, moneda: string) => {
+      if (!coupleId) return null;
+      setCreandoViaje(true);
+      try {
+        const nuevo = await crearViaje(supabase, coupleId, nombre, moneda);
+        setViajes((prev) => [nuevo, ...prev]);
+        return nuevo;
+      } catch {
+        return null;
+      } finally {
+        setCreandoViaje(false);
+      }
+    },
+    [supabase, coupleId]
+  );
+
   // Carga inicial: sesión → pareja → categorías + gastos del mes visible.
   useEffect(() => {
     let cancelado = false;
@@ -357,16 +538,18 @@ function GastosInner() {
         if (cancelado) return;
         setCoupleId(cid);
 
-        const [cats, paisPareja, saldoActual] = await Promise.all([
+        const [cats, paisPareja, saldoActual, viajesPareja] = await Promise.all([
           listarCategorias(supabase, cid),
           obtenerPaisPareja(supabase, cid),
           obtenerSaldoPareja(supabase, cid, user.id),
+          listarViajes(supabase, cid),
           cargarGastos(cid, prefijoMes),
         ]);
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
         setSaldos(saldoActual);
+        setViajes(viajesPareja);
         setSaldoCargado(true);
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
@@ -396,20 +579,43 @@ function GastosInner() {
     () => gastos.filter((g) => filtro === 'todas' || g.categoriaId === filtro).sort((a, b) => (a.fecha < b.fecha ? 1 : -1)),
     [gastos, filtro]
   );
-  // Solo suma los gastos en la moneda de la casa — mezclar pesos con dólares/euros en un solo
-  // total no tendría sentido (son unidades distintas). Los de viaje se ven aparte en su fila.
-  const totalMes = gastosDelMes.filter((g) => !g.moneda).reduce((a, g) => a + g.monto, 0);
-  const totalesViajePorMoneda = useMemo(() => {
-    const mapa = new Map<string, number>();
+  // Nunca se mezclan: lo local (moneda de la casa) y lo de cada viaje se calculan y se muestran
+  // aparte — sumar pesos con dólares en un solo total no tendría sentido (son unidades distintas).
+  const gastosLocales = useMemo(() => gastosDelMes.filter((g) => !g.moneda), [gastosDelMes]);
+  const totalMes = gastosLocales.reduce((a, g) => a + g.monto, 0);
+
+  // Cada viaje con nombre propio es su propio grupo — los gastos de viaje sin `viajeId` (de antes
+  // de que existiera esta función) se agrupan por moneda como respaldo, con nombre genérico.
+  const gruposDeViaje = useMemo(() => {
+    const mapa = new Map<string, { nombre: string; moneda: string; total: number; gastos: GastoDB[] }>();
     for (const g of gastosDelMes) {
-      if (g.moneda) mapa.set(g.moneda, (mapa.get(g.moneda) ?? 0) + g.monto);
+      if (!g.moneda) continue;
+      const clave = g.viajeId ?? `sin-nombre-${g.moneda}`;
+      const viaje = g.viajeId ? viajes.find((v) => v.id === g.viajeId) : null;
+      const existente = mapa.get(clave);
+      if (existente) {
+        existente.total += g.monto;
+        existente.gastos.push(g);
+      } else {
+        mapa.set(clave, { nombre: viaje?.nombre ?? `Viaje en ${nombreMoneda(g.moneda)}`, moneda: g.moneda, total: g.monto, gastos: [g] });
+      }
     }
-    return Array.from(mapa.entries());
-  }, [gastosDelMes]);
+    return Array.from(mapa.values());
+  }, [gastosDelMes, viajes]);
 
   const categoriaPorId = useCallback((id: string) => categorias.find((c) => c.id === id), [categorias]);
 
-  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => {
+  // Totales por categoría del mes ENTERO (sin aplicar el filtro activo — si no, al tocar una
+  // categoría las demás barras se irían a cero) y solo de gastos locales, para la barra de
+  // progreso de la lista vertical.
+  const totalPorCategoria = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const g of gastos) if (!g.moneda) mapa.set(g.categoriaId, (mapa.get(g.categoriaId) ?? 0) + g.monto);
+    return mapa;
+  }, [gastos]);
+  const totalMesSinFiltro = useMemo(() => gastos.filter((g) => !g.moneda).reduce((a, g) => a + g.monto, 0), [gastos]);
+
+  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => {
     if (!coupleId || !userId) return;
     setGuardando(true);
     try {
@@ -448,7 +654,7 @@ function GastosInner() {
     setGastoEditando(g);
   };
 
-  const guardarEdicion = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null }) => {
+  const guardarEdicion = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => {
     if (!gastoEditando || !coupleId || !userId) return;
     setGuardando(true);
     try {
@@ -458,6 +664,7 @@ function GastosInner() {
         nota: g.nota ?? null,
         splitPercent: g.splitPercent ?? null,
         moneda: g.moneda ?? null,
+        viajeId: g.viajeId ?? null,
       });
       setGastos((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)));
       setGastoEditando(null);
@@ -579,36 +786,49 @@ function GastosInner() {
         </button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-col gap-1.5">
         <button
           type="button"
           onClick={() => setFiltro('todas')}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
+          className={`flex items-center justify-between rounded-[var(--radius-button)] border px-3 py-2 text-[13px] font-medium [touch-action:manipulation] ${
             filtro === 'todas'
-              ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-              : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
+              ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_8%,transparent)] text-[var(--accent)]'
+              : 'border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] text-[var(--text-secondary)]'
           }`}
         >
-          Todas
+          Todas las categorías
+          <span className="tabular-nums text-[12px] text-[var(--text-tertiary)]">{formatoMoneda(totalMesSinFiltro, pais)}</span>
         </button>
         {categorias.map((c) => {
           const Icono = iconoDeCategoria(c.icono);
           const color = colorDeCategoria(c.color);
           const activo = filtro === c.id;
+          const total = totalPorCategoria.get(c.id) ?? 0;
+          const porcentaje = totalMesSinFiltro > 0 ? Math.min(100, Math.round((total / totalMesSinFiltro) * 100)) : 0;
           return (
             <button
               key={c.id}
               type="button"
               onClick={() => setFiltro(c.id)}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation]"
+              className="flex items-center gap-3 rounded-[var(--radius-button)] border px-3 py-2 text-left [touch-action:manipulation]"
               style={
                 activo
-                  ? { borderColor: color, backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`, color }
-                  : { borderColor: 'color-mix(in oklab, var(--text-tertiary) 25%, transparent)', color: 'var(--text-secondary)' }
+                  ? { borderColor: color, backgroundColor: `color-mix(in oklab, ${color} 8%, transparent)` }
+                  : { borderColor: 'color-mix(in oklab, var(--text-tertiary) 18%, transparent)' }
               }
             >
-              <Icono size={13} strokeWidth={2.2} aria-hidden="true" color={activo ? color : 'var(--text-tertiary)'} />
-              {c.nombre}
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: color }}>
+                <Icono size={14} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[13px] font-medium text-[var(--text-primary)]">{c.nombre}</span>
+                  <span className="shrink-0 tabular-nums text-[12px] font-semibold text-[var(--text-primary)]">{formatoMoneda(total, pais)}</span>
+                </span>
+                <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
+                  <span className="block h-full rounded-full transition-all" style={{ width: `${porcentaje}%`, backgroundColor: color }} />
+                </span>
+              </span>
             </button>
           );
         })}
@@ -625,19 +845,35 @@ function GastosInner() {
       </button>
 
       <div className="rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[12px] text-[var(--text-secondary)]">Total del mes</span>
-          <span className="text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-            {formatoMoneda(totalMes, pais)}
-          </span>
+        <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+          <Home size={13} strokeWidth={2.2} aria-hidden="true" />
+          Total del mes en casa
         </div>
-        {totalesViajePorMoneda.map(([codigo, total]) => (
-          <div key={codigo} className="mt-1.5 flex items-center justify-between border-t border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] pt-1.5">
-            <span className="text-[12px] text-[var(--text-tertiary)]">Viaje en {nombreMoneda(codigo)}</span>
-            <span className="text-[15px] font-semibold tabular-nums text-[var(--text-secondary)]">{formatoMonedaViaje(total, codigo)}</span>
-          </div>
-        ))}
+        <span className="mt-0.5 block text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+          {formatoMoneda(totalMes, pais)}
+        </span>
       </div>
+
+      {/* Los viajes SIEMPRE se ven en tarjetas separadas de la casa — nunca sumados a su total,
+          para que quede claro de un vistazo que son plata y cuentas aparte. */}
+      {gruposDeViaje.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {gruposDeViaje.map((v) => (
+            <div
+              key={`${v.nombre}-${v.moneda}`}
+              className="rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--accent-2)_35%,transparent)] bg-[color-mix(in_oklab,var(--accent-2)_6%,transparent)] px-4 py-3"
+            >
+              <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+                <MapPin size={13} strokeWidth={2.2} aria-hidden="true" />
+                {v.nombre}
+              </div>
+              <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                {formatoMonedaViaje(v.total, v.moneda)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {saldoCargado && (
         <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
@@ -697,6 +933,9 @@ function GastosInner() {
             guardando={guardando}
             inicial={datosDelEscaneo ?? undefined}
             creandoCategoria={creandoCategoria}
+            viajes={viajes}
+            creandoViaje={creandoViaje}
+            onCrearViaje={crearViajePropio}
             onGuardar={guardarGasto}
             onCrearCategoria={crearCategoriaPropia}
             onCerrar={() => {
@@ -720,8 +959,12 @@ function GastosInner() {
               nota: gastoEditando.nota,
               splitPercent: gastoEditando.splitPercent,
               moneda: gastoEditando.moneda,
+              viajeId: gastoEditando.viajeId,
             }}
             creandoCategoria={creandoCategoria}
+            viajes={viajes}
+            creandoViaje={creandoViaje}
+            onCrearViaje={crearViajePropio}
             onGuardar={guardarEdicion}
             onCrearCategoria={crearCategoriaPropia}
             onCerrar={() => setGastoEditando(null)}
@@ -776,80 +1019,59 @@ function GastosInner() {
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {gastosDelMes.map((g) => {
-            const cat = categoriaPorId(g.categoriaId);
-            const Icono = cat ? iconoDeCategoria(cat.icono) : iconoDeCategoria('circle');
-            return (
-              <li
-                key={g.id}
-                className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] bg-[var(--surface)] p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-button)]"
-                    style={{ backgroundColor: cat ? colorDeCategoria(cat.color) : 'var(--cat-gray)' }}
-                  >
-                    <Icono size={16} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block truncate text-[15px] font-medium text-[var(--text-primary)]">
-                      {g.nota || cat?.nombre || 'Gasto'}
-                    </span>
-                    <span className="block text-[12px] text-[var(--text-tertiary)]">
-                      {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
-                    </span>
-                  </span>
-                  <span className="shrink-0 tabular-nums text-[15px] font-semibold text-[var(--text-primary)]">
-                    {g.moneda ? formatoMonedaViaje(g.monto, g.moneda) : formatoMoneda(g.monto, pais)}
-                  </span>
-                </div>
+        <div className="flex flex-col gap-4">
+          {gastosLocales.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {gruposDeViaje.length > 0 && (
+                <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
+                  <Home size={12} strokeWidth={2.2} aria-hidden="true" />
+                  En casa
+                </p>
+              )}
+              <ul className="flex flex-col gap-2">
+                {gastosLocales.map((g) => (
+                  <FilaGasto
+                    key={g.id}
+                    g={g}
+                    categoriaPorId={categoriaPorId}
+                    pais={pais}
+                    userId={userId}
+                    confirmandoEliminar={confirmandoEliminar}
+                    eliminando={eliminando}
+                    onEditar={empezarEdicion}
+                    onPedirEliminar={setConfirmandoEliminar}
+                    onEliminar={eliminar}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
 
-                {confirmandoEliminar === g.id ? (
-                  <div className="mt-2 flex items-center justify-end gap-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-2">
-                    <span className="mr-auto text-[12px] text-[var(--text-secondary)]">¿Eliminar este gasto?</span>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmandoEliminar(null)}
-                      disabled={eliminando === g.id}
-                      className="flex h-9 items-center justify-center rounded-[var(--radius-button)] px-3 text-[12px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminar(g.id)}
-                      disabled={eliminando === g.id}
-                      className="flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_12%,transparent)] px-3 text-[12px] font-semibold text-[var(--danger)] disabled:opacity-50 [touch-action:manipulation]"
-                    >
-                      {eliminando === g.id && <Loader2 size={13} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
-                      {eliminando === g.id ? 'Eliminando…' : 'Sí, eliminar'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-1 flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => empezarEdicion(g)}
-                      aria-label="Editar gasto"
-                      className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
-                    >
-                      <Pencil size={14} strokeWidth={2.2} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmandoEliminar(g.id)}
-                      aria-label="Eliminar gasto"
-                      className="flex size-8 items-center justify-center rounded-[var(--radius-button)] text-[var(--text-tertiary)] [touch-action:manipulation]"
-                    >
-                      <Trash2 size={14} strokeWidth={2.2} aria-hidden="true" />
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+          {gruposDeViaje.map((v) => (
+            <div key={`${v.nombre}-${v.moneda}`} className="flex flex-col gap-2">
+              <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
+                <MapPin size={12} strokeWidth={2.2} aria-hidden="true" />
+                {v.nombre}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {v.gastos.map((g) => (
+                  <FilaGasto
+                    key={g.id}
+                    g={g}
+                    categoriaPorId={categoriaPorId}
+                    pais={pais}
+                    userId={userId}
+                    confirmandoEliminar={confirmandoEliminar}
+                    eliminando={eliminando}
+                    onEditar={empezarEdicion}
+                    onPedirEliminar={setConfirmandoEliminar}
+                    onEliminar={eliminar}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       )}
 
       <motion.button
@@ -857,10 +1079,11 @@ function GastosInner() {
         whileTap={{ scale: 0.92 }}
         onClick={() => setAsistenteAbierto(true)}
         aria-label="Preguntar al asistente"
-        className="fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--accent-2)] text-[var(--bg)] shadow-[var(--shadow-2)] [touch-action:manipulation]"
+        className="fixed right-4 z-30 flex size-14 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-2)] text-[var(--bg)] shadow-[var(--shadow-2)] [touch-action:manipulation]"
         style={{ bottom: 'max(84px, calc(env(safe-area-inset-bottom) + 76px))' }}
       >
-        <Bot size={22} strokeWidth={2.2} aria-hidden="true" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- ícono propio del asistente, archivo estático fijo */}
+        <img src="/icons/robot-asistente.png" alt="" className="size-full object-cover" aria-hidden="true" />
       </motion.button>
 
       {asistenteAbierto && <AsistenteChat onCerrar={() => setAsistenteAbierto(false)} />}
