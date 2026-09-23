@@ -295,6 +295,7 @@ export default function HoyPage() {
   // todavía no crearon ninguna meta.
   const [metaPrincipal, setMetaPrincipal] = useState<MetaDB | null>(null);
   const [cargandoMeta, setCargandoMeta] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
   useEffect(() => {
     setSaludo(saludoDelDia());
@@ -303,14 +304,22 @@ export default function HoyPage() {
     // mostraba "Gastado este mes" con datos de EJEMPLO fijos que nunca coincidían con lo que
     // de verdad registraban en Gastos, y no había forma de definir un presupuesto.
     (async () => {
+      try {
       const {
         data: { user },
+        error: errorSesion,
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setErrorCarga(`Sin sesión${errorSesion ? `: ${errorSesion.message}` : ''}`);
+        return;
+      }
       setUserId(user.id);
 
       const cid = await obtenerCoupleId(supabase);
-      if (!cid) return;
+      if (!cid) {
+        setErrorCarga('No se encontró tu pareja en esta cuenta');
+        return;
+      }
       const ahora = new Date();
       const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
       // Cada dato carga por separado: antes un solo fallo (por ejemplo la foto o la racha)
@@ -335,7 +344,13 @@ export default function HoyPage() {
       }
       if (rRacha.status === 'fulfilled') setRacha(rRacha.value);
       if (rMetas.status === 'fulfilled') setMetaPrincipal(rMetas.value[0] ?? null);
+      const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+      if (fallos.length > 0) setErrorCarga(fallos.map((f) => (f.reason instanceof Error ? f.reason.message : JSON.stringify(f.reason))).join(' | '));
       setCargandoMeta(false);
+      } catch (e) {
+        setErrorCarga(e instanceof Error ? e.message : JSON.stringify(e));
+        setCargandoMeta(false);
+      }
     })();
   }, [supabase]);
 
@@ -479,6 +494,15 @@ export default function HoyPage() {
           <CaretRight size={14} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
         </button>
 
+        {errorCarga && (
+          <div className="mb-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-3 text-[12px] text-[var(--danger)]">
+            <p className="font-semibold">No pudimos cargar todos tus datos.</p>
+            <p className="mt-0.5 break-words opacity-90">{errorCarga}</p>
+            <button type="button" onClick={() => window.location.reload()} className="mt-1.5 font-semibold underline [touch-action:manipulation]">
+              Reintentar
+            </button>
+          </div>
+        )}
         {editandoPresupuesto ? (
           <form
             className="flex flex-col gap-2"
