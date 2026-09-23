@@ -41,8 +41,14 @@ a punta (crear viaje → registrar gasto en él → verlo separado de la casa).
 ⚠️ Pendiente de decisión del usuario (se le preguntó, no se decidió sola): si además de la foto de
 perfil quiere una imagen de stock "antes/después" en Inicio — recomendé que no, a la espera de su
 respuesta.
-Commit preparado, sin push (el usuario hace push desde su propia terminal, como siempre en este
-proyecto).
+Commit `86636b3` + fix posterior del ícono del robot (`606b774`, cara completa y brazo levantado —
+el primer recorte mostraba solo media cara en el botón circular) — ambos subidos por el usuario.
+
+⚠️ PENDIENTE explícito de la usuaria (2026-09-22): la sección de VIAJES en Gastos (crear un viaje
+con nombre propio, elegir su moneda, ver sus gastos separados de la casa) no le quedó clara viéndola
+en vivo — pidió retomarlo con calma en la próxima sesión antes de seguir. Al retomar: abrir Gastos
+con ella, mostrarle paso a paso cómo se crea un viaje y dónde aparece, y ajustar lo que no se
+entienda (puede ser de explicación, o de diseño/flujo real — no asumir cuál hasta verlo con ella).
 
 ## Cambio de marca: DuoSync Wallet → Fairsy (2026-09-16) ✅
 - El dominio `duosyncwallet.app` no se pudo comprar; el usuario compró **`fairsy.lat`** y pidió renombrar
