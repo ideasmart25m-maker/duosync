@@ -91,16 +91,22 @@ export interface NombresPareja {
 // Nombre real de los dos integrantes (antes "Mateo & Sofía" fijos en el código) — necesita el
 // permiso nuevo de `profiles` (ver perfil de tu pareja) agregado en la misma migración.
 export async function obtenerNombresPareja(supabase: SupabaseClient, coupleId: string, miUserId: string): Promise<NombresPareja> {
-  const { data, error } = await supabase.from('couple_members').select('user_id, profiles(nombre, avatar_url)').eq('couple_id', coupleId);
+  // Dos consultas en vez de un join embebido: `couple_members` y `profiles` no tienen una
+  // llave foránea directa entre sí (ambas apuntan a auth.users), así que PostgREST no puede
+  // resolver el embed y fallaba con PGRST200.
+  const { data: miembros, error } = await supabase.from('couple_members').select('user_id').eq('couple_id', coupleId);
   if (error) throw error;
-  const filas = (data ?? []) as unknown as { user_id: string; profiles: { nombre: string; avatar_url: string | null } | null }[];
-  const mio = filas.find((f) => f.user_id === miUserId);
-  const suyo = filas.find((f) => f.user_id !== miUserId);
+  const ids = (miembros ?? []).map((m) => m.user_id as string);
+  const { data: perfiles, error: errorPerfiles } = await supabase.from('profiles').select('id, nombre, avatar_url').in('id', ids);
+  if (errorPerfiles) throw errorPerfiles;
+  const filas = (perfiles ?? []) as { id: string; nombre: string; avatar_url: string | null }[];
+  const mio = filas.find((f) => f.id === miUserId);
+  const suyo = filas.find((f) => f.id !== miUserId);
   return {
-    propio: mio?.profiles?.nombre ?? 'Tú',
-    otro: suyo?.profiles?.nombre ?? null,
-    avatarPropio: mio?.profiles?.avatar_url ?? null,
-    avatarOtro: suyo?.profiles?.avatar_url ?? null,
+    propio: mio?.nombre ?? 'Tú',
+    otro: suyo?.nombre ?? null,
+    avatarPropio: mio?.avatar_url ?? null,
+    avatarOtro: suyo?.avatar_url ?? null,
   };
 }
 
