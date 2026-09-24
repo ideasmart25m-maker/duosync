@@ -10,9 +10,11 @@ export interface ViajeDB {
   presupuesto: number | null;
 }
 
-export type SubcategoriaViaje = 'alojamiento' | 'alimentacion' | 'transporte' | 'tours' | 'compras';
+// Las básicas se guardan con su clave; las que agregue la pareja se guardan con su propio nombre.
+export type SubcategoriaViaje = string;
 
-export const SUBCATEGORIAS_VIAJE: { clave: SubcategoriaViaje; nombre: string }[] = [
+export const SUBCATEGORIAS_VIAJE: { clave: string; nombre: string }[] = [
+  { clave: 'tiquetes', nombre: 'Tiquetes' },
   { clave: 'alojamiento', nombre: 'Alojamiento' },
   { clave: 'alimentacion', nombre: 'Alimentación' },
   { clave: 'transporte', nombre: 'Transporte' },
@@ -27,6 +29,11 @@ export interface GastoViajeDB {
   nota: string | null;
   subcategoria: SubcategoriaViaje | null;
   registradoPor: string;
+}
+
+export function nombreSubcategoria(clave: string | null): string {
+  if (!clave) return 'Otros';
+  return SUBCATEGORIAS_VIAJE.find((s) => s.clave === clave)?.nombre ?? clave;
 }
 
 const COLUMNAS_VIAJE = 'id, nombre, moneda, presupuesto';
@@ -102,7 +109,7 @@ export async function registrarGastoDeViaje(
   supabase: SupabaseClient,
   coupleId: string,
   viaje: ViajeDB,
-  g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number }
+  g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number; receiptScanId?: string }
 ): Promise<GastoViajeDB & { viajeId: string }> {
   const {
     data: { user },
@@ -121,6 +128,7 @@ export async function registrarGastoDeViaje(
       moneda: viaje.moneda,
       viaje_id: viaje.id,
       subcategoria: g.subcategoria,
+      receipt_scan_id: g.receiptScanId ?? null,
     })
     .select('id, monto, fecha, nota, subcategoria, registrado_por, viaje_id')
     .single();
@@ -134,4 +142,17 @@ export async function registrarGastoDeViaje(
     registradoPor: data.registrado_por,
     viajeId: data.viaje_id as string,
   };
+}
+
+// Lee un recibo con la IA (misma función que en Gastos) y devuelve el monto detectado.
+export async function escanearReciboDeViaje(supabase: SupabaseClient, coupleId: string, foto: Blob): Promise<{ scanId: string; monto: number | null }> {
+  const { iniciarEscaneoRecibo, consultarEscaneoRecibo } = await import('@/lib/gastos');
+  const scanId = await iniciarEscaneoRecibo(supabase, coupleId, foto);
+  for (let intento = 0; intento < 14; intento++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    const scan = await consultarEscaneoRecibo(supabase, scanId);
+    if (scan.estado === 'listo') return { scanId, monto: scan.montoDetectado };
+    if (scan.estado === 'error') throw new Error(scan.errorMensaje ?? 'No pudimos leer el recibo.');
+  }
+  throw new Error('Está tardando más de lo normal.');
 }

@@ -6,6 +6,7 @@
 - Datos de prueba de viaje (categoría VIAJE ORLANDO y gastos en USD) borrados a pedido de la usuaria.
 - "Ahorro de <mes> (no hace parte de los gastos)" pasó de Gastos a Metas; Inicio conserva su recuadro verde de ahorro.
 - Categorías: botón de eliminar en el editor; los gastos de la categoría se mueven a la que elija (nunca se pierden).
+- Ronda 2 (2026-09-25, migración `20260925150000_viajes_cualquier_pais.sql`): color de fondo propio por viaje; subcategoría "Tiquetes" + subcategorías propias ("+ Otra", texto libre ≤40); escaneo de recibos dentro del viaje (mismo flujo de IA y topes que Gastos); país de destino con su moneda (60+ países, cualquier código ISO de 3 letras).
 - Verificado: tsc ✓ build ✓ · flujos probados contra la base real (viaje→gasto con subcategoría, subcategoría inválida rechazada, borrar categoría con gastos exige moverlos). ⚠️ Falta que la usuaria lo vea en vivo.
 
 ## Ahorro visible por meta (2026-09-24) ✅

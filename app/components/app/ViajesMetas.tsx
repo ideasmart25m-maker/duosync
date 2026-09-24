@@ -4,8 +4,8 @@
 // gastos se llevan por subcategoría, con la misma dinámica de reparto que los gastos de la casa.
 // Sus cuentas entre ustedes siguen saliendo en Gastos ("Cuentas entre ustedes"), por moneda.
 
-import { useEffect, useMemo, useState } from 'react';
-import { Plus, MapPin, Loader2, Minus, Trash2, Check, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus, MapPin, Loader2, Minus, Trash2, Check, X, Camera } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   listarViajes,
@@ -13,13 +13,24 @@ import {
   eliminarViaje,
   listarGastosDeViajes,
   registrarGastoDeViaje,
+  escanearReciboDeViaje,
+  nombreSubcategoria,
   SUBCATEGORIAS_VIAJE,
   type ViajeDB,
   type GastoViajeDB,
   type SubcategoriaViaje,
 } from '@/lib/viajes';
-import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
+import { DESTINOS, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { eliminarGasto } from '@/lib/gastos';
+import { comprimirImagen } from '@/lib/imagen';
+
+// Cada viaje tiene su propio color de fondo (siempre el mismo para el mismo viaje) para distinguirlos de un vistazo.
+const COLORES_VIAJE = ['teal', 'coral', 'amber', 'rose', 'blue', 'violet'];
+function colorDeViaje(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return `var(--cat-${COLORES_VIAJE[h % COLORES_VIAJE.length]})`;
+}
 
 type GastoConViaje = GastoViajeDB & { viajeId: string };
 
@@ -41,7 +52,8 @@ const campo =
 
 function FormularioNuevoViaje({ guardando, onGuardar, onCancelar }: { guardando: boolean; onGuardar: (v: { nombre: string; moneda: string; presupuesto: number | null }) => void; onCancelar: () => void }) {
   const [nombre, setNombre] = useState('');
-  const [moneda, setMoneda] = useState('USD');
+  const [pais, setPais] = useState('Estados Unidos');
+  const moneda = DESTINOS.find((d) => d.pais === pais)?.moneda ?? 'USD';
   const [presupuesto, setPresupuesto] = useState('');
   return (
     <form
@@ -54,13 +66,19 @@ function FormularioNuevoViaje({ guardando, onGuardar, onCancelar }: { guardando:
     >
       <p className="text-[15px] font-semibold text-[var(--text-primary)]">Nuevo viaje</p>
       <input autoFocus value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Viaje a Orlando" maxLength={60} className={campo} />
-      <div className="flex flex-wrap gap-2">
-        {MONEDAS_VIAJE.map((m) => (
-          <button key={m.codigo} type="button" onClick={() => setMoneda(m.codigo)} className={chip(moneda === m.codigo)}>
-            {m.nombre}
-          </button>
+      <label className="text-[12px] font-medium text-[var(--text-tertiary)]" htmlFor="destino-viaje">
+        País de destino
+      </label>
+      <select id="destino-viaje" value={pais} onChange={(e) => setPais(e.target.value)} className={campo}>
+        {DESTINOS.map((d) => (
+          <option key={d.pais} value={d.pais}>
+            {d.pais} · {d.moneda}
+          </option>
         ))}
-      </div>
+      </select>
+      <p className="text-[12px] text-[var(--text-secondary)]">
+        Los gastos de este viaje se llevan en <span className="font-semibold">{nombreMoneda(moneda).toLowerCase()} ({moneda})</span>, sin convertir.
+      </p>
       <input
         inputMode="numeric"
         value={presupuesto}
@@ -85,17 +103,45 @@ function FormularioGastoViaje({
   guardando,
   moneda,
   nombreOtro,
+  extras,
+  supabase,
+  coupleId,
   onGuardar,
   onCancelar,
 }: {
   guardando: boolean;
   moneda: string;
   nombreOtro: string;
-  onGuardar: (g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number }) => void;
+  extras: string[];
+  supabase: SupabaseClient;
+  coupleId: string;
+  onGuardar: (g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number; receiptScanId?: string }) => void;
   onCancelar: () => void;
 }) {
-  const [subcategoria, setSubcategoria] = useState<SubcategoriaViaje>('alojamiento');
   const [monto, setMonto] = useState('');
+  const [subcategoria, setSubcategoria] = useState<SubcategoriaViaje>('tiquetes');
+  const [otraAbierta, setOtraAbierta] = useState(false);
+  const [otraNombre, setOtraNombre] = useState('');
+  const [escaneando, setEscaneando] = useState(false);
+  const [errorEscaneo, setErrorEscaneo] = useState<string | null>(null);
+  const [receiptScanId, setReceiptScanId] = useState<string | undefined>(undefined);
+  const inputFoto = useRef<HTMLInputElement>(null);
+
+  const escanear = async (archivo: File) => {
+    setEscaneando(true);
+    setErrorEscaneo(null);
+    try {
+      const foto = await comprimirImagen(archivo);
+      const r = await escanearReciboDeViaje(supabase, coupleId, foto);
+      if (r.monto) setMonto(String(r.monto));
+      setReceiptScanId(r.scanId);
+    } catch (e) {
+      setErrorEscaneo(e instanceof Error ? e.message : 'No pudimos leer el recibo. Regístralo a mano.');
+    } finally {
+      setEscaneando(false);
+    }
+  };
+  const extrasVisibles = extras.filter((e) => !SUBCATEGORIAS_VIAJE.some((b) => b.clave === e));
   const [nota, setNota] = useState('');
   // Mi parte: el reparto por persona se respeta sin importar quién pague (igual que en Gastos).
   const [miParte, setMiParte] = useState(50);
@@ -107,16 +153,67 @@ function FormularioGastoViaje({
         const valor = Number(monto.replace(',', '.'));
         if (!valor || valor <= 0 || guardando) return;
         // Quien registra fue quien pagó: se guarda SU parte; lo que sobra le toca a su pareja.
-        onGuardar({ monto: valor, subcategoria, nota: nota.trim() || undefined, splitPercent: miParte });
+        const sub = otraAbierta ? otraNombre.trim() : subcategoria;
+        if (!sub) return;
+        onGuardar({ monto: valor, subcategoria: sub, nota: nota.trim() || undefined, splitPercent: miParte, receiptScanId });
       }}
     >
       <div className="flex flex-wrap gap-2">
         {SUBCATEGORIAS_VIAJE.map((s) => (
-          <button key={s.clave} type="button" onClick={() => setSubcategoria(s.clave)} className={chip(subcategoria === s.clave)}>
+          <button
+            key={s.clave}
+            type="button"
+            onClick={() => {
+              setSubcategoria(s.clave);
+              setOtraAbierta(false);
+            }}
+            className={chip(!otraAbierta && subcategoria === s.clave)}
+          >
             {s.nombre}
           </button>
         ))}
+        {extrasVisibles.map((e) => (
+          <button
+            key={e}
+            type="button"
+            onClick={() => {
+              setSubcategoria(e);
+              setOtraAbierta(false);
+            }}
+            className={chip(!otraAbierta && subcategoria === e)}
+          >
+            {e}
+          </button>
+        ))}
+        <button type="button" onClick={() => setOtraAbierta(true)} className={chip(otraAbierta)}>
+          + Otra
+        </button>
       </div>
+      {otraAbierta && (
+        <input autoFocus value={otraNombre} onChange={(e) => setOtraNombre(e.target.value)} placeholder="Nombre de la subcategoría (Ej. Seguro de viaje)" maxLength={40} className={campo} />
+      )}
+      <button
+        type="button"
+        onClick={() => inputFoto.current?.click()}
+        disabled={escaneando}
+        className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] text-[14px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+      >
+        {escaneando ? <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Camera size={16} strokeWidth={2.4} aria-hidden="true" />}
+        {escaneando ? 'Leyendo el recibo…' : 'Escanear recibo'}
+      </button>
+      <input
+        ref={inputFoto}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const archivo = e.target.files?.[0];
+          e.target.value = '';
+          if (archivo) escanear(archivo);
+        }}
+      />
+      {errorEscaneo && <p className="text-[12px] font-medium text-[var(--danger)]">{errorEscaneo}</p>}
       <input
         inputMode="decimal"
         value={monto}
@@ -180,12 +277,19 @@ function TarjetaViaje({
   const [borrandoGasto, setBorrandoGasto] = useState<string | null>(null);
 
   const total = gastos.reduce((a, g) => a + g.monto, 0);
-  const porSubcategoria = SUBCATEGORIAS_VIAJE.map((s) => ({ ...s, total: gastos.filter((g) => g.subcategoria === s.clave).reduce((a, g) => a + g.monto, 0) }));
+  const extras = Array.from(new Set(gastos.map((g) => g.subcategoria).filter((x): x is string => !!x)));
+  const claves = [...SUBCATEGORIAS_VIAJE.map((s) => s.clave), ...extras.filter((e) => !SUBCATEGORIAS_VIAJE.some((b) => b.clave === e))];
+  const porSubcategoria = claves.map((clave) => ({
+    clave,
+    nombre: nombreSubcategoria(clave),
+    total: gastos.filter((g) => g.subcategoria === clave).reduce((a, g) => a + g.monto, 0),
+  }));
+  const color = colorDeViaje(viaje.id);
   const pct = viaje.presupuesto ? Math.min(100, Math.round((total / viaje.presupuesto) * 100)) : 0;
   const pasado = viaje.presupuesto !== null && total > viaje.presupuesto;
   const f = (n: number) => formatoMonedaViaje(n, viaje.moneda);
 
-  const guardarGasto = async (g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number }) => {
+  const guardarGasto = async (g: { monto: number; subcategoria: SubcategoriaViaje; nota?: string; splitPercent: number; receiptScanId?: string }) => {
     setGuardando(true);
     setError(null);
     try {
@@ -221,10 +325,13 @@ function TarjetaViaje({
   };
 
   return (
-    <div className="rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--accent-2)_40%,transparent)] bg-[var(--surface)] p-4">
+    <div
+      className="rounded-[var(--radius-card)] border border-dashed p-4"
+      style={{ backgroundColor: `color-mix(in oklab, ${color} 13%, var(--surface))`, borderColor: `color-mix(in oklab, ${color} 55%, transparent)` }}
+    >
       <div className="flex items-center justify-between gap-2">
         <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold text-[var(--text-primary)]">
-          <MapPin size={15} strokeWidth={2.2} color="var(--accent-2)" aria-hidden="true" />
+          <MapPin size={15} strokeWidth={2.2} color={color} aria-hidden="true" />
           <span className="truncate">{viaje.nombre}</span>
         </p>
         <span className="shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[12px] font-medium text-[var(--text-secondary)]">{nombreMoneda(viaje.moneda)}</span>
@@ -242,7 +349,7 @@ function TarjetaViaje({
       </p>
       {viaje.presupuesto && (
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
-          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: pasado ? 'var(--danger)' : 'var(--accent-2)' }} />
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: pasado ? 'var(--danger)' : color }} />
         </div>
       )}
 
@@ -256,7 +363,16 @@ function TarjetaViaje({
       </ul>
 
       {registrando ? (
-        <FormularioGastoViaje guardando={guardando} moneda={viaje.moneda} nombreOtro={nombreOtro} onGuardar={guardarGasto} onCancelar={() => setRegistrando(false)} />
+        <FormularioGastoViaje
+          guardando={guardando}
+          moneda={viaje.moneda}
+          nombreOtro={nombreOtro}
+          extras={extras}
+          supabase={supabase}
+          coupleId={coupleId}
+          onGuardar={guardarGasto}
+          onCancelar={() => setRegistrando(false)}
+        />
       ) : (
         <button
           type="button"
@@ -276,7 +392,7 @@ function TarjetaViaje({
             <li key={g.id} className="flex items-center gap-2 py-2">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-medium text-[var(--text-primary)]">
-                  {SUBCATEGORIAS_VIAJE.find((s) => s.clave === g.subcategoria)?.nombre ?? 'Gasto'}
+                  {nombreSubcategoria(g.subcategoria)}
                   {g.nota ? ` · ${g.nota}` : ''}
                 </span>
                 <span className="block text-[12px] text-[var(--text-tertiary)]">
