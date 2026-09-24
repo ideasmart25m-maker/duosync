@@ -71,3 +71,26 @@ export async function aportarAMeta(supabase: SupabaseClient, metaId: string, mon
   if (error) throw error;
   return mapMeta(data);
 }
+
+export interface AporteDelMes {
+  metaId: string;
+  nombreMeta: string;
+  total: number;
+}
+
+// Lo ahorrado en el mes visible, sumado por meta (no cuenta como gasto). `prefijoMes` = "YYYY-MM".
+export async function listarAportesDelMes(supabase: SupabaseClient, coupleId: string, prefijoMes: string): Promise<AporteDelMes[]> {
+  const [anio, mes] = prefijoMes.split('-').map(Number);
+  const desde = new Date(anio, mes - 1, 1).toISOString();
+  const hasta = new Date(anio, mes, 1).toISOString();
+  const [{ data: aportes, error }, { data: metas, error: errorMetas }] = await Promise.all([
+    supabase.from('goal_contributions').select('meta_id, monto').eq('couple_id', coupleId).gte('created_at', desde).lt('created_at', hasta),
+    supabase.from('savings_goals').select('id, nombre').eq('couple_id', coupleId),
+  ]);
+  if (error) throw error;
+  if (errorMetas) throw errorMetas;
+  const nombres = new Map((metas ?? []).map((m) => [m.id as string, m.nombre as string]));
+  const totales = new Map<string, number>();
+  for (const a of aportes ?? []) totales.set(a.meta_id, (totales.get(a.meta_id) ?? 0) + Number(a.monto));
+  return Array.from(totales.entries()).map(([metaId, total]) => ({ metaId, nombreMeta: nombres.get(metaId) ?? 'Meta', total }));
+}

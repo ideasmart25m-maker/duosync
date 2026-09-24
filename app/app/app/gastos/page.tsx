@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, MapPin, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, MapPin, Home, PiggyBank } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -29,6 +29,7 @@ import {
   type SaldoPorMoneda,
 } from '@/lib/gastos';
 import { listarViajes, crearViaje, type ViajeDB } from '@/lib/viajes';
+import { listarAportesDelMes, type AporteDelMes } from '@/lib/metas';
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, splitEfectivo, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
@@ -485,6 +486,7 @@ function GastosInner() {
   const [editandoCategorias, setEditandoCategorias] = useState(false);
   const [nombres, setNombres] = useState<{ propio: string; otro: string | null; idOtro: string | null }>({ propio: 'Tú', otro: null, idOtro: null });
   const [registrandoPago, setRegistrandoPago] = useState<string | null>(null);
+  const [aportes, setAportes] = useState<AporteDelMes[]>([]);
 
   const [mesOffset, setMesOffset] = useState(0);
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
@@ -557,6 +559,7 @@ function GastosInner() {
         setSaldos(saldoActual);
         setViajes(viajesPareja);
         setSaldoCargado(true);
+        listarAportesDelMes(supabase, cid, prefijoMes).then((a) => !cancelado && setAportes(a)).catch(() => {});
         // Nombres de la pareja: opcional (solo para "¿quién lo paga?"), un fallo aquí no debe
         // tumbar la pantalla de gastos.
         obtenerNombresPareja(supabase, cid, user.id)
@@ -582,6 +585,7 @@ function GastosInner() {
       return;
     }
     if (!coupleId) return;
+    listarAportesDelMes(supabase, coupleId, prefijoMes).then(setAportes).catch(() => {});
     cargarGastos(coupleId, prefijoMes).catch((e) => setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.'));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- prefijoMes deriva de mesOffset
   }, [mesOffset]);
@@ -1001,6 +1005,28 @@ function GastosInner() {
           {formatoMoneda(totalMes, pais)}
         </span>
       </div>
+
+      {/* Ahorro: aportes a las metas del mes, cada uno con el nombre de su meta. NO se suma a lo
+          gastado — ahorrar no es gastar. */}
+      {aportes.length > 0 && (
+        <div className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--accent-2)_8%,transparent)] px-4 py-3">
+          <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+            <PiggyBank size={13} strokeWidth={2.2} aria-hidden="true" />
+            Ahorro de {mesLabel}
+          </div>
+          <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+            {formatoMoneda(aportes.reduce((a, x) => a + x.total, 0), pais)}
+          </span>
+          <ul className="mt-1.5 flex flex-col gap-0.5">
+            {aportes.map((a) => (
+              <li key={a.metaId} className="flex items-center justify-between text-[12px] text-[var(--text-secondary)]">
+                <span className="truncate">Ahorro · {a.nombreMeta}</span>
+                <span className="shrink-0 tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(a.total, pais)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Los viajes SIEMPRE se ven en tarjetas separadas de la casa — nunca sumados a su total,
           para que quede claro de un vistazo que son plata y cuentas aparte. */}

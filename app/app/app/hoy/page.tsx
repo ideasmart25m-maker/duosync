@@ -21,7 +21,7 @@ import {
   subirAvatar,
   type PreguntaDB,
 } from '@/lib/preguntas';
-import { listarMetas, type MetaDB } from '@/lib/metas';
+import { listarMetas, listarAportesDelMes, type MetaDB } from '@/lib/metas';
 import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -296,6 +296,7 @@ export default function HoyPage() {
   const [metaPrincipal, setMetaPrincipal] = useState<MetaDB | null>(null);
   const [cargandoMeta, setCargandoMeta] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [ahorrado, setAhorrado] = useState(0);
 
   useEffect(() => {
     setSaludo(saludoDelDia());
@@ -325,13 +326,14 @@ export default function HoyPage() {
       // Cada dato carga por separado: antes un solo fallo (por ejemplo la foto o la racha)
       // tumbaba TODA la tarjeta y parecía que el presupuesto y los gastos no se habían guardado
       // (reporte real de la usuaria, 2026-09-23).
-      const [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas] = await Promise.allSettled([
+      const [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro] = await Promise.allSettled([
         obtenerPaisPareja(supabase, cid),
         obtenerPresupuestoPareja(supabase, cid),
         obtenerGastadoDelMes(supabase, cid, prefijoMes),
         obtenerNombresPareja(supabase, cid, user.id),
         obtenerRachaPareja(supabase, cid),
         listarMetas(supabase, cid),
+        listarAportesDelMes(supabase, cid, prefijoMes),
       ]);
       if (rPais.status === 'fulfilled') setPais(rPais.value);
       if (rPresupuesto.status === 'fulfilled') setPresupuesto(rPresupuesto.value);
@@ -344,7 +346,8 @@ export default function HoyPage() {
       }
       if (rRacha.status === 'fulfilled') setRacha(rRacha.value);
       if (rMetas.status === 'fulfilled') setMetaPrincipal(rMetas.value[0] ?? null);
-      const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+      if (rAhorro.status === 'fulfilled') setAhorrado(rAhorro.value.reduce((a, x) => a + x.total, 0));
+      const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
       if (fallos.length > 0) setErrorCarga(fallos.map((f) => (f.reason instanceof Error ? f.reason.message : JSON.stringify(f.reason))).join(' | '));
       setCargandoMeta(false);
       } catch (e) {
@@ -578,6 +581,12 @@ export default function HoyPage() {
                       {formatoMoneda(disponible ?? 0, pais)}
                     </span>
                   </div>
+                  {ahorrado > 0 && (
+                    <div className="flex items-center justify-between text-[15px]">
+                      <span className="text-[var(--text-secondary)]">Ahorro en metas</span>
+                      <span className="tabular-nums font-semibold text-[var(--accent-2)]">{formatoMoneda(ahorrado, pais)}</span>
+                    </div>
+                  )}
                 </div>
               </>
             )}

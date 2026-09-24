@@ -1,6 +1,10 @@
 # ESTADO — Fairsy
 Última actualización: 2026-09-22 | Sesión actual: 7
 
+## Ahorro visible por meta (2026-09-24) ✅
+- Migración `20260924160000_aportes_a_metas.sql` (aplicada): tabla `goal_contributions` (historial de aportes, solo lectura por RLS; se escribe desde `aportar_a_meta`), con el ahorro previo cargado como un aporte inicial por meta. Gastos muestra "Ahorro de <mes>" con cada meta por nombre y el total; Inicio muestra "Ahorro en metas". No se suma a lo gastado.
+- Verificado: tsc ✓ build ✓ · tabla consultada contra la base real. ⚠️ Falta que la usuaria lo vea en vivo.
+
 ## Pagos fijos con valor mensual y "quién paga" (2026-09-24) ✅ — a pedido de la usuaria
 - Migración `20260924120000_pagos_fijos.sql` (aplicada): `categories.montos_mensuales` (un valor por fecha de vencimiento) + `categories.paga_user_id` (opcional; null = quien toque "Registrar pago") con trigger que exige que sea integrante de la pareja. NO se tocó `calcular_saldo_pareja`/`liquidar_saldo`.
 - Editor de categorías: valor del mes por factura, total del mes, "quien paga se queda con X% ($) · el otro devuelve Y% ($)" y selector "¿Quién lo paga?".
