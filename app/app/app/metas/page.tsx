@@ -165,13 +165,23 @@ function FormularioMeta({
   );
 }
 
+// Cada meta con su propio tono de fondo (la primera conserva el verde de la marca). Se mezcla el color de
+// categoría con el texto principal para que siempre quede profundo y con contraste para el texto claro.
+const TONOS_META = [null, 'blue', 'violet', 'coral', 'rose', 'amber'];
+function fondoDeMeta(indice: number): string | undefined {
+  const tono = TONOS_META[indice % TONOS_META.length];
+  return tono ? `color-mix(in oklab, var(--cat-${tono}) 58%, var(--text-primary))` : undefined;
+}
+
 function TarjetaMeta({
   meta,
+  indice,
   pais,
   supabase,
   onActualizada,
 }: {
   meta: MetaDB;
+  indice: number;
   pais: string | null;
   supabase: ReturnType<typeof crearClienteNavegador>;
   onActualizada: (m: MetaDB) => void;
@@ -240,7 +250,10 @@ function TarjetaMeta({
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
+    <div
+      className="relative overflow-hidden rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]"
+      style={fondoDeMeta(indice) ? ({ '--accent-2': fondoDeMeta(indice) } as CSSProperties) : undefined}
+    >
       {metaCumplida && <ConfettiMeta />}
 
       {editando ? (
@@ -486,7 +499,7 @@ export default function MetasPage() {
           <p className="text-[13px] text-[var(--text-tertiary)]">Un viaje, un proyecto, un ahorro para lo que sea — empiecen por ponerle nombre.</p>
         </div>
       ) : (
-        metas.map((m) => <TarjetaMeta key={m.id} meta={m} pais={pais} supabase={supabase} onActualizada={actualizarEnLista} />)
+        metas.map((m, i) => <TarjetaMeta key={m.id} meta={m} indice={i} pais={pais} supabase={supabase} onActualizada={actualizarEnLista} />)
       )}
 
       {creandoMeta ? (
