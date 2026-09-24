@@ -7,10 +7,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Plus, Bell, Trash2 } from 'lucide-react';
+import { X, Minus, Plus, Bell, Trash2, Loader2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
-import { actualizarCategoria } from '@/lib/gastos';
+import { actualizarCategoria, eliminarCategoria } from '@/lib/gastos';
 import { formatoMoneda } from '@/lib/paises';
 
 export interface ParejaEditor {
@@ -51,13 +51,33 @@ function FilaCategoria({
   categoria,
   supabase,
   pareja,
+  otras,
   onActualizada,
+  onEliminada,
 }: {
   categoria: CategoriaDB;
   supabase: SupabaseClient;
   pareja: ParejaEditor;
+  otras: CategoriaDB[];
   onActualizada: (c: CategoriaDB) => void;
+  onEliminada: (id: string) => void;
 }) {
+  const [confirmandoBorrar, setConfirmandoBorrar] = useState(false);
+  const [destinoId, setDestinoId] = useState(otras[0]?.id ?? '');
+  const [borrando, setBorrando] = useState(false);
+  const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
+  const borrar = async () => {
+    if (!destinoId) return;
+    setBorrando(true);
+    setErrorBorrar(null);
+    try {
+      await eliminarCategoria(supabase, categoria.id, destinoId);
+      onEliminada(categoria.id);
+    } catch {
+      setErrorBorrar('No pudimos eliminarla. Intenten de nuevo en un momento.');
+      setBorrando(false);
+    }
+  };
   const [guardando, setGuardando] = useState(false);
   const Icono = iconoDeCategoria(categoria.icono);
   const color = colorDeCategoria(categoria.color);
@@ -100,7 +120,50 @@ function FilaCategoria({
         </span>
         <span className="flex-1 text-[14px] font-medium text-[var(--text-primary)]">{categoria.nombre}</span>
         {guardando && <span className="text-[11px] text-[var(--text-tertiary)]">Guardando…</span>}
+        {otras.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setConfirmandoBorrar((v) => !v)}
+            aria-label={`Eliminar la categoría ${categoria.nombre}`}
+            className="flex size-8 shrink-0 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+          >
+            <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        )}
       </div>
+
+      {confirmandoBorrar && (
+        <div className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] p-3 text-[12px] text-[var(--text-secondary)]">
+          <p className="font-semibold text-[var(--danger)]">¿Eliminar &quot;{categoria.nombre}&quot;?</p>
+          <p className="mt-1">Los gastos que tenga no se pierden: pasan a esta categoría.</p>
+          <select
+            value={destinoId}
+            onChange={(e) => setDestinoId(e.target.value)}
+            className="mt-2 h-10 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-3 text-[14px] text-[var(--text-primary)]"
+          >
+            {otras.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.nombre}
+              </option>
+            ))}
+          </select>
+          {errorBorrar && <p className="mt-1 font-medium text-[var(--danger)]">{errorBorrar}</p>}
+          <div className="mt-2 flex justify-end gap-2">
+            <button type="button" onClick={() => setConfirmandoBorrar(false)} disabled={borrando} className="flex h-9 items-center px-3 text-[12px] font-medium [touch-action:manipulation]">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={borrar}
+              disabled={borrando || !destinoId}
+              className="flex h-9 items-center gap-1.5 rounded-[var(--radius-button)] bg-[var(--danger)] px-3 text-[12px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            >
+              {borrando && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-between">
         <span className="text-[12px] text-[var(--text-secondary)]">
@@ -296,12 +359,14 @@ export function EditorCategorias({
   supabase,
   pareja,
   onActualizada,
+  onEliminada,
   onCerrar,
 }: {
   categorias: CategoriaDB[];
   supabase: SupabaseClient;
   pareja: ParejaEditor;
   onActualizada: (c: CategoriaDB) => void;
+  onEliminada: (id: string) => void;
   onCerrar: () => void;
 }) {
   return (
@@ -323,7 +388,7 @@ export function EditorCategorias({
         </p>
         <div className="flex-1 space-y-3 overflow-y-auto">
           {categorias.map((c) => (
-            <FilaCategoria key={c.id} categoria={c} supabase={supabase} pareja={pareja} onActualizada={onActualizada} />
+            <FilaCategoria key={c.id} categoria={c} supabase={supabase} pareja={pareja} otras={categorias.filter((o) => o.id !== c.id)} onActualizada={onActualizada} onEliminada={onEliminada} />
           ))}
         </div>
       </motion.div>

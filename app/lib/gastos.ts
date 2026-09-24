@@ -329,6 +329,15 @@ export async function actualizarGasto(
   };
 }
 
+// Elimina una categoría de la casa. Sus gastos NO se pierden: pasan primero a la categoría destino
+// (expenses.category_id impide borrar una categoría que todavía tiene gastos).
+export async function eliminarCategoria(supabase: SupabaseClient, categoriaId: string, destinoId: string): Promise<void> {
+  const { error: errorMover } = await supabase.from('expenses').update({ category_id: destinoId }).eq('category_id', categoriaId);
+  if (errorMover) throw errorMover;
+  const { error } = await supabase.from('categories').delete().eq('id', categoriaId);
+  if (error) throw error;
+}
+
 export async function eliminarGasto(supabase: SupabaseClient, gastoId: string): Promise<void> {
   const { error } = await supabase.from('expenses').delete().eq('id', gastoId);
   if (error) throw error;

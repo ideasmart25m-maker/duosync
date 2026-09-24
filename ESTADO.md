@@ -1,6 +1,13 @@
 # ESTADO — Fairsy
 Última actualización: 2026-09-22 | Sesión actual: 7
 
+## Viajes en Metas, ahorro en Metas y eliminar categorías (2026-09-25) ✅
+- Migración `20260925120000_viajes_en_metas.sql`: `viajes.presupuesto`, `categories.es_de_viaje` (categoría interna "Viajes", oculta en Gastos), `expenses.subcategoria` (alojamiento/alimentación/transporte/tours/compras). Los viajes salieron de Gastos y viven en Metas (`components/app/ViajesMetas.tsx`): presupuesto, gastado por subcategoría, reparto por persona como en la casa; las cuentas del viaje siguen saliendo en "Cuentas entre ustedes" (por moneda, `calcular_saldo_pareja` intacto).
+- Datos de prueba de viaje (categoría VIAJE ORLANDO y gastos en USD) borrados a pedido de la usuaria.
+- "Ahorro de <mes> (no hace parte de los gastos)" pasó de Gastos a Metas; Inicio conserva su recuadro verde de ahorro.
+- Categorías: botón de eliminar en el editor; los gastos de la categoría se mueven a la que elija (nunca se pierden).
+- Verificado: tsc ✓ build ✓ · flujos probados contra la base real (viaje→gasto con subcategoría, subcategoría inválida rechazada, borrar categoría con gastos exige moverlos). ⚠️ Falta que la usuaria lo vea en vivo.
+
 ## Ahorro visible por meta (2026-09-24) ✅
 - Migración `20260924160000_aportes_a_metas.sql` (aplicada): tabla `goal_contributions` (historial de aportes, solo lectura por RLS; se escribe desde `aportar_a_meta`), con el ahorro previo cargado como un aporte inicial por meta. Gastos muestra "Ahorro de <mes>" con cada meta por nombre y el total; Inicio muestra "Ahorro en metas". No se suma a lo gastado.
 - Verificado: tsc ✓ build ✓ · tabla consultada contra la base real. ⚠️ Falta que la usuaria lo vea en vivo.

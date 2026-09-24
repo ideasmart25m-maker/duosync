@@ -1004,6 +1004,12 @@ function GastosInner() {
           supabase={supabase}
           pareja={{ miUserId: userId ?? '', otroUserId: nombres.idOtro, nombrePropio: nombres.propio, nombreOtro: nombres.otro, pais }}
           onActualizada={(actualizada) => setCategorias((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)))}
+          onEliminada={(id) => {
+            setCategorias((prev) => prev.filter((c) => c.id !== id));
+            if (filtro === id) setFiltro('todas');
+            // Sus gastos pasaron a otra categoría: se recargan para verlos en su nueva categoría.
+            if (coupleId) cargarGastos(coupleId, prefijoMes).catch(() => {});
+          }}
           onCerrar={() => setEditandoCategorias(false)}
         />
       )}
