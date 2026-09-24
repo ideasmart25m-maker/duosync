@@ -94,3 +94,15 @@ export async function listarAportesDelMes(supabase: SupabaseClient, coupleId: st
   for (const a of aportes ?? []) totales.set(a.meta_id, (totales.get(a.meta_id) ?? 0) + Number(a.monto));
   return Array.from(totales.entries()).map(([metaId, total]) => ({ metaId, nombreMeta: nombres.get(metaId) ?? 'Meta', total }));
 }
+
+// Preferencia personal de Inicio: ver u ocultar el recuadro de ahorro.
+export async function obtenerMostrarAhorro(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const { data, error } = await supabase.from('profiles').select('mostrar_ahorro_inicio').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data?.mostrar_ahorro_inicio ?? true;
+}
+
+export async function guardarMostrarAhorro(supabase: SupabaseClient, userId: string, mostrar: boolean): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ mostrar_ahorro_inicio: mostrar }).eq('id', userId);
+  if (error) throw error;
+}

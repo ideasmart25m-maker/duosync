@@ -21,7 +21,7 @@ import {
   subirAvatar,
   type PreguntaDB,
 } from '@/lib/preguntas';
-import { listarMetas, listarAportesDelMes, type MetaDB } from '@/lib/metas';
+import { listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarAhorro, type MetaDB } from '@/lib/metas';
 import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -297,6 +297,7 @@ export default function HoyPage() {
   const [cargandoMeta, setCargandoMeta] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [ahorrado, setAhorrado] = useState(0);
+  const [mostrarAhorro, setMostrarAhorro] = useState(true);
 
   useEffect(() => {
     setSaludo(saludoDelDia());
@@ -326,7 +327,7 @@ export default function HoyPage() {
       // Cada dato carga por separado: antes un solo fallo (por ejemplo la foto o la racha)
       // tumbaba TODA la tarjeta y parecía que el presupuesto y los gastos no se habían guardado
       // (reporte real de la usuaria, 2026-09-23).
-      const [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro] = await Promise.allSettled([
+      const [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro, rMostrar] = await Promise.allSettled([
         obtenerPaisPareja(supabase, cid),
         obtenerPresupuestoPareja(supabase, cid),
         obtenerGastadoDelMes(supabase, cid, prefijoMes),
@@ -334,6 +335,7 @@ export default function HoyPage() {
         obtenerRachaPareja(supabase, cid),
         listarMetas(supabase, cid),
         listarAportesDelMes(supabase, cid, prefijoMes),
+        obtenerMostrarAhorro(supabase, user.id),
       ]);
       if (rPais.status === 'fulfilled') setPais(rPais.value);
       if (rPresupuesto.status === 'fulfilled') setPresupuesto(rPresupuesto.value);
@@ -346,8 +348,9 @@ export default function HoyPage() {
       }
       if (rRacha.status === 'fulfilled') setRacha(rRacha.value);
       if (rMetas.status === 'fulfilled') setMetaPrincipal(rMetas.value[0] ?? null);
+      if (rMostrar.status === 'fulfilled') setMostrarAhorro(rMostrar.value);
       if (rAhorro.status === 'fulfilled') setAhorrado(rAhorro.value.reduce((a, x) => a + x.total, 0));
-      const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+      const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro, rMostrar].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
       if (fallos.length > 0) setErrorCarga(fallos.map((f) => (f.reason instanceof Error ? f.reason.message : JSON.stringify(f.reason))).join(' | '));
       setCargandoMeta(false);
       } catch (e) {
@@ -379,6 +382,11 @@ export default function HoyPage() {
     } finally {
       setSubiendoAvatar(false);
     }
+  };
+
+  const cambiarMostrarAhorro = (mostrar: boolean) => {
+    setMostrarAhorro(mostrar);
+    if (userId) guardarMostrarAhorro(supabase, userId, mostrar).catch(() => setMostrarAhorro(!mostrar));
   };
 
   const guardarPresupuesto = async () => {
@@ -596,13 +604,32 @@ export default function HoyPage() {
               </Link>
             </div>
 
-            {ahorrado > 0 && (
+            {ahorrado > 0 && mostrarAhorro && (
               <div className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent-2)_10%,transparent)] p-3">
-                <p className="text-[12px] font-medium text-[var(--accent-2)]">Ahorro en metas (no hace parte de los gastos)</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[12px] font-medium text-[var(--accent-2)]">Ahorro en metas (no hace parte de los gastos)</p>
+                  <button
+                    type="button"
+                    onClick={() => cambiarMostrarAhorro(false)}
+                    aria-label="Ocultar el ahorro de Inicio"
+                    className="shrink-0 text-[12px] font-semibold text-[var(--accent-2)] underline [touch-action:manipulation]"
+                  >
+                    Ocultar
+                  </button>
+                </div>
                 <p className="mt-0.5 text-[20px] font-bold tabular-nums text-[var(--accent-2)] [font-family:var(--font-display)]">
                   {formatoMoneda(ahorrado, pais)}
                 </p>
               </div>
+            )}
+            {ahorrado > 0 && !mostrarAhorro && (
+              <button
+                type="button"
+                onClick={() => cambiarMostrarAhorro(true)}
+                className="mt-3 text-[12px] font-semibold text-[var(--text-tertiary)] underline [touch-action:manipulation]"
+              >
+                Mostrar mi ahorro aquí
+              </button>
             )}
           </>
         )}
