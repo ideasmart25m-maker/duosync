@@ -9,7 +9,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, MapPin, Home, PiggyBank } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, Home } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -28,12 +28,10 @@ import {
   type GastoDB,
   type SaldoPorMoneda,
 } from '@/lib/gastos';
-import { listarViajes, crearViaje, type ViajeDB } from '@/lib/viajes';
-import { listarAportesDelMes, type AporteDelMes } from '@/lib/metas';
 import { comprimirImagen } from '@/lib/imagen';
 import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, splitEfectivo, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
-import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
+import { formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
 import { EditorCategorias, NOMBRES_SERVICIOS } from '@/components/app/EditorCategorias';
 import { obtenerNombresPareja } from '@/lib/preguntas';
@@ -51,36 +49,27 @@ function formatoFecha(iso: string): string {
 function FormularioGasto({
   categorias,
   miUserId,
-  viajes,
   guardando,
-  creandoViaje,
   inicial,
   esEdicion,
   creandoCategoria,
   onGuardar,
   onCerrar,
   onCrearCategoria,
-  onCrearViaje,
 }: {
   categorias: CategoriaDB[];
   miUserId: string | null;
-  viajes: ViajeDB[];
   guardando: boolean;
-  creandoViaje: boolean;
-  inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null; moneda?: string | null; viajeId?: string | null };
+  inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null };
   esEdicion?: boolean;
   creandoCategoria: boolean;
-  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => void;
+  onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => void;
   onCerrar: () => void;
   onCrearCategoria: (nombre: string) => void;
-  onCrearViaje: (nombre: string, moneda: string) => Promise<ViajeDB | null>;
 }) {
   const [categoriaId, setCategoriaId] = useState(inicial?.categoriaId ?? categorias[0]?.id ?? '');
   const [monto, setMonto] = useState(inicial?.monto ? String(inicial.monto) : '');
   const [nota, setNota] = useState(inicial?.nota ?? '');
-  const [moneda, setMoneda] = useState<string | null>(inicial?.moneda ?? null);
-  const [viajeId, setViajeId] = useState<string | null>(inicial?.viajeId ?? null);
-  const [nuevoViajeNombre, setNuevoViajeNombre] = useState<string | null>(null);
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
   const [reparto, setReparto] = useState(inicial?.splitPercent ?? splitEfectivo(categoriaActual, miUserId));
@@ -108,7 +97,7 @@ function FormularioGasto({
         e.preventDefault();
         const valor = Number(monto);
         if (!valor || valor <= 0 || !categoriaId || guardando) return;
-        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto, moneda, viajeId: moneda ? viajeId : null });
+        onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto });
       }}
     >
       <div className="mb-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-[var(--surface)] p-4">
@@ -204,101 +193,6 @@ function FormularioGasto({
           placeholder="Nota (opcional)"
           className="mt-2 h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setMoneda(null)}
-            className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
-              moneda === null
-                ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-                : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
-            }`}
-          >
-            Moneda de casa
-          </button>
-          {MONEDAS_VIAJE.map((m) => (
-            <button
-              key={m.codigo}
-              type="button"
-              onClick={() => {
-                setMoneda(m.codigo);
-                // Si la moneda cambia, el viaje elegido antes puede ser de otra — evita
-                // guardar un gasto en dólares dentro de un viaje que en realidad es en euros.
-                if (moneda !== m.codigo) setViajeId(null);
-              }}
-              className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
-                moneda === m.codigo
-                  ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-                  : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
-              }`}
-            >
-              {m.nombre}
-            </button>
-          ))}
-        </div>
-        {moneda !== null && (
-          <div className="mt-3 rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
-            <p className="text-[12px] text-[var(--text-secondary)]">
-              Gasto de viaje en {nombreMoneda(moneda)}, sin convertir — se reparte y se ve aparte de las cuentas de la casa.
-            </p>
-            {/* Elegir a qué viaje pertenece (o crear uno nuevo) — pedido real del usuario:
-                antes un "viaje" era solo "gastos en esta moneda", sin nombre propio. */}
-            <p className="mt-2 text-[12px] font-medium text-[var(--text-tertiary)]">¿A qué viaje pertenece?</p>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              {viajes
-                .filter((v) => v.moneda === moneda)
-                .map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setViajeId(v.id)}
-                    className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
-                      viajeId === v.id
-                        ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
-                        : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    {v.nombre}
-                  </button>
-                ))}
-              {nuevoViajeNombre === null ? (
-                <button
-                  type="button"
-                  onClick={() => setNuevoViajeNombre('')}
-                  className="flex items-center gap-1 rounded-full border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_35%,transparent)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] [touch-action:manipulation]"
-                >
-                  <Plus size={12} strokeWidth={2.4} aria-hidden="true" />
-                  Nuevo viaje
-                </button>
-              ) : (
-                <div className="flex w-full items-center gap-2">
-                  <input
-                    autoFocus
-                    value={nuevoViajeNombre}
-                    onChange={(e) => setNuevoViajeNombre(e.target.value)}
-                    placeholder="Ej. Viaje New York"
-                    maxLength={60}
-                    className="h-9 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-3 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-                  />
-                  <button
-                    type="button"
-                    disabled={!nuevoViajeNombre.trim() || creandoViaje}
-                    onClick={async () => {
-                      const nombre = nuevoViajeNombre.trim();
-                      const nuevo = await onCrearViaje(nombre, moneda);
-                      if (nuevo) setViajeId(nuevo.id);
-                      setNuevoViajeNombre(null);
-                    }}
-                    aria-label="Crear viaje"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
-                  >
-                    {creandoViaje ? <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Check size={14} strokeWidth={2.4} aria-hidden="true" />}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
         {!ajustandoReparto ? (
           <button
             type="button"
@@ -470,8 +364,6 @@ function GastosInner() {
   const [pais, setPais] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
-  const [viajes, setViajes] = useState<ViajeDB[]>([]);
-  const [creandoViaje, setCreandoViaje] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [saldos, setSaldos] = useState<SaldoPorMoneda[] | null>(null);
@@ -486,7 +378,6 @@ function GastosInner() {
   const [editandoCategorias, setEditandoCategorias] = useState(false);
   const [nombres, setNombres] = useState<{ propio: string; otro: string | null; idOtro: string | null }>({ propio: 'Tú', otro: null, idOtro: null });
   const [registrandoPago, setRegistrandoPago] = useState<string | null>(null);
-  const [aportes, setAportes] = useState<AporteDelMes[]>([]);
 
   const [mesOffset, setMesOffset] = useState(0);
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
@@ -507,26 +398,10 @@ function GastosInner() {
   const cargarGastos = useCallback(
     async (cid: string, prefijo: string) => {
       const filas = await listarGastosDelMes(supabase, cid, prefijo);
-      setGastos(filas);
+      // Los gastos de viaje viven en Metas: aquí solo van los de la casa.
+      setGastos(filas.filter((g) => !g.moneda));
     },
     [supabase]
-  );
-
-  const crearViajePropio = useCallback(
-    async (nombre: string, moneda: string) => {
-      if (!coupleId) return null;
-      setCreandoViaje(true);
-      try {
-        const nuevo = await crearViaje(supabase, coupleId, nombre, moneda);
-        setViajes((prev) => [nuevo, ...prev]);
-        return nuevo;
-      } catch {
-        return null;
-      } finally {
-        setCreandoViaje(false);
-      }
-    },
-    [supabase, coupleId]
   );
 
   // Carga inicial: sesión → pareja → categorías + gastos del mes visible.
@@ -546,20 +421,17 @@ function GastosInner() {
         if (cancelado) return;
         setCoupleId(cid);
 
-        const [cats, paisPareja, saldoActual, viajesPareja] = await Promise.all([
+        const [cats, paisPareja, saldoActual] = await Promise.all([
           listarCategorias(supabase, cid),
           obtenerPaisPareja(supabase, cid),
           obtenerSaldoPareja(supabase, cid, user.id),
-          listarViajes(supabase, cid),
           cargarGastos(cid, prefijoMes),
         ]);
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
         setSaldos(saldoActual);
-        setViajes(viajesPareja);
         setSaldoCargado(true);
-        listarAportesDelMes(supabase, cid, prefijoMes).then((a) => !cancelado && setAportes(a)).catch(() => {});
         // Nombres de la pareja: opcional (solo para "¿quién lo paga?"), un fallo aquí no debe
         // tumbar la pantalla de gastos.
         obtenerNombresPareja(supabase, cid, user.id)
@@ -585,7 +457,6 @@ function GastosInner() {
       return;
     }
     if (!coupleId) return;
-    listarAportesDelMes(supabase, coupleId, prefijoMes).then(setAportes).catch(() => {});
     cargarGastos(coupleId, prefijoMes).catch((e) => setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.'));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- prefijoMes deriva de mesOffset
   }, [mesOffset]);
@@ -596,27 +467,8 @@ function GastosInner() {
   );
   // Nunca se mezclan: lo local (moneda de la casa) y lo de cada viaje se calculan y se muestran
   // aparte — sumar pesos con dólares en un solo total no tendría sentido (son unidades distintas).
-  const gastosLocales = useMemo(() => gastosDelMes.filter((g) => !g.moneda), [gastosDelMes]);
+  const gastosLocales = gastosDelMes;
   const totalMes = gastosLocales.reduce((a, g) => a + g.monto, 0);
-
-  // Cada viaje con nombre propio es su propio grupo — los gastos de viaje sin `viajeId` (de antes
-  // de que existiera esta función) se agrupan por moneda como respaldo, con nombre genérico.
-  const gruposDeViaje = useMemo(() => {
-    const mapa = new Map<string, { nombre: string; moneda: string; total: number; gastos: GastoDB[] }>();
-    for (const g of gastosDelMes) {
-      if (!g.moneda) continue;
-      const clave = g.viajeId ?? `sin-nombre-${g.moneda}`;
-      const viaje = g.viajeId ? viajes.find((v) => v.id === g.viajeId) : null;
-      const existente = mapa.get(clave);
-      if (existente) {
-        existente.total += g.monto;
-        existente.gastos.push(g);
-      } else {
-        mapa.set(clave, { nombre: viaje?.nombre ?? `Viaje en ${nombreMoneda(g.moneda)}`, moneda: g.moneda, total: g.monto, gastos: [g] });
-      }
-    }
-    return Array.from(mapa.values());
-  }, [gastosDelMes, viajes]);
 
   const categoriaPorId = useCallback((id: string) => categorias.find((c) => c.id === id), [categorias]);
 
@@ -669,7 +521,7 @@ function GastosInner() {
   }, [gastos]);
   const totalMesSinFiltro = useMemo(() => gastos.filter((g) => !g.moneda).reduce((a, g) => a + g.monto, 0), [gastos]);
 
-  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => {
+  const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => {
     if (!coupleId || !userId) return;
     setGuardando(true);
     try {
@@ -708,7 +560,7 @@ function GastosInner() {
     setGastoEditando(g);
   };
 
-  const guardarEdicion = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number; moneda?: string | null; viajeId?: string | null }) => {
+  const guardarEdicion = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => {
     if (!gastoEditando || !coupleId || !userId) return;
     setGuardando(true);
     try {
@@ -717,8 +569,8 @@ function GastosInner() {
         monto: g.monto,
         nota: g.nota ?? null,
         splitPercent: g.splitPercent ?? null,
-        moneda: g.moneda ?? null,
-        viajeId: g.viajeId ?? null,
+        moneda: null,
+        viajeId: null,
       });
       setGastos((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)));
       setGastoEditando(null);
@@ -917,9 +769,6 @@ function GastosInner() {
             guardando={guardando}
             inicial={datosDelEscaneo ?? undefined}
             creandoCategoria={creandoCategoria}
-            viajes={viajes}
-            creandoViaje={creandoViaje}
-            onCrearViaje={crearViajePropio}
             onGuardar={guardarGasto}
             onCrearCategoria={crearCategoriaPropia}
             onCerrar={() => {
@@ -943,13 +792,8 @@ function GastosInner() {
               monto: gastoEditando.monto,
               nota: gastoEditando.nota,
               splitPercent: gastoEditando.splitPercent,
-              moneda: gastoEditando.moneda,
-              viajeId: gastoEditando.viajeId,
             }}
             creandoCategoria={creandoCategoria}
-            viajes={viajes}
-            creandoViaje={creandoViaje}
-            onCrearViaje={crearViajePropio}
             onGuardar={guardarEdicion}
             onCrearCategoria={crearCategoriaPropia}
             onCerrar={() => setGastoEditando(null)}
@@ -1005,49 +849,6 @@ function GastosInner() {
           {formatoMoneda(totalMes, pais)}
         </span>
       </div>
-
-      {/* Ahorro: aportes a las metas del mes, cada uno con el nombre de su meta. NO se suma a lo
-          gastado — ahorrar no es gastar. */}
-      {aportes.length > 0 && (
-        <div className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--accent-2)_8%,transparent)] px-4 py-3">
-          <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
-            <PiggyBank size={13} strokeWidth={2.2} aria-hidden="true" />
-            Ahorro de {mesLabel} (no hace parte de los gastos)
-          </div>
-          <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-            {formatoMoneda(aportes.reduce((a, x) => a + x.total, 0), pais)}
-          </span>
-          <ul className="mt-1.5 flex flex-col gap-0.5">
-            {aportes.map((a) => (
-              <li key={a.metaId} className="flex items-center justify-between text-[12px] text-[var(--text-secondary)]">
-                <span className="truncate">Ahorro · {a.nombreMeta}</span>
-                <span className="shrink-0 tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(a.total, pais)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Los viajes SIEMPRE se ven en tarjetas separadas de la casa — nunca sumados a su total,
-          para que quede claro de un vistazo que son plata y cuentas aparte. */}
-      {gruposDeViaje.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {gruposDeViaje.map((v) => (
-            <div
-              key={`${v.nombre}-${v.moneda}`}
-              className="rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--accent-2)_35%,transparent)] bg-[color-mix(in_oklab,var(--accent-2)_6%,transparent)] px-4 py-3"
-            >
-              <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
-                <MapPin size={13} strokeWidth={2.2} aria-hidden="true" />
-                {v.nombre}
-              </div>
-              <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
-                {formatoMonedaViaje(v.total, v.moneda)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {saldoCargado && (
         <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
@@ -1161,12 +962,6 @@ function GastosInner() {
         <div className="flex flex-col gap-4">
           {gastosLocales.length > 0 && (
             <div className="flex flex-col gap-2">
-              {gruposDeViaje.length > 0 && (
-                <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
-                  <Home size={12} strokeWidth={2.2} aria-hidden="true" />
-                  En casa
-                </p>
-              )}
               <ul className="flex flex-col gap-2">
                 {gastosLocales.map((g) => (
                   <FilaGasto
@@ -1186,30 +981,6 @@ function GastosInner() {
             </div>
           )}
 
-          {gruposDeViaje.map((v) => (
-            <div key={`${v.nombre}-${v.moneda}`} className="flex flex-col gap-2">
-              <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
-                <MapPin size={12} strokeWidth={2.2} aria-hidden="true" />
-                {v.nombre}
-              </p>
-              <ul className="flex flex-col gap-2">
-                {v.gastos.map((g) => (
-                  <FilaGasto
-                    key={g.id}
-                    g={g}
-                    categoriaPorId={categoriaPorId}
-                    pais={pais}
-                    userId={userId}
-                    confirmandoEliminar={confirmandoEliminar}
-                    eliminando={eliminando}
-                    onEditar={empezarEdicion}
-                    onPedirEliminar={setConfirmandoEliminar}
-                    onEliminar={eliminar}
-                  />
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
       )}
 

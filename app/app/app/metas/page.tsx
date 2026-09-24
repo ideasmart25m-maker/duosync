@@ -11,10 +11,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
-import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles } from 'lucide-react';
+import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles, PiggyBank } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
-import { listarMetas, crearMeta, actualizarMeta, aportarAMeta, type MetaDB } from '@/lib/metas';
+import { listarMetas, crearMeta, actualizarMeta, aportarAMeta, listarAportesDelMes, type MetaDB, type AporteDelMes } from '@/lib/metas';
+import { obtenerNombresPareja } from '@/lib/preguntas';
+import { ViajesMetas } from '@/components/app/ViajesMetas';
 import { formatoMoneda } from '@/lib/paises';
 
 // Anima CADA VEZ que cambia `target` (desde el último valor mostrado, no siempre desde 0) —
@@ -392,6 +394,9 @@ export default function MetasPage() {
   const [metas, setMetas] = useState<MetaDB[]>([]);
   const [creandoMeta, setCreandoMeta] = useState(false);
   const [guardandoMeta, setGuardandoMeta] = useState(false);
+  const [aportes, setAportes] = useState<AporteDelMes[]>([]);
+  const [mesLabel, setMesLabel] = useState('');
+  const [nombreOtro, setNombreOtro] = useState('Tu pareja');
 
   useEffect(() => {
     let cancelado = false;
@@ -405,6 +410,13 @@ export default function MetasPage() {
         if (cancelado) return;
         setPais(paisPareja);
         setMetas(metasReales);
+        const ahora = new Date();
+        const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+        const nombresMes = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        setMesLabel(`${nombresMes[ahora.getMonth()]} ${ahora.getFullYear()}`);
+        listarAportesDelMes(supabase, cid, prefijoMes).then((a) => !cancelado && setAportes(a)).catch(() => {});
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) obtenerNombresPareja(supabase, cid, user.id).then((n) => !cancelado && n.otro && setNombreOtro(n.otro)).catch(() => {});
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus metas.');
       } finally {
@@ -418,7 +430,12 @@ export default function MetasPage() {
 
   const actualizarEnLista = useCallback((m: MetaDB) => {
     setMetas((prev) => prev.map((x) => (x.id === m.id ? m : x)));
-  }, []);
+    if (coupleId) {
+      const ahora = new Date();
+      const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+      listarAportesDelMes(supabase, coupleId, prefijoMes).then(setAportes).catch(() => {});
+    }
+  }, [coupleId, supabase]);
 
   const crearMetaNueva = async (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => {
     if (!coupleId) return;
@@ -492,6 +509,28 @@ export default function MetasPage() {
           Nueva meta juntos
         </button>
       )}
+
+      {aportes.length > 0 && (
+        <div className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--accent-2)_8%,transparent)] px-4 py-3">
+          <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+            <PiggyBank size={13} strokeWidth={2.2} aria-hidden="true" />
+            Ahorro de {mesLabel} (no hace parte de los gastos)
+          </div>
+          <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+            {formatoMoneda(aportes.reduce((a, x) => a + x.total, 0), pais)}
+          </span>
+          <ul className="mt-1.5 flex flex-col gap-0.5">
+            {aportes.map((a) => (
+              <li key={a.metaId} className="flex items-center justify-between text-[12px] text-[var(--text-secondary)]">
+                <span className="truncate">Ahorro · {a.nombreMeta}</span>
+                <span className="shrink-0 tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(a.total, pais)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {coupleId && <ViajesMetas supabase={supabase} coupleId={coupleId} nombreOtro={nombreOtro} />}
     </div>
   );
 }

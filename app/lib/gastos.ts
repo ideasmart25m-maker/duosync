@@ -95,7 +95,7 @@ function mapCategoria(c: {
 const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento, montos_mensuales, paga_user_id, reparto_user_id';
 
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
-  const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).order('created_at', { ascending: true });
+  const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).eq('es_de_viaje', false).order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapCategoria);
 }
