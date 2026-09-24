@@ -84,6 +84,7 @@ export async function obtenerHistorialConexion(supabase: SupabaseClient, coupleI
 export interface NombresPareja {
   propio: string;
   otro: string | null; // null si todavía no se ha unido nadie más
+  idOtro: string | null;
   avatarPropio: string | null;
   avatarOtro: string | null;
 }
@@ -105,6 +106,7 @@ export async function obtenerNombresPareja(supabase: SupabaseClient, coupleId: s
   return {
     propio: mio?.nombre ?? 'Tú',
     otro: suyo?.nombre ?? null,
+    idOtro: suyo?.id ?? null,
     avatarPropio: mio?.avatar_url ?? null,
     avatarOtro: suyo?.avatar_url ?? null,
   };

@@ -17,6 +17,7 @@ import {
   listarCategorias,
   listarGastosDelMes,
   crearGasto,
+  registrarPagoFijo,
   actualizarGasto,
   eliminarGasto,
   crearCategoria,
@@ -33,7 +34,8 @@ import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, type Categori
 import { formatoMoneda } from '@/lib/paises';
 import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
-import { EditorCategorias } from '@/components/app/EditorCategorias';
+import { EditorCategorias, NOMBRES_SERVICIOS } from '@/components/app/EditorCategorias';
+import { obtenerNombresPareja } from '@/lib/preguntas';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -479,6 +481,8 @@ function GastosInner() {
 
   const [asistenteAbierto, setAsistenteAbierto] = useState(false);
   const [editandoCategorias, setEditandoCategorias] = useState(false);
+  const [nombres, setNombres] = useState<{ propio: string; otro: string | null; idOtro: string | null }>({ propio: 'Tú', otro: null, idOtro: null });
+  const [registrandoPago, setRegistrandoPago] = useState<string | null>(null);
 
   const [mesOffset, setMesOffset] = useState(0);
   const [filtro, setFiltro] = useState<string | 'todas'>('todas');
@@ -551,6 +555,11 @@ function GastosInner() {
         setSaldos(saldoActual);
         setViajes(viajesPareja);
         setSaldoCargado(true);
+        // Nombres de la pareja: opcional (solo para "¿quién lo paga?"), un fallo aquí no debe
+        // tumbar la pantalla de gastos.
+        obtenerNombresPareja(supabase, cid, user.id)
+          .then((n) => !cancelado && setNombres({ propio: n.propio, otro: n.otro, idOtro: n.idOtro }))
+          .catch(() => {});
       } catch (e) {
         if (!cancelado) setError(e instanceof Error ? e.message : 'No pudimos cargar sus gastos.');
       } finally {
@@ -604,6 +613,44 @@ function GastosInner() {
   }, [gastosDelMes, viajes]);
 
   const categoriaPorId = useCallback((id: string) => categorias.find((c) => c.id === id), [categorias]);
+
+  // Pagos fijos del mes (arriendo, servicios…) con su valor ya definido en "Editar reparto y
+  // recurrencia". La nota con nombre + mes sirve también para saber si ya se registró este mes.
+  const pagosFijos = useMemo(() => {
+    const lista: { clave: string; categoria: CategoriaDB; nombre: string; dia: number; monto: number; nota: string; registrado: boolean }[] = [];
+    for (const c of categorias) {
+      if (!c.esRecurrente) continue;
+      const dias = c.diasVencimiento ?? [];
+      dias.forEach((dia, i) => {
+        const monto = c.montosMensuales?.[i] ?? 0;
+        if (monto <= 0) return;
+        const detalle = c.nombre === 'Servicios públicos' && dias.length > 1 ? (NOMBRES_SERVICIOS[i] ?? `factura ${i + 1}`) : dias.length > 1 ? `pago ${i + 1}` : null;
+        const nombre = detalle ? `${c.nombre} · ${detalle}` : c.nombre;
+        const nota = `${nombre} · ${mesLabel}`;
+        lista.push({ clave: `${c.id}-${i}`, categoria: c, nombre, dia, monto, nota, registrado: gastos.some((g) => g.categoriaId === c.id && g.nota === nota) });
+      });
+    }
+    return lista.sort((a, b) => a.dia - b.dia);
+  }, [categorias, gastos, mesLabel]);
+
+  const registrarPago = async (p: (typeof pagosFijos)[number]) => {
+    if (!coupleId || !userId) return;
+    setRegistrandoPago(p.clave);
+    try {
+      const nuevo = await registrarPagoFijo(supabase, coupleId, {
+        categoriaId: p.categoria.id,
+        monto: p.monto,
+        nota: p.nota,
+        pagadorId: p.categoria.pagaUserId,
+      });
+      setGastos((prev) => [nuevo, ...prev]);
+      obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldos).catch(() => {});
+    } catch {
+      setError('No pudimos registrar el pago. Intenten de nuevo en un momento.');
+    } finally {
+      setRegistrandoPago(null);
+    }
+  };
 
   // Totales por categoría del mes ENTERO (sin aplicar el filtro activo — si no, al tocar una
   // categoría las demás barras se irían a cero) y solo de gastos locales, para la barra de
@@ -926,6 +973,45 @@ function GastosInner() {
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
       {escaneoError && <p className="text-[12px] font-medium text-[var(--danger)]">{escaneoError}</p>}
 
+      {mesOffset === 0 && pagosFijos.length > 0 && (
+        <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">Pagos fijos de {mesLabel}</p>
+          <ul className="mt-2 flex flex-col divide-y divide-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)]">
+            {pagosFijos.map((p) => {
+              const quien =
+                p.categoria.pagaUserId === null ? null : p.categoria.pagaUserId === userId ? 'Pagas tú' : `Paga ${nombres.otro ?? 'tu pareja'}`;
+              return (
+                <li key={p.clave} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium text-[var(--text-primary)]">{p.nombre}</span>
+                    <span className="block text-[12px] text-[var(--text-tertiary)]">
+                      Vence el {p.dia} · {formatoMoneda(p.monto, pais)}
+                      {quien ? ` · ${quien}` : ''}
+                    </span>
+                  </span>
+                  {p.registrado ? (
+                    <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--accent-2)]">
+                      <Check size={14} strokeWidth={2.4} aria-hidden="true" />
+                      Registrado
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => registrarPago(p)}
+                      disabled={registrandoPago !== null}
+                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-button)] bg-[var(--accent)] px-3 text-[12px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                    >
+                      {registrandoPago === p.clave && <Loader2 size={13} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                      Registrar pago
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <AnimatePresence initial={false}>
         {formularioAbierto && (
           <FormularioGasto
@@ -1092,6 +1178,7 @@ function GastosInner() {
         <EditorCategorias
           categorias={categorias}
           supabase={supabase}
+          pareja={{ miUserId: userId ?? '', otroUserId: nombres.idOtro, nombrePropio: nombres.propio, nombreOtro: nombres.otro, pais }}
           onActualizada={(actualizada) => setCategorias((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)))}
           onCerrar={() => setEditandoCategorias(false)}
         />

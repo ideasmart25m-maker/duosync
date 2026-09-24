@@ -1,16 +1,12 @@
 # ESTADO — Fairsy
 Última actualización: 2026-09-22 | Sesión actual: 7
 
-## ⏸️ PENDIENTE DE DISEÑO (2026-09-23): valor mensual de gastos fijos + "cuánto le toca a cada uno"
-La usuaria quiere registrar el valor TOTAL del mes de arriendo/servicios/recurrentes en
-"Editar reparto y recurrencia" y ver ahí lo que le corresponde a cada uno según el %. Propuesta
-hecha (sin construir): campo `monto_mensual` por categoría + botón "Registrar pago" de un toque en el
-recordatorio (crea el gasto prellenado) + valor propio por factura en Servicios públicos. Ella decidió
-NO cerrar todavía "quién paga" (fijo por categoría vs. quien toque el botón): cada pareja paga distinto
-y quiere una solución general que sirva a todas. Al retomar: proponer un diseño único y flexible (p. ej.
-"quién paga" opcional por categoría, con valor por defecto = quien registra) y esperar su OK antes de
-construir. No tocar `calcular_saldo_pareja`/`liquidar_saldo` sin necesidad.
-También pendiente (de antes): revisar con ella la sección de VIAJES en Gastos.
+## Pagos fijos con valor mensual y "quién paga" (2026-09-24) ✅ — a pedido de la usuaria
+- Migración `20260924120000_pagos_fijos.sql` (aplicada): `categories.montos_mensuales` (un valor por fecha de vencimiento) + `categories.paga_user_id` (opcional; null = quien toque "Registrar pago") con trigger que exige que sea integrante de la pareja. NO se tocó `calcular_saldo_pareja`/`liquidar_saldo`.
+- Editor de categorías: valor del mes por factura, total del mes, "quien paga se queda con X% ($) · el otro devuelve Y% ($)" y selector "¿Quién lo paga?".
+- Gastos: sección "Pagos fijos de <mes>" con botón "Registrar pago" de un toque (crea el gasto con el valor, a nombre del pagador; se reasigna con UPDATE porque el INSERT exige registrado_por = uno mismo). "Registrado" se detecta por nota + categoría del mes.
+- Verificado: tsc ✓ build ✓ · columnas y trigger probados contra la base real. ⚠️ Falta que la usuaria lo pruebe en vivo (Editar reparto y recurrencia → poner valor → Registrar pago) y confirme que el saldo entre ustedes cuadra.
+- Pendiente conocido: el correo recordatorio de vencimiento aún no menciona el valor.
 
 ## Ajustes de Inicio/Hoy, Gastos y Metas pedidos por el usuario (2026-09-22) ✅
 Pedido con 7 capturas: foto de perfil en Inicio, mover el selector de país/moneda, cambiar íconos

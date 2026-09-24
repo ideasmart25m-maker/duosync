@@ -5,31 +5,74 @@
 // Suscripciones como recurrentes y ajustar el % de reparto por categoría, no solo al vuelo
 // cuando registran un gasto.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Minus, Plus, Bell, Trash2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { actualizarCategoria } from '@/lib/gastos';
+import { formatoMoneda } from '@/lib/paises';
+
+export interface ParejaEditor {
+  miUserId: string;
+  otroUserId: string | null;
+  nombrePropio: string;
+  nombreOtro: string | null;
+  pais: string | null;
+}
+
+// Valor del mes de UNA factura — se escribe libre y se guarda al salir del campo (no a cada tecla).
+function MontoInput({ valor, etiqueta, onGuardar }: { valor: number; etiqueta: string; onGuardar: (n: number) => void }) {
+  const [texto, setTexto] = useState(valor ? String(valor) : '');
+  useEffect(() => setTexto(valor ? String(valor) : ''), [valor]);
+  return (
+    <input
+      inputMode="numeric"
+      value={texto}
+      onChange={(e) => setTexto(e.target.value.replace(/\D/g, ''))}
+      onBlur={() => {
+        const n = Number(texto) || 0;
+        if (n !== valor) onGuardar(n);
+      }}
+      placeholder="Valor"
+      aria-label={etiqueta}
+      className="h-9 w-24 border-l border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-transparent pl-2 text-[13px] tabular-nums text-[var(--text-primary)] outline-none"
+    />
+  );
+}
 
 // Orden fijo pensado para "Servicios públicos": Acueducto, Energía, Gas, Internet — el usuario
 // agrega las fechas en ese orden y cada una se identifica con su letra (no hay forma de saber
 // desde la base de datos cuál factura es cuál, así que esto es solo una guía visual de orden).
 const LETRAS_SERVICIOS = ['A', 'E', 'G', 'I'];
-const NOMBRES_SERVICIOS = ['Acueducto', 'Energía', 'Gas', 'Internet'];
+export const NOMBRES_SERVICIOS = ['Acueducto', 'Energía', 'Gas', 'Internet'];
 
 function FilaCategoria({
   categoria,
   supabase,
+  pareja,
   onActualizada,
 }: {
   categoria: CategoriaDB;
   supabase: SupabaseClient;
+  pareja: ParejaEditor;
   onActualizada: (c: CategoriaDB) => void;
 }) {
   const [guardando, setGuardando] = useState(false);
   const Icono = iconoDeCategoria(categoria.icono);
   const color = colorDeCategoria(categoria.color);
+  const dias = categoria.diasVencimiento ?? [1];
+  const montos = dias.map((_, i) => categoria.montosMensuales?.[i] ?? 0);
+  const totalMes = montos.reduce((a, m) => a + m, 0);
+  const cambiarMonto = (indice: number, nuevo: number) => {
+    const copia = [...montos];
+    copia[indice] = nuevo;
+    guardar({ montosMensuales: copia });
+  };
+  const nombrePagador =
+    categoria.pagaUserId === null ? null : categoria.pagaUserId === pareja.miUserId ? pareja.nombrePropio : (pareja.nombreOtro ?? 'Tu pareja');
+  const parteDelPagador = Math.round((totalMes * categoria.splitPercent) / 100);
+  const parteDelOtro = totalMes - parteDelPagador;
 
   const guardar = async (cambios: Parameters<typeof actualizarCategoria>[2]) => {
     setGuardando(true);
@@ -151,19 +194,28 @@ function FilaCategoria({
                   }
                   onChange={(e) => {
                     const nuevoDia = Math.min(31, Math.max(1, Number(e.target.value) || 1));
-                    const dias = [...(categoria.diasVencimiento ?? [1])];
-                    dias[indice] = nuevoDia;
-                    guardar({ diasVencimiento: dias });
+                    const nuevos = [...dias];
+                    nuevos[indice] = nuevoDia;
+                    guardar({ diasVencimiento: nuevos });
                   }}
                   className="h-9 w-12 bg-transparent text-center text-[13px] tabular-nums text-[var(--text-primary)] outline-none"
+                />
+                <MontoInput
+                  valor={montos[indice] ?? 0}
+                  etiqueta={`Valor a pagar cada mes de ${
+                    categoria.nombre === 'Servicios públicos' && dias.length > 1 ? (NOMBRES_SERVICIOS[indice] ?? `factura ${indice + 1}`) : categoria.nombre
+                  }`}
+                  onGuardar={(n) => cambiarMonto(indice, n)}
                 />
                 {(categoria.diasVencimiento?.length ?? 1) > 1 && (
                   <button
                     type="button"
                     disabled={guardando}
                     onClick={() => {
-                      const dias = (categoria.diasVencimiento ?? [1]).filter((_, i) => i !== indice);
-                      guardar({ diasVencimiento: dias });
+                      guardar({
+                        diasVencimiento: dias.filter((_, i) => i !== indice),
+                        montosMensuales: montos.filter((_, i) => i !== indice),
+                      });
                     }}
                     aria-label="Quitar esta fecha"
                     className="flex size-7 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
@@ -176,12 +228,55 @@ function FilaCategoria({
             <button
               type="button"
               disabled={guardando || (categoria.diasVencimiento?.length ?? 0) >= 6}
-              onClick={() => guardar({ diasVencimiento: [...(categoria.diasVencimiento ?? [1]), 1] })}
+              onClick={() => guardar({ diasVencimiento: [...dias, 1], montosMensuales: [...montos, 0] })}
               aria-label="Agregar otra fecha"
               className="flex size-9 items-center justify-center rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_35%,transparent)] text-[var(--text-tertiary)] disabled:opacity-40 [touch-action:manipulation]"
             >
               <Plus size={14} strokeWidth={2.2} aria-hidden="true" />
             </button>
+          </div>
+
+          {totalMes > 0 && (
+            <div className="rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3 text-[12px] text-[var(--text-secondary)]">
+              <p>
+                Total del mes: <span className="font-semibold text-[var(--text-primary)]">{formatoMoneda(totalMes, pareja.pais)}</span>
+              </p>
+              <p className="mt-1">
+                {nombrePagador ? `${nombrePagador} paga y se queda con` : 'Quien pague se queda con'}{' '}
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {categoria.splitPercent}% ({formatoMoneda(parteDelPagador, pareja.pais)})
+                </span>
+                {' · '}el otro le devuelve{' '}
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {100 - categoria.splitPercent}% ({formatoMoneda(parteDelOtro, pareja.pais)})
+                </span>
+              </p>
+            </div>
+          )}
+
+          <div>
+            <span className="text-[12px] text-[var(--text-secondary)]">¿Quién lo paga?</span>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {[
+                { id: null as string | null, texto: 'Quien toque "Registrar pago"' },
+                { id: pareja.miUserId as string | null, texto: pareja.nombrePropio },
+                ...(pareja.otroUserId ? [{ id: pareja.otroUserId as string | null, texto: pareja.nombreOtro ?? 'Tu pareja' }] : []),
+              ].map((op) => (
+                <button
+                  key={op.id ?? 'nadie'}
+                  type="button"
+                  disabled={guardando}
+                  onClick={() => guardar({ pagaUserId: op.id })}
+                  className={`rounded-full border px-3 py-1.5 text-[12px] font-medium [touch-action:manipulation] ${
+                    categoria.pagaUserId === op.id
+                      ? 'border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]'
+                      : 'border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {op.texto}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -192,11 +287,13 @@ function FilaCategoria({
 export function EditorCategorias({
   categorias,
   supabase,
+  pareja,
   onActualizada,
   onCerrar,
 }: {
   categorias: CategoriaDB[];
   supabase: SupabaseClient;
+  pareja: ParejaEditor;
   onActualizada: (c: CategoriaDB) => void;
   onCerrar: () => void;
 }) {
@@ -219,7 +316,7 @@ export function EditorCategorias({
         </p>
         <div className="flex-1 space-y-3 overflow-y-auto">
           {categorias.map((c) => (
-            <FilaCategoria key={c.id} categoria={c} supabase={supabase} onActualizada={onActualizada} />
+            <FilaCategoria key={c.id} categoria={c} supabase={supabase} pareja={pareja} onActualizada={onActualizada} />
           ))}
         </div>
       </motion.div>

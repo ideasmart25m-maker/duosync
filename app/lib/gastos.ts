@@ -74,6 +74,8 @@ function mapCategoria(c: {
   split_percent: number;
   es_recurrente: boolean;
   dias_vencimiento: number[] | null;
+  montos_mensuales: (number | string)[] | null;
+  paga_user_id: string | null;
 }): CategoriaDB {
   return {
     id: c.id,
@@ -83,10 +85,12 @@ function mapCategoria(c: {
     splitPercent: c.split_percent,
     esRecurrente: c.es_recurrente,
     diasVencimiento: c.dias_vencimiento,
+    montosMensuales: c.montos_mensuales ? c.montos_mensuales.map(Number) : null,
+    pagaUserId: c.paga_user_id,
   };
 }
 
-const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento';
+const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento, montos_mensuales, paga_user_id';
 
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
   const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).order('created_at', { ascending: true });
@@ -114,9 +118,17 @@ export async function crearCategoria(supabase: SupabaseClient, coupleId: string,
 export async function actualizarCategoria(
   supabase: SupabaseClient,
   categoriaId: string,
-  cambios: { splitPercent?: number; esRecurrente?: boolean; diasVencimiento?: number[] | null }
+  cambios: {
+    splitPercent?: number;
+    esRecurrente?: boolean;
+    diasVencimiento?: number[] | null;
+    montosMensuales?: number[] | null;
+    pagaUserId?: string | null;
+  }
 ): Promise<CategoriaDB> {
   const patch: Record<string, unknown> = {};
+  if (cambios.montosMensuales !== undefined) patch.montos_mensuales = cambios.montosMensuales;
+  if (cambios.pagaUserId !== undefined) patch.paga_user_id = cambios.pagaUserId;
   if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
   if (cambios.esRecurrente !== undefined) patch.es_recurrente = cambios.esRecurrente;
   if (cambios.diasVencimiento !== undefined) patch.dias_vencimiento = cambios.diasVencimiento;
@@ -252,6 +264,26 @@ export async function crearGasto(
 export interface SaldoPorMoneda {
   moneda: string | null; // null = la moneda normal de la casa; 'USD'/'EUR'/'GBP' = un viaje
   saldo: number;
+}
+
+// Registra un pago fijo (arriendo, servicios…) a nombre de quien de verdad lo paga. La política de
+// INSERT exige registrado_por = quien está logueado, así que se inserta como uno mismo y, si el
+// pagador fijo es la pareja, se reasigna con un UPDATE (esa política sí lo permite entre integrantes).
+export async function registrarPagoFijo(
+  supabase: SupabaseClient,
+  coupleId: string,
+  pago: { categoriaId: string; monto: number; nota: string; pagadorId: string | null }
+): Promise<GastoDB> {
+  const creado = await crearGasto(supabase, coupleId, { categoriaId: pago.categoriaId, monto: pago.monto, nota: pago.nota });
+  if (!pago.pagadorId || pago.pagadorId === creado.registradoPor) return creado;
+  const { data, error } = await supabase
+    .from('expenses')
+    .update({ registrado_por: pago.pagadorId })
+    .eq('id', creado.id)
+    .select('registrado_por')
+    .single();
+  if (error) throw error;
+  return { ...creado, registradoPor: data.registrado_por };
 }
 
 // Corrige un gasto ya guardado (monto, categoría, nota, reparto o moneda) — la política de

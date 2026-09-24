@@ -28,6 +28,8 @@ export interface CategoriaDB {
   splitPercent: number; // % del gasto que le corresponde a quien lo REGISTRA (el resto, a su pareja)
   esRecurrente: boolean;
   diasVencimiento: number[] | null; // días 1-31, uno por cada factura de la categoría (solo si esRecurrente)
+  montosMensuales: number[] | null; // valor a pagar cada mes, mismo orden que diasVencimiento
+  pagaUserId: string | null; // quien paga siempre esta categoría; null = quien toque "Registrar pago"
 }
 
 const ICONOS: Record<string, LucideIcon> = {
