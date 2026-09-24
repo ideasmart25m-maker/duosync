@@ -30,6 +30,7 @@ export interface CategoriaDB {
   diasVencimiento: number[] | null; // días 1-31, uno por cada factura de la categoría (solo si esRecurrente)
   montosMensuales: number[] | null; // valor a pagar cada mes, mismo orden que diasVencimiento
   pagaUserId: string | null; // quien paga siempre esta categoría; null = quien toque "Registrar pago"
+  repartoUserId: string | null; // persona a la que pertenece splitPercent (null = datos viejos: quien registra)
 }
 
 const ICONOS: Record<string, LucideIcon> = {
@@ -71,4 +72,12 @@ export function colorDeCategoria(color: string): string {
   const validos: ColorCategoria[] = ['teal', 'coral', 'amber', 'rose', 'blue', 'violet', 'gray'];
   const clave = (validos as string[]).includes(color) ? color : 'gray';
   return `var(--cat-${clave})`;
+}
+
+// Parte del gasto que le toca a QUIEN PAGÓ (lo que entiende el cálculo de saldos), a partir del
+// reparto acordado por persona: el 60/40 se respeta sin importar quién ponga la plata ese día.
+export function splitEfectivo(cat: Pick<CategoriaDB, 'splitPercent' | 'repartoUserId'> | undefined, pagadorId: string | null): number {
+  const p = cat?.splitPercent ?? 50;
+  if (!cat?.repartoUserId || !pagadorId) return p;
+  return cat.repartoUserId === pagadorId ? p : 100 - p;
 }

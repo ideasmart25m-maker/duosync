@@ -30,7 +30,7 @@ import {
 } from '@/lib/gastos';
 import { listarViajes, crearViaje, type ViajeDB } from '@/lib/viajes';
 import { comprimirImagen } from '@/lib/imagen';
-import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
+import { iconoDeCategoria, iconoDeCategoriaFill, colorDeCategoria, splitEfectivo, type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
 import { MONEDAS_VIAJE, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
@@ -49,6 +49,7 @@ function formatoFecha(iso: string): string {
 
 function FormularioGasto({
   categorias,
+  miUserId,
   viajes,
   guardando,
   creandoViaje,
@@ -61,6 +62,7 @@ function FormularioGasto({
   onCrearViaje,
 }: {
   categorias: CategoriaDB[];
+  miUserId: string | null;
   viajes: ViajeDB[];
   guardando: boolean;
   creandoViaje: boolean;
@@ -80,7 +82,7 @@ function FormularioGasto({
   const [nuevoViajeNombre, setNuevoViajeNombre] = useState<string | null>(null);
   const [nuevaCategoria, setNuevaCategoria] = useState<string | null>(null);
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
-  const [reparto, setReparto] = useState(inicial?.splitPercent ?? categoriaActual?.splitPercent ?? 50);
+  const [reparto, setReparto] = useState(inicial?.splitPercent ?? splitEfectivo(categoriaActual, miUserId));
   const [ajustandoReparto, setAjustandoReparto] = useState(false);
 
   // Si cambian de categoría, el % vuelve al de la categoría nueva (a menos que ya lo hayan
@@ -90,7 +92,7 @@ function FormularioGasto({
     setCategoriaId(id);
     if (!repartoTocado) {
       const cat = categorias.find((c) => c.id === id);
-      setReparto(cat?.splitPercent ?? 50);
+      setReparto(splitEfectivo(cat, miUserId));
     }
   };
 
@@ -642,6 +644,7 @@ function GastosInner() {
         monto: p.monto,
         nota: p.nota,
         pagadorId: p.categoria.pagaUserId,
+        splitPercent: splitEfectivo(p.categoria, p.categoria.pagaUserId ?? userId),
       });
       setGastos((prev) => [nuevo, ...prev]);
       obtenerSaldoPareja(supabase, coupleId, userId).then(setSaldos).catch(() => {});
@@ -1016,6 +1019,7 @@ function GastosInner() {
         {formularioAbierto && (
           <FormularioGasto
             categorias={categorias}
+            miUserId={userId}
             guardando={guardando}
             inicial={datosDelEscaneo ?? undefined}
             creandoCategoria={creandoCategoria}
@@ -1037,6 +1041,7 @@ function GastosInner() {
         {gastoEditando && (
           <FormularioGasto
             categorias={categorias}
+            miUserId={userId}
             guardando={guardando}
             esEdicion
             inicial={{

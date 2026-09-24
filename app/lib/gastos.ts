@@ -76,6 +76,7 @@ function mapCategoria(c: {
   dias_vencimiento: number[] | null;
   montos_mensuales: (number | string)[] | null;
   paga_user_id: string | null;
+  reparto_user_id: string | null;
 }): CategoriaDB {
   return {
     id: c.id,
@@ -87,10 +88,11 @@ function mapCategoria(c: {
     diasVencimiento: c.dias_vencimiento,
     montosMensuales: c.montos_mensuales ? c.montos_mensuales.map(Number) : null,
     pagaUserId: c.paga_user_id,
+    repartoUserId: c.reparto_user_id,
   };
 }
 
-const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento, montos_mensuales, paga_user_id';
+const COLUMNAS_CATEGORIA = 'id, nombre, icono, color, split_percent, es_recurrente, dias_vencimiento, montos_mensuales, paga_user_id, reparto_user_id';
 
 export async function listarCategorias(supabase: SupabaseClient, coupleId: string): Promise<CategoriaDB[]> {
   const { data, error } = await supabase.from('categories').select(COLUMNAS_CATEGORIA).eq('couple_id', coupleId).order('created_at', { ascending: true });
@@ -104,9 +106,12 @@ const PALETA_CATEGORIAS: CategoriaDB['color'][] = ['teal', 'coral', 'amber', 'ro
 // categoría también se distinga de un vistazo sin pedirle al usuario que elija un color.
 export async function crearCategoria(supabase: SupabaseClient, coupleId: string, nombre: string, existentes: CategoriaDB[]): Promise<CategoriaDB> {
   const color = PALETA_CATEGORIAS[existentes.length % PALETA_CATEGORIAS.length];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from('categories')
-    .insert({ couple_id: coupleId, nombre: nombre.trim(), icono: 'circle', color })
+    .insert({ couple_id: coupleId, nombre: nombre.trim(), icono: 'circle', color, reparto_user_id: user?.id ?? null })
     .select(COLUMNAS_CATEGORIA)
     .single();
   if (error) throw error;
@@ -124,11 +129,13 @@ export async function actualizarCategoria(
     diasVencimiento?: number[] | null;
     montosMensuales?: number[] | null;
     pagaUserId?: string | null;
+    repartoUserId?: string | null;
   }
 ): Promise<CategoriaDB> {
   const patch: Record<string, unknown> = {};
   if (cambios.montosMensuales !== undefined) patch.montos_mensuales = cambios.montosMensuales;
   if (cambios.pagaUserId !== undefined) patch.paga_user_id = cambios.pagaUserId;
+  if (cambios.repartoUserId !== undefined) patch.reparto_user_id = cambios.repartoUserId;
   if (cambios.splitPercent !== undefined) patch.split_percent = cambios.splitPercent;
   if (cambios.esRecurrente !== undefined) patch.es_recurrente = cambios.esRecurrente;
   if (cambios.diasVencimiento !== undefined) patch.dias_vencimiento = cambios.diasVencimiento;
@@ -272,9 +279,9 @@ export interface SaldoPorMoneda {
 export async function registrarPagoFijo(
   supabase: SupabaseClient,
   coupleId: string,
-  pago: { categoriaId: string; monto: number; nota: string; pagadorId: string | null }
+  pago: { categoriaId: string; monto: number; nota: string; pagadorId: string | null; splitPercent: number }
 ): Promise<GastoDB> {
-  const creado = await crearGasto(supabase, coupleId, { categoriaId: pago.categoriaId, monto: pago.monto, nota: pago.nota });
+  const creado = await crearGasto(supabase, coupleId, { categoriaId: pago.categoriaId, monto: pago.monto, nota: pago.nota, splitPercent: pago.splitPercent });
   if (!pago.pagadorId || pago.pagadorId === creado.registradoPor) return creado;
   const { data, error } = await supabase
     .from('expenses')

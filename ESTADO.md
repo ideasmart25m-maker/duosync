@@ -6,6 +6,7 @@
 - Editor de categorías: valor del mes por factura, total del mes, "quien paga se queda con X% ($) · el otro devuelve Y% ($)" y selector "¿Quién lo paga?".
 - Gastos: sección "Pagos fijos de <mes>" con botón "Registrar pago" de un toque (crea el gasto con el valor, a nombre del pagador; se reasigna con UPDATE porque el INSERT exige registrado_por = uno mismo). "Registrado" se detecta por nota + categoría del mes.
 - Verificado: tsc ✓ build ✓ · columnas y trigger probados contra la base real. ⚠️ Falta que la usuaria lo pruebe en vivo (Editar reparto y recurrencia → poner valor → Registrar pago) y confirme que el saldo entre ustedes cuadra.
+- Corrección 2026-09-24 (pedido de la usuaria): el reparto ahora es POR PERSONA, no por quien registra — migración `20260924140000_reparto_por_persona.sql` (`categories.reparto_user_id`; `split_percent` = parte de esa persona). Al registrar un gasto se convierte a "parte de quien pagó" con `splitEfectivo()` (`lib/categorias.ts`), así el 60/40 se respeta sin importar quién pague; `calcular_saldo_pareja` sigue intacto.
 - Pendiente conocido: el correo recordatorio de vencimiento aún no menciona el valor.
 
 ## Ajustes de Inicio/Hoy, Gastos y Metas pedidos por el usuario (2026-09-22) ✅

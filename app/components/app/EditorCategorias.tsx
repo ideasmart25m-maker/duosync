@@ -71,8 +71,12 @@ function FilaCategoria({
   };
   const nombrePagador =
     categoria.pagaUserId === null ? null : categoria.pagaUserId === pareja.miUserId ? pareja.nombrePropio : (pareja.nombreOtro ?? 'Tu pareja');
-  const parteDelPagador = Math.round((totalMes * categoria.splitPercent) / 100);
-  const parteDelOtro = totalMes - parteDelPagador;
+  // Reparto por PERSONA (no por quien paga): mi parte es splitPercent si el reparto es mío, o lo que sobra si es de mi pareja.
+  const miParte = categoria.repartoUserId && categoria.repartoUserId !== pareja.miUserId ? 100 - categoria.splitPercent : categoria.splitPercent;
+  const cambiarMiParte = (nuevo: number) => guardar({ splitPercent: Math.min(100, Math.max(0, nuevo)), repartoUserId: pareja.miUserId });
+  const nombreOtro = pareja.nombreOtro ?? 'Tu pareja';
+  const valorMio = Math.round((totalMes * miParte) / 100);
+  const valorOtro = totalMes - valorMio;
 
   const guardar = async (cambios: Parameters<typeof actualizarCategoria>[2]) => {
     setGuardando(true);
@@ -100,14 +104,14 @@ function FilaCategoria({
 
       <div className="mt-3 flex items-center justify-between">
         <span className="text-[12px] text-[var(--text-secondary)]">
-          Reparto: <span className="font-semibold text-[var(--text-primary)]">{categoria.splitPercent}%</span> quien registra ·{' '}
-          <span className="font-semibold text-[var(--text-primary)]">{100 - categoria.splitPercent}%</span> su pareja
+          Reparto: <span className="font-semibold text-[var(--text-primary)]">{miParte}%</span> tú ·{' '}
+          <span className="font-semibold text-[var(--text-primary)]">{100 - miParte}%</span> {nombreOtro}
         </span>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            disabled={categoria.splitPercent <= 0 || guardando}
-            onClick={() => guardar({ splitPercent: Math.max(0, categoria.splitPercent - 10) })}
+            disabled={miParte <= 0 || guardando}
+            onClick={() => cambiarMiParte(miParte - 10)}
             aria-label="Bajar reparto"
             className="flex size-7 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-40 [touch-action:manipulation]"
           >
@@ -115,8 +119,8 @@ function FilaCategoria({
           </button>
           <button
             type="button"
-            disabled={categoria.splitPercent >= 100 || guardando}
-            onClick={() => guardar({ splitPercent: Math.min(100, categoria.splitPercent + 10) })}
+            disabled={miParte >= 100 || guardando}
+            onClick={() => cambiarMiParte(miParte + 10)}
             aria-label="Subir reparto"
             className="flex size-7 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-40 [touch-action:manipulation]"
           >
@@ -242,14 +246,17 @@ function FilaCategoria({
                 Total del mes: <span className="font-semibold text-[var(--text-primary)]">{formatoMoneda(totalMes, pareja.pais)}</span>
               </p>
               <p className="mt-1">
-                {nombrePagador ? `${nombrePagador} paga y se queda con` : 'Quien pague se queda con'}{' '}
+                Te toca a ti{' '}
                 <span className="font-semibold text-[var(--text-primary)]">
-                  {categoria.splitPercent}% ({formatoMoneda(parteDelPagador, pareja.pais)})
+                  {miParte}% ({formatoMoneda(valorMio, pareja.pais)})
                 </span>
-                {' · '}el otro le devuelve{' '}
+                {' · '}a {nombreOtro}{' '}
                 <span className="font-semibold text-[var(--text-primary)]">
-                  {100 - categoria.splitPercent}% ({formatoMoneda(parteDelOtro, pareja.pais)})
+                  {100 - miParte}% ({formatoMoneda(valorOtro, pareja.pais)})
                 </span>
+              </p>
+              <p className="mt-1 text-[var(--text-tertiary)]">
+                {nombrePagador ? `${nombrePagador} paga y el otro le devuelve su parte.` : 'Quien pague recibe de vuelta la parte del otro.'}
               </p>
             </div>
           )}
