@@ -1012,7 +1012,7 @@ function GastosInner() {
         <div className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--accent-2)_8%,transparent)] px-4 py-3">
           <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
             <PiggyBank size={13} strokeWidth={2.2} aria-hidden="true" />
-            Ahorro de {mesLabel}
+            Ahorro de {mesLabel} (no hace parte de los gastos)
           </div>
           <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
             {formatoMoneda(aportes.reduce((a, x) => a + x.total, 0), pais)}

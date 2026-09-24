@@ -545,6 +545,9 @@ export default function HoyPage() {
           </form>
         ) : (
           <>
+            {/* Presupuesto en su propio recuadro (fondo neutro) y el ahorro aparte, en verde — son
+                cosas distintas: el ahorro NO es un gasto y no debe confundirse con el saldo. */}
+            <div className="rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
             <button
               type="button"
               onClick={() => {
@@ -581,15 +584,10 @@ export default function HoyPage() {
                       {formatoMoneda(disponible ?? 0, pais)}
                     </span>
                   </div>
-                  {ahorrado > 0 && (
-                    <div className="flex items-center justify-between text-[15px]">
-                      <span className="text-[var(--text-secondary)]">Ahorro en metas</span>
-                      <span className="tabular-nums font-semibold text-[var(--accent-2)]">{formatoMoneda(ahorrado, pais)}</span>
-                    </div>
-                  )}
                 </div>
               </>
             )}
+            </div>
 
             <div className="mt-3">
               <Link href="/app/gastos" className="flex w-fit items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
@@ -597,6 +595,15 @@ export default function HoyPage() {
                 <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
               </Link>
             </div>
+
+            {ahorrado > 0 && (
+              <div className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent-2)_10%,transparent)] p-3">
+                <p className="text-[12px] font-medium text-[var(--accent-2)]">Ahorro en metas (no hace parte de los gastos)</p>
+                <p className="mt-0.5 text-[20px] font-bold tabular-nums text-[var(--accent-2)] [font-family:var(--font-display)]">
+                  {formatoMoneda(ahorrado, pais)}
+                </p>
+              </div>
+            )}
           </>
         )}
       </motion.div>
