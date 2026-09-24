@@ -854,7 +854,15 @@ function GastosInner() {
           const color = colorDeCategoria(c.color);
           const activo = filtro === c.id;
           const total = totalPorCategoria.get(c.id) ?? 0;
-          const porcentaje = totalMesSinFiltro > 0 ? Math.min(100, Math.round((total / totalMesSinFiltro) * 100)) : 0;
+          // Categoría con pagos fijos definidos: la barra mide lo PAGADO vs lo que toca pagar este
+          // mes (llena = todo pagado). Sin valor definido: peso de la categoría en el gasto del mes.
+          const planeado = c.esRecurrente ? (c.montosMensuales ?? []).reduce((a, m) => a + m, 0) : 0;
+          const porcentaje =
+            planeado > 0
+              ? Math.min(100, Math.round((total / planeado) * 100))
+              : totalMesSinFiltro > 0
+                ? Math.min(100, Math.round((total / totalMesSinFiltro) * 100))
+                : 0;
           return (
             <button
               key={c.id}
@@ -873,7 +881,10 @@ function GastosInner() {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2">
                   <span className="truncate text-[13px] font-medium text-[var(--text-primary)]">{c.nombre}</span>
-                  <span className="shrink-0 tabular-nums text-[12px] font-semibold text-[var(--text-primary)]">{formatoMoneda(total, pais)}</span>
+                  <span className="shrink-0 tabular-nums text-[12px] font-semibold text-[var(--text-primary)]">
+                    {formatoMoneda(total, pais)}
+                    {planeado > 0 && <span className="font-normal text-[var(--text-tertiary)]"> de {formatoMoneda(planeado, pais)}</span>}
+                  </span>
                 </span>
                 <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
                   <span className="block h-full rounded-full transition-all" style={{ width: `${porcentaje}%`, backgroundColor: color }} />
