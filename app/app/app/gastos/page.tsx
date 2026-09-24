@@ -905,6 +905,93 @@ function GastosInner() {
         Editar reparto y recurrencia
       </button>
 
+      <AnimatePresence initial={false}>
+        {formularioAbierto && (
+          <FormularioGasto
+            categorias={categorias}
+            miUserId={userId}
+            guardando={guardando}
+            inicial={datosDelEscaneo ?? undefined}
+            creandoCategoria={creandoCategoria}
+            viajes={viajes}
+            creandoViaje={creandoViaje}
+            onCrearViaje={crearViajePropio}
+            onGuardar={guardarGasto}
+            onCrearCategoria={crearCategoriaPropia}
+            onCerrar={() => {
+              setFormularioAbierto(false);
+              setDatosDelEscaneo(null);
+              setReceiptScanId(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence initial={false}>
+        {gastoEditando && (
+          <FormularioGasto
+            categorias={categorias}
+            miUserId={userId}
+            guardando={guardando}
+            esEdicion
+            inicial={{
+              categoriaId: gastoEditando.categoriaId,
+              monto: gastoEditando.monto,
+              nota: gastoEditando.nota,
+              splitPercent: gastoEditando.splitPercent,
+              moneda: gastoEditando.moneda,
+              viajeId: gastoEditando.viajeId,
+            }}
+            creandoCategoria={creandoCategoria}
+            viajes={viajes}
+            creandoViaje={creandoViaje}
+            onCrearViaje={crearViajePropio}
+            onGuardar={guardarEdicion}
+            onCrearCategoria={crearCategoriaPropia}
+            onCerrar={() => setGastoEditando(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {!formularioAbierto && !gastoEditando && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setFormularioAbierto(true)}
+            disabled={categorias.length === 0}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[15px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+            Nuevo gasto
+          </button>
+          <button
+            type="button"
+            onClick={() => inputFotoRef.current?.click()}
+            disabled={categorias.length === 0 || escaneando}
+            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] px-4 text-[15px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+          >
+            {escaneando ? (
+              <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Camera size={16} strokeWidth={2.4} aria-hidden="true" />
+            )}
+            {escaneando ? 'Leyendo…' : 'Escanear recibo'}
+          </button>
+          <input
+            ref={inputFotoRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const archivo = e.target.files?.[0];
+              e.target.value = '';
+              if (archivo) manejarFotoSeleccionada(archivo);
+            }}
+          />
+        </div>
+      )}
+
       <div className="rounded-[var(--radius-card)] bg-[var(--surface-2)] px-4 py-3">
         <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
           <Home size={13} strokeWidth={2.2} aria-hidden="true" />
@@ -1026,91 +1113,15 @@ function GastosInner() {
         </div>
       )}
 
-      <AnimatePresence initial={false}>
-        {formularioAbierto && (
-          <FormularioGasto
-            categorias={categorias}
-            miUserId={userId}
-            guardando={guardando}
-            inicial={datosDelEscaneo ?? undefined}
-            creandoCategoria={creandoCategoria}
-            viajes={viajes}
-            creandoViaje={creandoViaje}
-            onCrearViaje={crearViajePropio}
-            onGuardar={guardarGasto}
-            onCrearCategoria={crearCategoriaPropia}
-            onCerrar={() => {
-              setFormularioAbierto(false);
-              setDatosDelEscaneo(null);
-              setReceiptScanId(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence initial={false}>
-        {gastoEditando && (
-          <FormularioGasto
-            categorias={categorias}
-            miUserId={userId}
-            guardando={guardando}
-            esEdicion
-            inicial={{
-              categoriaId: gastoEditando.categoriaId,
-              monto: gastoEditando.monto,
-              nota: gastoEditando.nota,
-              splitPercent: gastoEditando.splitPercent,
-              moneda: gastoEditando.moneda,
-              viajeId: gastoEditando.viajeId,
-            }}
-            creandoCategoria={creandoCategoria}
-            viajes={viajes}
-            creandoViaje={creandoViaje}
-            onCrearViaje={crearViajePropio}
-            onGuardar={guardarEdicion}
-            onCrearCategoria={crearCategoriaPropia}
-            onCerrar={() => setGastoEditando(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {!formularioAbierto && !gastoEditando && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setFormularioAbierto(true)}
-            disabled={categorias.length === 0}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-dashed border-[color-mix(in_oklab,var(--accent)_40%,transparent)] text-[15px] font-semibold text-[var(--accent)] disabled:opacity-50 [touch-action:manipulation]"
-          >
-            <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
-            Nuevo gasto
-          </button>
-          <button
-            type="button"
-            onClick={() => inputFotoRef.current?.click()}
-            disabled={categorias.length === 0 || escaneando}
-            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface-2)] px-4 text-[15px] font-semibold text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
-          >
-            {escaneando ? (
-              <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />
-            ) : (
-              <Camera size={16} strokeWidth={2.4} aria-hidden="true" />
-            )}
-            {escaneando ? 'Leyendo…' : 'Escanear recibo'}
-          </button>
-          <input
-            ref={inputFotoRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => {
-              const archivo = e.target.files?.[0];
-              e.target.value = '';
-              if (archivo) manejarFotoSeleccionada(archivo);
-            }}
-          />
-        </div>
+      {filtro !== 'todas' && (
+        <button
+          type="button"
+          onClick={() => setFiltro('todas')}
+          className="flex items-center justify-between rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] px-3 py-2 text-[12px] font-medium text-[var(--accent)] [touch-action:manipulation]"
+        >
+          <span>Mostrando solo: {categoriaPorId(filtro)?.nombre ?? 'una categoría'}</span>
+          <span className="font-semibold underline">Ver todos</span>
+        </button>
       )}
 
       {gastosDelMes.length === 0 ? (
