@@ -95,9 +95,9 @@ function aSuscripcion(f: Fila): Suscripcion {
   };
 }
 
-async function enviarBienvenida(email: string): Promise<void> {
+async function enviarBienvenida(email: string): Promise<string | null> {
   const resend = crearClienteResend();
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: REMITENTE,
     to: email,
     subject: 'Tu acceso a Fairsy ya está listo',
@@ -106,6 +106,7 @@ async function enviarBienvenida(email: string): Promise<void> {
 <p>Tu prueba gratis de 7 días ya está activa. Si algo no funciona, responde a este correo o escribe a soporte@fairsy.lat.</p>`,
   });
   if (error) throw new Error(`Resend: ${error.message}`);
+  return data?.id ?? null;
 }
 
 export async function procesarEvento(admin: SupabaseClient, body: Json): Promise<{ resultado: ResultadoWebhook; detalle: string }> {
@@ -181,7 +182,8 @@ export async function procesarEvento(admin: SupabaseClient, body: Json): Promise
   let detalle = `${tipo} → ${s.status}${s.planInterval ? ` (${s.planInterval})` : ''}, acceso hasta ${s.accessUntil.toISOString().slice(0, 10)}`;
   if (decision.inicioDePrueba && !fila?.welcome_sent_at) {
     try {
-      await enviarBienvenida(email);
+      const idCorreo = await enviarBienvenida(email);
+      detalle += ` — correo de bienvenida aceptado por Resend (id ${idCorreo ?? '?'})`;
       await admin.from('subscriptions').update({ welcome_sent_at: new Date().toISOString() }).eq('email', email);
     } catch (e) {
       // El acceso ya quedó aplicado: un fallo del correo no debe hacer que Hotmart reintente el evento.
