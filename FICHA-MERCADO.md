@@ -32,6 +32,15 @@
 - ¿Desde cuándo cuenta el plazo de garantía?: desde la fecha del primer cobro tras el trial (configuración estándar de Hotmart) — confirmar el valor exacto al crear el producto real en `18-VENTA-HOTMART.md`
 - Pendiente para Sesión 6 (creación del producto real en Hotmart): configurar la garantía en 15 días en el panel del productor y re-verificar que el checkout real lo refleje así
 
+### Checkout REAL del Plan Mensual — verificado 2026-10-06 (abierto a 375px, país Colombia)
+- URL pública: https://pay.hotmart.com/J107905702P?off=0kq05mk6 (no es un secreto: es el enlace que verá el comprador).
+- Prueba: casilla "Quiero un periodo gratis" — "Tendrás 7 día(s)… después se cobrará el importe" ✓ coincide con la decisión (7 días).
+- Precio: con tarjeta cobra en COP $20.494/mes; con PayPal cobra en USD US$5,99/mes (la landing y el paywall muestran $5.99 USD ✓). El valor en COP depende del tipo de cambio que use Hotmart — revisarlo de vez en cuando.
+- Medios que aparecen: Débito/Crédito ✓ funciona, PayPal ✓ funciona (cambia el cobro a USD), **Efecty: se muestra pero está INERTE** (al tocarlo no se selecciona; no admite suscripción). Un medio visible pero muerto hace creer que la página está rota → pendiente: quitarlo en el panel de Hotmart si el producto lo permite.
+- Garantía: el checkout NO la muestra por ningún lado → solo nuestra web promete los 15 días, tiene que ser exacta. Pendiente confirmar en el panel que la garantía del producto sea de 15 días.
+- Sin textos rotos ni claves sin traducir. Idioma y moneda coherentes. (Falta la captura con fecha en docs/revisiones/.)
+- Falta el enlace del Plan ANUAL y verificarlo igual.
+
 ## 5. CONVERSIÓN ESPERABLE
 - NO ENCONTRADO — se decide por criterio y se revisa cuando haya datos propios de la app en producción (36-ANALITICA-Y-EVENTOS)
 
