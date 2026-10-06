@@ -62,6 +62,9 @@ export function decidir(actual: Suscripcion | null, ev: EventoNormalizado): Deci
         };
       }
 
+      // Confirmado con un aviso real de Hotmart (2026-10-06): el inicio de prueba llega como APPROVED con precio 0.
+      // Un aviso sin cobro real nunca convierte a nadie en pagante ni extiende su acceso.
+      if (!ev.precioPositivo) return ignorar('aviso sin cobro (precio 0): no mueve el acceso');
       if (actual.status === 'trialing' && actual.trialEndsAt && ev.ocurridoEn < actual.trialEndsAt) {
         return ignorar('segundo aviso dentro de la prueba');
       }

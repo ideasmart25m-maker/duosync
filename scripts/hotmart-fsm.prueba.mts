@@ -33,6 +33,10 @@ const activa = (r as Extract<typeof r, { accion: 'aplicar' }>).siguiente;
 ok('firstPaidAt se fija en el primer cobro', activa.firstPaidAt?.toISOString() === '2026-10-17T12:30:00.000Z');
 ok('acceso mensual = 31 + 5 días', activa.accessUntil.toISOString() === '2026-11-22T12:30:00.000Z');
 
+// 3b. Aviso de precio 0 tras la prueba no convierte a pagante
+r = decidir(prueba, ev('PURCHASE_APPROVED', { transaccion: 'HP7', precioPositivo: false, ocurridoEn: d('2026-10-18T00:00:00Z') }));
+ok('APPROVED con precio 0 tras la prueba se ignora', r.accion === 'ignorar');
+
 // 4. PURCHASE_COMPLETE no extiende el acceso
 r = decidir(activa, ev('PURCHASE_COMPLETE', { transaccion: 'HP2', ocurridoEn: d('2026-11-01T00:00:00Z') }));
 ok('COMPLETE se ignora', r.accion === 'ignorar');
