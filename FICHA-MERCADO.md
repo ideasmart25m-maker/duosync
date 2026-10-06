@@ -36,7 +36,8 @@
 - URL pública: https://pay.hotmart.com/J107905702P?off=0kq05mk6 (no es un secreto: es el enlace que verá el comprador).
 - Prueba: casilla "Quiero un periodo gratis" — "Tendrás 7 día(s)… después se cobrará el importe" ✓ coincide con la decisión (7 días).
 - Precio: con tarjeta cobra en COP $20.494/mes; con PayPal cobra en USD US$5,99/mes (la landing y el paywall muestran $5.99 USD ✓). El valor en COP depende del tipo de cambio que use Hotmart — revisarlo de vez en cuando.
-- Medios que aparecen: Débito/Crédito ✓ funciona, PayPal ✓ funciona (cambia el cobro a USD), **Efecty: se muestra pero está INERTE** (al tocarlo no se selecciona; no admite suscripción). Un medio visible pero muerto hace creer que la página está rota → pendiente: quitarlo en el panel de Hotmart si el producto lo permite.
+- ✅ RESUELTO 2026-10-06: Efecty se quitó en Hotmart (producto → métodos de pago: se apagaron "Boleto Bancário", "Medios de pago locales" y "Pago Híbrido", que lo traían). Re-verificado en el checkout real: solo quedan Débito/Crédito y PayPal.
+- Medios que aparecían antes: Débito/Crédito ✓ funciona, PayPal ✓ funciona (cambia el cobro a USD), **Efecty: se muestra pero está INERTE** (al tocarlo no se selecciona; no admite suscripción). Un medio visible pero muerto hace creer que la página está rota → pendiente: quitarlo en el panel de Hotmart si el producto lo permite.
 - Garantía: el checkout NO la muestra por ningún lado → solo nuestra web promete los 15 días, tiene que ser exacta. Pendiente confirmar en el panel que la garantía del producto sea de 15 días.
 - Sin textos rotos ni claves sin traducir. Idioma y moneda coherentes. (Falta la captura con fecha en docs/revisiones/.)
 - Plan ANUAL verificado 2026-10-06: https://pay.hotmart.com/J107905702P?off=tif6z4p3 — 7 días gratis ✓; con tarjeta COP $122.954/año, con PayPal US$35,94/año ✓ (coincide con la landing y el paywall: $35.94/año = 50% del mensual). Mismos medios que el mensual (Efecty inerte también).
