@@ -3,6 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { crearClienteResend, REMITENTE } from '@/lib/email/resend';
 import { decidir, EVENTOS_CONOCIDOS, OFERTAS, type EventoNormalizado, type Intervalo, type Suscripcion } from './fsm';
 
+// Producto Fairsy en Hotmart (el ID que muestra la configuración del webhook).
+const PRODUCTO_FAIRSY = '8666599';
+
 export type ResultadoWebhook = 'applied' | 'duplicate' | 'ignored' | 'illegal' | 'unauthorized' | 'error';
 
 // Comparación en tiempo constante: se hashea cada lado para igualar longitudes sin filtrar nada.
@@ -112,6 +115,7 @@ export async function procesarEvento(admin: SupabaseClient, body: Json): Promise
   const n = normalizar(body);
 
   // Catálogo: solo se acepta lo que pertenece a las ofertas de Fairsy (si el aviso trae oferta).
+  if (n.productoId && n.productoId !== PRODUCTO_FAIRSY) return { resultado: 'illegal', detalle: `producto desconocido: ${n.productoId}` };
   if (n.ofertaCodigo && !OFERTAS[n.ofertaCodigo]) return { resultado: 'illegal', detalle: `oferta desconocida: ${n.ofertaCodigo}` };
 
   // Quién es: por correo; si el aviso no lo trae (p. ej. cancelaciones), por código de suscriptor.
