@@ -39,7 +39,7 @@
 - Medios que aparecen: Débito/Crédito ✓ funciona, PayPal ✓ funciona (cambia el cobro a USD), **Efecty: se muestra pero está INERTE** (al tocarlo no se selecciona; no admite suscripción). Un medio visible pero muerto hace creer que la página está rota → pendiente: quitarlo en el panel de Hotmart si el producto lo permite.
 - Garantía: el checkout NO la muestra por ningún lado → solo nuestra web promete los 15 días, tiene que ser exacta. Pendiente confirmar en el panel que la garantía del producto sea de 15 días.
 - Sin textos rotos ni claves sin traducir. Idioma y moneda coherentes. (Falta la captura con fecha en docs/revisiones/.)
-- Falta el enlace del Plan ANUAL y verificarlo igual.
+- Plan ANUAL verificado 2026-10-06: https://pay.hotmart.com/J107905702P?off=tif6z4p3 — 7 días gratis ✓; con tarjeta COP $122.954/año, con PayPal US$35,94/año ✓ (coincide con la landing y el paywall: $35.94/año = 50% del mensual). Mismos medios que el mensual (Efecty inerte también).
 
 ## 5. CONVERSIÓN ESPERABLE
 - NO ENCONTRADO — se decide por criterio y se revisa cuando haya datos propios de la app en producción (36-ANALITICA-Y-EVENTOS)
