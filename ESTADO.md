@@ -1,6 +1,13 @@
 # ESTADO — Fairsy
 Última actualización: 2026-10-05 | Sesión actual: 8
 
+## Webhook de Hotmart construido (2026-10-06) — falta registrarlo en Hotmart
+- Endpoint `app/api/webhooks/hotmart/route.ts` + `lib/hotmart/{fsm,procesar}.ts`. Pipeline: cuerpo crudo → hottok en tiempo constante (sin `HOTMART_HOTTOK` responde 503, nunca procesa) → frescura 72 h → dedupe por id de evento → catálogo por código de oferta (mensual `0kq05mk6`, anual `tif6z4p3`) → máquina de estados → bitácora. Fallo propio = 500 (Hotmart reintenta); evento ajeno = 200.
+- Migración `20261006120000_hotmart_webhook.sql`: tablas `subscriptions` (por correo del comprador), `processed_events`, `webhook_log` (con el aviso sin teléfono/documento), `payment_transactions` (ledger, un ingreso por transacción); funciones que DERIVAN `couples.plan` de las suscripciones (premium si alguien de la pareja tiene acceso vigente) + trigger al unirse a una pareja + cron diario que baja a gratis los vencidos y purga la bitácora a 90 días. Todo solo por clave de servidor, sin acceso desde clientes.
+- Reglas: el primer APPROVED de una persona inicia la prueba de 7 días (+5 de gracia); el primer cobro tras la prueba pasa a active; PURCHASE_COMPLETE no mueve acceso (evita extender dos veces); cancelar en prueba corta al fin de prueba; reembolso/chargeback cortan ya; acceso siempre acotado por `access_until` (mensual 31+5 días, anual 366+5).
+- Verificado: 23 pruebas de la máquina de estados (`scripts/hotmart-fsm.prueba.mts`) y 17 de punta a punta contra el servidor local y la base real (`scripts/hotmart-webhook.e2e.mjs`, con un Hottok de prueba local ya retirado); derivación del plan probada en la pareja real y revertida.
+- ⚠️ PENDIENTE: (1) poner el HOTTOK real en Vercel como `HOTMART_HOTTOK` (la usuaria lo hace en el panel, jamás en el chat) y redesplegar; (2) registrar el webhook en Hotmart apuntando a `https://www.fairsy.lat/api/webhooks/hotmart` con los eventos del catálogo; (3) "Enviar test" y comprar con una tarjeta real reembolsable para capturar el JSON real del inicio de prueba — la detección de prueba es una SUPOSICIÓN (primer APPROVED = prueba) hasta verlo; (4) recién ahí conectar los botones de la landing/paywall a los enlaces de pago; (5) flujo "ya pagué, conectar mi compra" por si paga con otro correo que el del login; (6) correo de bienvenida solo se ve en producción (la clave de Resend no está en local).
+
 ## ⚠️ INCIDENTE: fairsy.lat caído por suspensión ICANN (2026-10-05)
 - Síntoma: ERR_CONNECTION_REFUSED en fairsy.lat y www.fairsy.lat, desde cualquier navegador/incógnito.
   Causa real (confirmada por soporte de Namecheap, agente Pavithran B.): el dominio quedó suspendido
