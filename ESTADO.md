@@ -1,5 +1,21 @@
 # ESTADO — Fairsy
-Última actualización: 2026-09-22 | Sesión actual: 7
+Última actualización: 2026-10-05 | Sesión actual: 8
+
+## ⚠️ INCIDENTE: fairsy.lat caído por suspensión ICANN (2026-10-05)
+- Síntoma: ERR_CONNECTION_REFUSED en fairsy.lat y www.fairsy.lat, desde cualquier navegador/incógnito.
+  Causa real (confirmada por soporte de Namecheap, agente Pavithran B.): el dominio quedó suspendido
+  por falta de VERIFICACIÓN ICANN (correo de confirmación obligatorio tras el registro/cambio de
+  contacto) — Namecheap revierte los nameservers a uno de aparcado mientras el dominio está suspendido
+  así. El panel de DNS avanzado mostraba "DNS personalizado" (dns1/dns2.registrar-servers.com) y el
+  cambio manual a "Namecheap BasicDNS" fallaba con error genérico — NO era un problema de hosting
+  (se descartó: "Lista de alojamiento" vacía) ni de configuración nuestra.
+- Soporte verificó el dominio por ICANN el 2026-10-05 21:47 UTC — avisaron 24-48h de propagación para
+  que los nameservers vuelvan a los activos. Pendiente: confirmar al día siguiente que fairsy.lat
+  vuelve a responder y que los registros DNS para Vercel/Resend (configurados en septiembre) siguen
+  intactos una vez se restablezca BasicDNS.
+- ⚠️ Para evitar que se repita: revisar el correo (incl. spam) ante cualquier aviso de verificación
+  ICANN de Namecheap, sobre todo si se cambia el correo de contacto del dominio — ignorarlo fue la
+  causa raíz de esta caída.
 
 ## Viajes en Metas, ahorro en Metas y eliminar categorías (2026-09-25) ✅
 - Migración `20260925120000_viajes_en_metas.sql`: `viajes.presupuesto`, `categories.es_de_viaje` (categoría interna "Viajes", oculta en Gastos), `expenses.subcategoria` (alojamiento/alimentación/transporte/tours/compras). Los viajes salieron de Gastos y viven en Metas (`components/app/ViajesMetas.tsx`): presupuesto, gastado por subcategoría, reparto por persona como en la casa; las cuentas del viaje siguen saliendo en "Cuentas entre ustedes" (por moneda, `calcular_saldo_pareja` intacto).
