@@ -25,6 +25,9 @@ function LoginInner() {
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [codigoEscrito, setCodigoEscrito] = useState('');
+  const [verificando, setVerificando] = useState(false);
+  const [errorCodigo, setErrorCodigo] = useState<string | null>(null);
 
   // El enlace mágico llega desde /auth/callback con ?error= cuando venció o ya se usó — antes
   // este error se perdía en silencio y la pantalla solo parecía "no hacer nada" (bug real
@@ -57,6 +60,26 @@ function LoginInner() {
       return;
     }
     setEnviado(true);
+  };
+
+  // Entrar con el código de 6 dígitos del mismo correo — sirve cuando el enlace se abre en otra app o
+  // navegador (Gmail dentro de otra app, otro dispositivo) y la sesión no queda donde se pidió.
+  const entrarConCodigo = async () => {
+    const token = codigoEscrito.replace(/D/g, '');
+    if (verificando || token.length < 6) return;
+    setVerificando(true);
+    setErrorCodigo(null);
+    const supabase = crearClienteNavegador();
+    const { error: errorVerificar } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    if (errorVerificar) {
+      setVerificando(false);
+      setErrorCodigo('Ese código no es correcto o ya venció. Revisa el último correo que te llegó o pide uno nuevo.');
+      return;
+    }
+    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free' });
+    // Navegación completa a propósito: /auth/completar es un Route Handler (lee la sesión del servidor y redirige), no una página.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = `/auth/completar?${siguiente.toString()}`;
   };
 
   return (
@@ -159,9 +182,48 @@ function LoginInner() {
             Le enviamos un enlace a <span className="font-semibold text-[var(--text-primary)]">{email}</span>. Tóquenlo
             para entrar — no hace falta contraseña.
           </p>
+
+          <form
+            className="mt-8 flex w-full max-w-xs flex-col gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              entrarConCodigo();
+            }}
+          >
+            <label htmlFor="codigo-correo" className="text-[13px] font-medium text-[var(--text-secondary)]">
+              ¿Prefieres un código? Escribe el de 6 dígitos del correo
+            </label>
+            <input
+              id="codigo-correo"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={8}
+              value={codigoEscrito}
+              onChange={(e) => {
+                setCodigoEscrito(e.target.value.replace(/D/g, ''));
+                if (errorCodigo) setErrorCodigo(null);
+              }}
+              placeholder="000000"
+              aria-invalid={!!errorCodigo}
+              className="h-14 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.3em] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            />
+            {errorCodigo && <p className="text-[12px] font-medium text-[var(--danger)]">{errorCodigo}</p>}
+            <button
+              type="submit"
+              disabled={codigoEscrito.length < 6 || verificando}
+              className="mt-1 flex h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            >
+              {verificando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+              {verificando ? 'Entrando…' : 'Entrar con el código'}
+            </button>
+          </form>
           <button
             type="button"
-            onClick={() => setEnviado(false)}
+            onClick={() => {
+              setEnviado(false);
+              setCodigoEscrito('');
+              setErrorCodigo(null);
+            }}
             className="mt-6 flex items-center gap-1 text-[12px] font-medium text-[var(--accent)]"
           >
             Usar otro correo
