@@ -191,7 +191,7 @@ function LoginInner() {
             }}
           >
             <label htmlFor="codigo-correo" className="text-[13px] font-medium text-[var(--text-secondary)]">
-              ¿Prefieres un código? Escribe el de 6 dígitos del correo
+              ¿Prefieres un código? Escribe el del correo
             </label>
             <input
               id="codigo-correo"

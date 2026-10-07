@@ -102,7 +102,7 @@ async function enviarBienvenida(email: string): Promise<string | null> {
     to: email,
     subject: 'Tu acceso a Fairsy ya está listo',
     html: `<p>¡Gracias por empezar con Fairsy!</p>
-<p>Para entrar: abre <a href="https://www.fairsy.lat/login">www.fairsy.lat/login</a> y escribe <strong>este mismo correo</strong> (${email}). Te llegará un enlace o un código de 6 dígitos para ingresar.</p>
+<p>Para entrar: abre <a href="https://www.fairsy.lat/login">www.fairsy.lat/login</a> y escribe <strong>este mismo correo</strong> (${email}). Te llegará un enlace (o un código) para ingresar.</p>
 <p>Tu prueba gratis de 7 días ya está activa. Si algo no funciona, responde a este correo o escribe a soporte@fairsy.lat.</p>`,
   });
   if (error) throw new Error(`Resend: ${error.message}`);
