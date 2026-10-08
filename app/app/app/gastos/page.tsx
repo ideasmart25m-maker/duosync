@@ -368,6 +368,7 @@ function GastosInner() {
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [saldos, setSaldos] = useState<SaldoPorMoneda[] | null>(null);
   const [saldoCargado, setSaldoCargado] = useState(false);
+  const [saldoFallo, setSaldoFallo] = useState(false);
   const [liquidandoMoneda, setLiquidandoMoneda] = useState<string | null | undefined>(undefined);
 
   const [gastoEditando, setGastoEditando] = useState<GastoDB | null>(null);
@@ -423,14 +424,16 @@ function GastosInner() {
 
         const [cats, paisPareja, saldoActual] = await Promise.all([
           listarCategorias(supabase, cid),
-          obtenerPaisPareja(supabase, cid),
-          obtenerSaldoPareja(supabase, cid, user.id),
+          obtenerPaisPareja(supabase, cid).catch(() => null),
+          // El saldo es secundario: si falla, NO debe dejar la pantalla sin categorías (ya pasó con una pareja de dos).
+          obtenerSaldoPareja(supabase, cid, user.id).catch(() => 'fallo' as const),
           cargarGastos(cid, prefijoMes),
         ]);
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
-        setSaldos(saldoActual);
+        setSaldoFallo(saldoActual === 'fallo');
+        setSaldos(saldoActual === 'fallo' ? null : saldoActual);
         setSaldoCargado(true);
         // Nombres de la pareja: opcional (solo para "¿quién lo paga?"), un fallo aquí no debe
         // tumbar la pantalla de gastos.
@@ -856,7 +859,11 @@ function GastosInner() {
             <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
             Cuentas entre ustedes
           </p>
-          {saldos === null ? (
+          {saldoFallo ? (
+            <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">
+              No pudimos calcular las cuentas entre ustedes en este momento. Sus gastos están a salvo; intenta de nuevo en unos minutos.
+            </p>
+          ) : saldos === null ? (
             <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">
               Cuando tu pareja se una con el código de invitación, aquí van a ver cuánto le corresponde a cada uno.
             </p>
