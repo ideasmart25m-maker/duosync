@@ -12,7 +12,8 @@ export async function completarVinculacion(supabase: SupabaseClient, modo: strin
   // generarle una segunda pareja duplicada.
   const { data: yaTienePareja } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
   if (!yaTienePareja) {
-    await supabase.rpc('crear_pareja');
+    // Se le pasa el código que la persona YA compartió por WhatsApp, para que sea el real de la pareja.
+    await supabase.rpc('crear_pareja', codigo && /^[0-9]{4}$/.test(codigo) ? { p_codigo: codigo } : {});
   }
   return { vinculacionFallo: false };
 }

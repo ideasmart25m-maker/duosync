@@ -656,7 +656,12 @@ function PasoResultado({
   // por la URL hasta el login — recién ahí, con sesión real, se llama a la RPC que
   // de verdad crea o une la pareja en la base de datos (antes esto era 100% estado
   // local que se perdía al recargar — hallazgo crítico de la auditoría).
-  const siguiente = `/paywall?meta=${encodeURIComponent(nombreMeta)}&modo=${modo}&codigo=${codigo}`;
+  // Quien se une a una pareja YA creada no paga aparte: la suscripción es de la pareja (un solo plan
+  // para los dos), así que va directo a entrar; el plan de la pareja le llega por la persona que sí pagó.
+  const siguiente =
+    modo === 'unirse'
+      ? `/login?plan=free&modo=unirse&codigo=${encodeURIComponent(codigo)}`
+      : `/paywall?meta=${encodeURIComponent(nombreMeta)}&modo=${modo}&codigo=${codigo}`;
   return (
     <div className="flex flex-1 flex-col">
       {/* El bloque de recap se centra en el espacio disponible ARRIBA del CTA fijo — mismo
@@ -701,7 +706,7 @@ function PasoResultado({
       </div>
 
       <div className="mt-auto pt-8">
-        <CtaFijo href={siguiente}>Ver el Plan {nombreMeta}</CtaFijo>
+        <CtaFijo href={siguiente}>{modo === 'unirse' ? 'Entrar y unirme a mi pareja' : `Ver el Plan ${nombreMeta}`}</CtaFijo>
       </div>
     </div>
   );

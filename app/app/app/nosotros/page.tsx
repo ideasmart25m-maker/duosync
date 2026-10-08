@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
+import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { obtenerCoupleId } from '@/lib/gastos';
 import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja } from '@/lib/preguntas';
 
@@ -23,6 +24,7 @@ export default function NosotrosPage() {
   const [historial, setHistorial] = useState<boolean[]>(Array(28).fill(false));
   const [nombrePropio, setNombrePropio] = useState('Tú');
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
+  const [coupleId, setCoupleId] = useState<string | null>(null);
 
   const supabase = useMemo(() => crearClienteNavegador(), []);
 
@@ -36,6 +38,7 @@ export default function NosotrosPage() {
 
       const cid = await obtenerCoupleId(supabase);
       if (!cid || cancelado) return;
+      setCoupleId(cid);
 
       // Racha, historial de 28 días y nombres reales — antes eran datos de ejemplo fijos
       // (hallazgo de la auditoría 2026-09-08: "X y Y llevan N días" nunca reflejaba lo que la
@@ -65,6 +68,8 @@ export default function NosotrosPage() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Nosotros</h1>
+
+      {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
 
       <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
         <div className="flex items-center gap-2">
