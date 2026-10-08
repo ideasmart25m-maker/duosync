@@ -40,6 +40,7 @@ function LoginInner() {
   }, []);
 
   const esGratis = plan === 'free' || !plan;
+  const seUne = modo === 'unirse' && /^[0-9]{4}$/.test(codigo);
 
   const enviarEnlace = async () => {
     if (enviando || !email.includes('@')) return;
@@ -103,10 +104,12 @@ function LoginInner() {
               real ya corregido en las pantallas del onboarding con este mismo patrón). */}
           <div className="flex flex-1 flex-col justify-center">
             <h1 className="text-balance text-[32px] font-bold leading-[1.15] tracking-[-0.02em] text-[var(--text-primary)] [font-family:var(--font-display)]">
-              Guardemos su plan
+              {seUne ? 'Entra para unirte' : 'Guardemos su plan'}
             </h1>
             <p className="mt-2 text-[16px] leading-relaxed text-[var(--text-secondary)]">
-              {esGratis
+              {seUne
+                ? `Te unes a tu pareja con el código ${codigo}. Escribe tu correo para entrar.`
+                : esGratis
                 ? 'Con su correo, sus cuentas quedan conectadas y listas cuando vuelvan.'
                 : 'Con su correo activamos su plan y les avisamos antes de cada cobro.'}
             </p>

@@ -441,9 +441,9 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí: ${
+              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí y toca "Unirme con mi correo": ${
                 typeof window !== 'undefined' ? window.location.origin : ''
-              }`
+              }/unirme?codigo=${codigo}`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

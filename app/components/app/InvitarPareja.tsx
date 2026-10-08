@@ -30,7 +30,7 @@ export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient
 
   if (!codigo || !falta) return null;
 
-  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Entra a ${window.location.origin}, toca "Ya tengo un código" y escribe este código de pareja: ${codigo}`;
+  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Entra aquí y toca "Unirme con mi correo": ${window.location.origin}/unirme?codigo=${codigo}`;
 
   return (
     <div className="rounded-[var(--radius-card)] border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--surface))] p-4">
