@@ -65,8 +65,8 @@ function LoginInner() {
 
   // Entrar con el código de 6 dígitos del mismo correo — sirve cuando el enlace se abre en otra app o
   // navegador (Gmail dentro de otra app, otro dispositivo) y la sesión no queda donde se pidió.
-  const entrarConCodigo = async () => {
-    const token = codigoEscrito.replace(/D/g, '');
+  const entrarConCodigo = async (escrito: string = codigoEscrito) => {
+    const token = escrito.replace(/\D/g, '');
     if (verificando || token.length < 6) return;
     setVerificando(true);
     setErrorCodigo(null);
@@ -179,11 +179,11 @@ function LoginInner() {
             <Mail size={28} strokeWidth={1.8} color="var(--accent)" aria-hidden="true" />
           </span>
           <h1 className="mt-6 text-balance text-[24px] font-bold leading-[1.2] text-[var(--text-primary)] [font-family:var(--font-display)]">
-            Revisen su correo
+            Escribe el código del correo
           </h1>
           <p className="mt-3 max-w-xs text-[16px] leading-relaxed text-[var(--text-secondary)]">
-            Le enviamos un enlace a <span className="font-semibold text-[var(--text-primary)]">{email}</span>. Tóquenlo
-            para entrar — no hace falta contraseña.
+            Te enviamos un correo a <span className="font-semibold text-[var(--text-primary)]">{email}</span> con un código
+            de 8 números. Escríbelo aquí y entras al instante.
           </p>
 
           <form
@@ -193,18 +193,21 @@ function LoginInner() {
               entrarConCodigo();
             }}
           >
-            <label htmlFor="codigo-correo" className="text-[13px] font-medium text-[var(--text-secondary)]">
-              ¿Prefieres un código? Escribe el del correo
+            <label htmlFor="codigo-correo" className="sr-only">
+              Código de 8 números del correo
             </label>
             <input
               id="codigo-correo"
+              autoFocus
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={8}
               value={codigoEscrito}
               onChange={(e) => {
-                setCodigoEscrito(e.target.value.replace(/D/g, ''));
+                // Acepta pegar el código con espacios o guiones; al completar los 8 números entra solo.
+                const limpio = e.target.value.replace(/\D/g, '').slice(0, 8);
+                setCodigoEscrito(limpio);
                 if (errorCodigo) setErrorCodigo(null);
+                if (limpio.length === 8) entrarConCodigo(limpio);
               }}
               placeholder="00000000"
               aria-invalid={!!errorCodigo}
@@ -220,6 +223,10 @@ function LoginInner() {
               {verificando ? 'Entrando…' : 'Entrar con el código'}
             </button>
           </form>
+          <p className="mt-6 max-w-xs text-[13px] leading-relaxed text-[var(--text-tertiary)]">
+            ¿No te llegó? Revisa Spam. También puedes tocar el botón &quot;Entrar a Fairsy&quot; del correo, pero ábrelo en este mismo
+            navegador.
+          </p>
           <button
             type="button"
             onClick={() => {
