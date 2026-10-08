@@ -277,6 +277,12 @@ export default function HoyPage() {
   const [supabase] = useState(() => crearClienteNavegador());
   const [userId, setUserId] = useState<string | null>(null);
   const [nombrePropio, setNombrePropio] = useState('Tú');
+  const [emailPropio, setEmailPropio] = useState<string | null>(null);
+  const [editandoNombre, setEditandoNombre] = useState(false);
+  const [nombreDescartado, setNombreDescartado] = useState(false);
+  const [borradorNombre, setBorradorNombre] = useState('');
+  const [guardandoNombre, setGuardandoNombre] = useState(false);
+  const [errorNombre, setErrorNombre] = useState<string | null>(null);
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
   const [avatarPropio, setAvatarPropio] = useState<string | null>(null);
   const [avatarOtro, setAvatarOtro] = useState<string | null>(null);
@@ -316,6 +322,7 @@ export default function HoyPage() {
         return;
       }
       setUserId(user.id);
+      setEmailPropio(user.email ?? null);
 
       const cid = await obtenerCoupleId(supabase);
       if (!cid) {
@@ -405,6 +412,25 @@ export default function HoyPage() {
     }
   };
 
+  // Si todavía se llama como el inicio de su correo (así se crea la cuenta), se le pregunta cómo se llama.
+  const nombreAutomatico = !!emailPropio && nombrePropio.trim().toLowerCase() === emailPropio.split('@')[0].toLowerCase();
+  const mostrarPreguntaNombre = editandoNombre || (nombreAutomatico && !nombreDescartado && !cargandoMeta);
+
+  const guardarNombre = async () => {
+    const nombre = borradorNombre.trim();
+    if (!nombre || nombre.length > 60 || !userId || guardandoNombre) return;
+    setGuardandoNombre(true);
+    setErrorNombre(null);
+    const { error } = await supabase.from('profiles').update({ nombre }).eq('id', userId);
+    setGuardandoNombre(false);
+    if (error) {
+      setErrorNombre('No pudimos guardar tu nombre. Intenta de nuevo en un momento.');
+      return;
+    }
+    setNombrePropio(nombre);
+    setEditandoNombre(false);
+  };
+
   const disponible = presupuesto !== null ? presupuesto - gastado : null;
   const pctMeta = metaPrincipal ? Math.min(100, Math.round((metaPrincipal.montoActual / metaPrincipal.montoObjetivo) * 100)) : 0;
 
@@ -425,8 +451,20 @@ export default function HoyPage() {
               Sofía") sin sumar información nueva — defecto real detectado por el revisor-visual.
               El saludo solo, los nombres quedan una única vez, en el título. */}
           <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>
-          <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
+          <h1 className="flex items-center gap-1.5 text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
             {nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}
+            <button
+              type="button"
+              onClick={() => {
+                setBorradorNombre(nombrePropio);
+                setErrorNombre(null);
+                setEditandoNombre(true);
+              }}
+              aria-label="Cambiar mi nombre"
+              className="flex size-7 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+            >
+              <PencilSimple size={13} strokeWidth={2.2} aria-hidden="true" />
+            </button>
           </h1>
         </div>
         <div className="flex -space-x-2">
@@ -475,6 +513,51 @@ export default function HoyPage() {
           )}
         </div>
       </motion.div>
+
+      {mostrarPreguntaNombre && (
+        <form
+          className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-[color-mix(in_oklab,var(--accent)_6%,var(--surface))] p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            guardarNombre();
+          }}
+        >
+          <label htmlFor="mi-nombre" className="text-[15px] font-semibold text-[var(--text-primary)]">
+            ¿Cómo te llamas?
+          </label>
+          <p className="text-[12px] text-[var(--text-secondary)]">Es el nombre que verá tu pareja en la app.</p>
+          <input
+            id="mi-nombre"
+            value={borradorNombre}
+            onChange={(e) => setBorradorNombre(e.target.value)}
+            placeholder="Tu nombre"
+            maxLength={60}
+            autoComplete="given-name"
+            className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          />
+          {errorNombre && <p className="text-[12px] font-medium text-[var(--danger)]">{errorNombre}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEditandoNombre(false);
+                setNombreDescartado(true);
+              }}
+              className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation]"
+            >
+              Ahora no
+            </button>
+            <button
+              type="submit"
+              disabled={!borradorNombre.trim() || guardandoNombre}
+              className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+            >
+              {guardandoNombre && <CircleNotch size={15} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+              Guardar mi nombre
+            </button>
+          </div>
+        </form>
+      )}
 
       <motion.div {...entrada(0.06)}>
         {userId ? (
