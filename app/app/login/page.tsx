@@ -206,7 +206,7 @@ function LoginInner() {
                 setCodigoEscrito(e.target.value.replace(/D/g, ''));
                 if (errorCodigo) setErrorCodigo(null);
               }}
-              placeholder="000000"
+              placeholder="00000000"
               aria-invalid={!!errorCodigo}
               className="h-14 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.3em] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             />
