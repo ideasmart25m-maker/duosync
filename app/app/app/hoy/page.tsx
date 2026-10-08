@@ -24,6 +24,7 @@ import {
 import { listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarAhorro, type MetaDB } from '@/lib/metas';
 import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
+import { InvitarPareja } from '@/components/app/InvitarPareja';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
@@ -278,6 +279,7 @@ export default function HoyPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [nombrePropio, setNombrePropio] = useState('Tú');
   const [emailPropio, setEmailPropio] = useState<string | null>(null);
+  const [coupleId, setCoupleId] = useState<string | null>(null);
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [nombreDescartado, setNombreDescartado] = useState(false);
   const [borradorNombre, setBorradorNombre] = useState('');
@@ -329,6 +331,7 @@ export default function HoyPage() {
         setErrorCarga('No se encontró tu pareja en esta cuenta');
         return;
       }
+      setCoupleId(cid);
       const ahora = new Date();
       const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
       // Cada dato carga por separado: antes un solo fallo (por ejemplo la foto o la racha)
@@ -558,6 +561,10 @@ export default function HoyPage() {
           </div>
         </form>
       )}
+
+      {/* Invitar a la pareja es parte central de lo que ofrece la app: se ve aquí hasta que la otra
+          persona se une, y desaparece sola cuando eso pasa (el componente se oculta con 2 integrantes). */}
+      {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
 
       <motion.div {...entrada(0.06)}>
         {userId ? (
