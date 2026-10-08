@@ -1,6 +1,7 @@
 // Prueba contra la base real: el código de pareja que se comparte pasa a ser el real. Crea usuarios
 // temporales (@example.com), los usa y los borra al terminar. Requiere correr desde una carpeta con
 // node_modules (se probó copiándolo temporalmente a app/ y ajustando la ruta del .env.local).
+import fs from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
 for (const l of fs.readFileSync('app/.env.local', 'utf8').split(/\r?\n/)) {
