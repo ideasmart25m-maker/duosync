@@ -9,6 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient; coupleId: string }) {
   const [codigo, setCodigo] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [falta, setFalta] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
@@ -16,11 +17,12 @@ export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient
     let cancelado = false;
     (async () => {
       const [{ data: pareja }, { count }] = await Promise.all([
-        supabase.from('couples').select('codigo_invitacion').eq('id', coupleId).maybeSingle(),
+        supabase.from('couples').select('codigo_invitacion, token_invitacion').eq('id', coupleId).maybeSingle(),
         supabase.from('couple_members').select('user_id', { count: 'exact', head: true }).eq('couple_id', coupleId),
       ]);
       if (cancelado) return;
       setCodigo(pareja?.codigo_invitacion ?? null);
+      setToken(pareja?.token_invitacion ?? null);
       setFalta((count ?? 0) < 2);
     })().catch(() => {});
     return () => {
@@ -30,7 +32,7 @@ export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient
 
   if (!codigo || !falta) return null;
 
-  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Entra aquí y toca "Unirme con mi correo": ${window.location.origin}/unirme?codigo=${codigo}`;
+  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Entra aquí y toca "Entrar ahora": ${window.location.origin}/unirme?${token ? `t=${token}&` : ''}codigo=${codigo}`;
 
   return (
     <div className="rounded-[var(--radius-card)] border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--surface))] p-4">

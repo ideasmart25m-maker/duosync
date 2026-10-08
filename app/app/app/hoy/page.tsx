@@ -25,6 +25,7 @@ import { listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarA
 import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
+import { GuardarAcceso } from '@/components/app/GuardarAcceso';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
@@ -425,7 +426,8 @@ export default function HoyPage() {
   };
 
   // Si todavía se llama como el inicio de su correo (así se crea la cuenta), se le pregunta cómo se llama.
-  const nombreAutomatico = !!emailPropio && nombrePropio.trim().toLowerCase() === emailPropio.split('@')[0].toLowerCase();
+  // (o 'Tu pareja': el nombre provisional de quien entró como invitado, sin correo).
+  const nombreAutomatico = nombrePropio === 'Tu pareja' || (!!emailPropio && nombrePropio.trim().toLowerCase() === emailPropio.split('@')[0].toLowerCase());
   const mostrarPreguntaNombre = editandoNombre || (nombreAutomatico && !nombreDescartado && !cargandoMeta);
 
   const guardarNombre = async () => {
@@ -581,6 +583,8 @@ export default function HoyPage() {
       {/* Invitar a la pareja es parte central de lo que ofrece la app: se ve aquí hasta que la otra
           persona se une, y desaparece sola cuando eso pasa (el componente se oculta con 2 integrantes). */}
       {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
+
+      <GuardarAcceso supabase={supabase} />
 
       <motion.div {...entrada(0.06)}>
         {userId ? (

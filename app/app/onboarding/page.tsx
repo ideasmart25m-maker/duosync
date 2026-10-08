@@ -49,6 +49,12 @@ export default function OnboardingPage() {
   const [codigo] = useState(() => String(Math.floor(1000 + Math.random() * 9000)));
   const [tengoCodigo, setTengoCodigo] = useState(false);
   const [codigoIngresado, setCodigoIngresado] = useState('');
+  // Clave larga del enlace de invitación (la que de verdad da acceso sin correo). Se crea al montar, en el
+  // navegador, para que el HTML del servidor y el del navegador no difieran.
+  const [token, setToken] = useState('');
+  useEffect(() => {
+    setToken(crypto.randomUUID().replace(/-/g, ''));
+  }, []);
 
   const avanzar = () => setPaso((p) => Math.min(p + 1, TOTAL_PASOS - 1));
   const atras = () => setPaso((p) => Math.max(p - 1, 0));
@@ -153,6 +159,7 @@ export default function OnboardingPage() {
           {paso === 6 && (
             <PasoVinculacion
               codigo={codigo}
+              token={token}
               tengoCodigo={tengoCodigo}
               setTengoCodigo={setTengoCodigo}
               codigoIngresado={codigoIngresado}
@@ -168,6 +175,7 @@ export default function OnboardingPage() {
               respuestas={r}
               modo={tengoCodigo ? 'unirse' : 'crear'}
               codigo={tengoCodigo ? codigoIngresado : codigo}
+              token={tengoCodigo ? '' : token}
             />
           )}
         </PasoTransition>
@@ -379,6 +387,7 @@ function PasoMeta({
 
 function PasoVinculacion({
   codigo,
+  token,
   tengoCodigo,
   setTengoCodigo,
   codigoIngresado,
@@ -386,6 +395,7 @@ function PasoVinculacion({
   onContinuar,
 }: {
   codigo: string;
+  token: string;
   tengoCodigo: boolean;
   setTengoCodigo: (v: boolean) => void;
   codigoIngresado: string;
@@ -441,9 +451,9 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí y toca "Unirme con mi correo": ${
+              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí y toca "Entrar ahora": ${
                 typeof window !== 'undefined' ? window.location.origin : ''
-              }/unirme?codigo=${codigo}`
+              }/unirme?${token ? `t=${token}&` : ''}codigo=${codigo}`
             )}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -645,10 +655,12 @@ function PasoResultado({
   respuestas,
   modo,
   codigo,
+  token,
 }: {
   respuestas: Respuestas;
   modo: 'crear' | 'unirse';
   codigo: string;
+  token: string;
 }) {
   const reducido = useReducedMotion();
   const nombreMeta = respuestas.meta ?? 'su meta juntos';
@@ -661,7 +673,7 @@ function PasoResultado({
   const siguiente =
     modo === 'unirse'
       ? `/login?plan=free&modo=unirse&codigo=${encodeURIComponent(codigo)}`
-      : `/paywall?meta=${encodeURIComponent(nombreMeta)}&modo=${modo}&codigo=${codigo}`;
+      : `/paywall?meta=${encodeURIComponent(nombreMeta)}&modo=${modo}&codigo=${codigo}&tk=${token}`;
   return (
     <div className="flex flex-1 flex-col">
       {/* El bloque de recap se centra en el espacio disponible ARRIBA del CTA fijo — mismo

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=enlace_invalido`);
   }
 
-  const { vinculacionFallo } = await completarVinculacion(supabase, modo, codigo);
+  const { vinculacionFallo } = await completarVinculacion(supabase, modo, codigo, searchParams.get('tk'));
   if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=${vinculacionFallo}`);
 
   return NextResponse.redirect(`${origin}${next}`);

@@ -50,6 +50,7 @@ function PaywallInner() {
   // que es donde recién hay una sesión real para poder crear/unir la pareja de verdad.
   const modo = params.get('modo') ?? 'crear';
   const codigo = params.get('codigo') ?? '';
+  const tk = params.get('tk') ?? '';
   const [plan, setPlan] = useState<'anual' | 'mensual'>('anual');
   const [cargando, setCargando] = useState(false);
   const [errorNav, setErrorNav] = useState(false);
@@ -59,7 +60,7 @@ function PaywallInner() {
   const nombrePlan = meta ? `Plan ${meta}` : 'plan';
   const fechaCobro = useMemo(() => fechaEnDias(7), []);
   const siguienteLogin = (planElegido: string) =>
-    `/login?plan=${planElegido}&modo=${modo}&codigo=${encodeURIComponent(codigo)}`;
+    `/login?plan=${planElegido}&modo=${modo}&codigo=${encodeURIComponent(codigo)}&tk=${encodeURIComponent(tk)}`;
 
   // Mismo feedback de navegación que `elegir()` — antes "Cerrar"/"Ahora no" quedaban mudos
   // tras el tap mientras el CTA principal sí mostraba estado de carga (defecto real detectado

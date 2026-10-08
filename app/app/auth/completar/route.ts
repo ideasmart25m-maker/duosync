@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${origin}/login?error=enlace_invalido`);
 
-  const { vinculacionFallo } = await completarVinculacion(supabase, searchParams.get('modo'), searchParams.get('codigo'));
+  const { vinculacionFallo } = await completarVinculacion(supabase, searchParams.get('modo'), searchParams.get('codigo'), searchParams.get('tk'));
   if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=${vinculacionFallo}`);
 
   return NextResponse.redirect(`${origin}${next}`);

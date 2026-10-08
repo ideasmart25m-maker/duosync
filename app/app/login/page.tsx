@@ -21,6 +21,7 @@ function LoginInner() {
   const plan = params.get('plan');
   const modo = params.get('modo') ?? 'crear';
   const codigo = params.get('codigo') ?? '';
+  const tk = params.get('tk') ?? '';
   const [email, setEmail] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -48,7 +49,7 @@ function LoginInner() {
     setError(null);
 
     const supabase = crearClienteNavegador();
-    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free' });
+    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free', tk });
     const { error: errorEnvio } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback?${siguiente.toString()}` },
@@ -77,7 +78,7 @@ function LoginInner() {
       setErrorCodigo('Ese código no es correcto o ya venció. Revisa el último correo que te llegó o pide uno nuevo.');
       return;
     }
-    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free' });
+    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free', tk });
     // Navegación completa a propósito: /auth/completar es un Route Handler (lee la sesión del servidor y redirige), no una página.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `/auth/completar?${siguiente.toString()}`;
