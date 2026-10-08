@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.redirect(`${origin}/login?error=enlace_invalido`);
 
   const { vinculacionFallo } = await completarVinculacion(supabase, searchParams.get('modo'), searchParams.get('codigo'));
-  if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=error`);
+  if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=${vinculacionFallo}`);
 
   return NextResponse.redirect(`${origin}${next}`);
 }

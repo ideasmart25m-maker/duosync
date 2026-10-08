@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { vinculacionFallo } = await completarVinculacion(supabase, modo, codigo);
-  if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=error`);
+  if (vinculacionFallo) return NextResponse.redirect(`${origin}${next}?vinculacion=${vinculacionFallo}`);
 
   return NextResponse.redirect(`${origin}${next}`);
 }

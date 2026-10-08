@@ -304,10 +304,19 @@ export default function HoyPage() {
   const [metaPrincipal, setMetaPrincipal] = useState<MetaDB | null>(null);
   const [cargandoMeta, setCargandoMeta] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [avisoVinculacion, setAvisoVinculacion] = useState<string | null>(null);
   const [ahorrado, setAhorrado] = useState(0);
   const [mostrarAhorro, setMostrarAhorro] = useState(true);
 
   useEffect(() => {
+    const motivo = new URLSearchParams(window.location.search).get('vinculacion');
+    const mensajes: Record<string, string> = {
+      codigo: 'Ese código de pareja no existe. Pídele a tu pareja que te lo envíe de nuevo.',
+      intentos: 'Probaste demasiados códigos seguidos. Espera 15 minutos y vuelve a intentarlo.',
+      ya_tienes_pareja: 'Esta cuenta ya tiene su propia pareja con datos, así que no puede unirse a otra. Usa otro correo para unirte.',
+      error: 'No pudimos unirte a tu pareja. Pídele que te envíe el código otra vez.',
+    };
+    if (motivo) setAvisoVinculacion(mensajes[motivo] ?? mensajes.error);
     setSaludo(saludoDelDia());
     setMesLabel(mesActualLabel());
     // Presupuesto/gastado real de Supabase (pedido real del usuario) — antes esta tarjeta
@@ -516,6 +525,13 @@ export default function HoyPage() {
           )}
         </div>
       </motion.div>
+
+      {avisoVinculacion && (
+        <div role="alert" className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-4 text-[14px] text-[var(--danger)]">
+          <p className="font-semibold">No pudimos unirte a tu pareja</p>
+          <p className="mt-1">{avisoVinculacion}</p>
+        </div>
+      )}
 
       {mostrarPreguntaNombre && (
         <form
