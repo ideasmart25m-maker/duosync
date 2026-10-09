@@ -52,6 +52,7 @@ function FormularioGasto({
   guardando,
   inicial,
   esEdicion,
+  gastosDelMes,
   creandoCategoria,
   onGuardar,
   onCerrar,
@@ -62,6 +63,7 @@ function FormularioGasto({
   guardando: boolean;
   inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null };
   esEdicion?: boolean;
+  gastosDelMes?: { categoriaId: string; monto: number }[];
   creandoCategoria: boolean;
   onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => void;
   onCerrar: () => void;
@@ -74,12 +76,14 @@ function FormularioGasto({
   const categoriaActual = categorias.find((c) => c.id === categoriaId);
   const [reparto, setReparto] = useState(inicial?.splitPercent ?? splitEfectivo(categoriaActual, miUserId));
   const [ajustandoReparto, setAjustandoReparto] = useState(false);
+  const [repetidoConfirmado, setRepetidoConfirmado] = useState(false);
 
   // Si cambian de categoría, el % vuelve al de la categoría nueva (a menos que ya lo hayan
   // tocado a mano en este mismo formulario — evita pisar un ajuste puntual sin querer).
   const [repartoTocado, setRepartoTocado] = useState(false);
   const cambiarCategoria = (id: string) => {
     setCategoriaId(id);
+    setRepetidoConfirmado(false);
     if (!repartoTocado) {
       const cat = categorias.find((c) => c.id === id);
       setReparto(splitEfectivo(cat, miUserId));
@@ -97,6 +101,11 @@ function FormularioGasto({
         e.preventDefault();
         const valor = Number(monto);
         if (!valor || valor <= 0 || !categoriaId || guardando) return;
+        // Mismo valor y categoría ya registrados este mes: se pregunta una vez antes de guardar (evita dobles por error).
+        if (!esEdicion && !repetidoConfirmado && (gastosDelMes ?? []).some((g) => g.categoriaId === categoriaId && g.monto === valor)) {
+          setRepetidoConfirmado(true);
+          return;
+        }
         onGuardar({ categoriaId, monto: valor, nota: nota.trim() || undefined, splitPercent: reparto });
       }}
     >
@@ -177,7 +186,10 @@ function FormularioGasto({
           autoFocus
           inputMode="numeric"
           value={monto}
-          onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => {
+            setMonto(e.target.value.replace(/\D/g, ''));
+            setRepetidoConfirmado(false);
+          }}
           onKeyDown={(e) => {
             // "Enter"/"Listo" del teclado numérico no debe enviar el formulario solo — si el
             // usuario todavía no tocó una categoría, guardaría con la primera por defecto sin
@@ -240,6 +252,12 @@ function FormularioGasto({
           </div>
         )}
 
+        {repetidoConfirmado && !esEdicion && (
+          <p role="alert" className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] p-3 text-[13px] text-[var(--text-primary)]">
+            Ya hay un gasto igual en esta categoría este mes. Si es el mismo (por ejemplo, un pago fijo), no lo repitas. Si es otro, toca "Sí, guardar otro igual".
+          </p>
+        )}
+
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -255,7 +273,7 @@ function FormularioGasto({
             className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[15px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
           >
             {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
-            {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar gasto'}
+            {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : repetidoConfirmado ? 'Sí, guardar otro igual' : 'Guardar gasto'}
           </button>
         </div>
       </div>
@@ -479,6 +497,7 @@ function GastosInner() {
   // recurrencia". La nota con nombre + mes sirve también para saber si ya se registró este mes.
   const pagosFijos = useMemo(() => {
     const lista: { clave: string; categoria: CategoriaDB; nombre: string; dia: number; monto: number; nota: string; registrado: boolean }[] = [];
+    const usados = new Set<string>(); // cada gasto del mes solo puede cubrir UN pago fijo
     for (const c of categorias) {
       if (!c.esRecurrente) continue;
       const dias = c.diasVencimiento ?? [];
@@ -488,9 +507,20 @@ function GastosInner() {
         const detalle = c.nombre === 'Servicios públicos' && dias.length > 1 ? (NOMBRES_SERVICIOS[i] ?? `factura ${i + 1}`) : dias.length > 1 ? `pago ${i + 1}` : null;
         const nombre = detalle ? `${c.nombre} · ${detalle}` : c.nombre;
         const nota = `${nombre} · ${mesLabel}`;
-        lista.push({ clave: `${c.id}-${i}`, categoria: c, nombre, dia, monto, nota, registrado: gastos.some((g) => g.categoriaId === c.id && g.nota === nota) });
+        lista.push({ clave: `${c.id}-${i}`, categoria: c, nombre, dia, monto, nota, registrado: false });
       });
     }
+    // 1) los que se registraron con el botón (misma nota); 2) los que se anotaron a mano con el mismo valor en la
+    //    misma categoría — así quien registra el arriendo a mano no ve después "Registrar pago" y lo duplica.
+    const cubrir = (p: (typeof lista)[number], porNota: boolean) => {
+      const g = gastos.find((x) => !usados.has(x.id) && x.categoriaId === p.categoria.id && (porNota ? x.nota === p.nota : x.monto === p.monto));
+      if (!g) return false;
+      usados.add(g.id);
+      p.registrado = true;
+      return true;
+    };
+    lista.forEach((p) => cubrir(p, true));
+    lista.filter((p) => !p.registrado).forEach((p) => cubrir(p, false));
     return lista.sort((a, b) => a.dia - b.dia);
   }, [categorias, gastos, mesLabel]);
 
@@ -770,6 +800,7 @@ function GastosInner() {
             categorias={categorias}
             miUserId={userId}
             guardando={guardando}
+            gastosDelMes={gastos}
             inicial={datosDelEscaneo ?? undefined}
             creandoCategoria={creandoCategoria}
             onGuardar={guardarGasto}

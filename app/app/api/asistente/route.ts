@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { crearClienteServidor } from '@/lib/supabase/server';
 import { crearClienteAdmin } from '@/lib/supabase/admin';
-import { streamRespuestaAsistente, type MensajeChat } from '@/lib/ai/asistente';
+import { streamRespuestaAsistente, type MensajeChat, type GastoParaAsistente } from '@/lib/ai/asistente';
+import { paisPorCodigo } from '@/lib/paises';
 import { verificarYRegistrarUsoIA } from '@/lib/ia-uso';
 import { registrarCostoIA } from '@/lib/ai/costo-ia';
 import { AI_MODEL } from '@/lib/ai/anthropic';
@@ -38,21 +39,49 @@ export async function POST(request: NextRequest) {
   // sobre meses anteriores) — el volumen de gastos de UN hogar es bajo, así que el costo en
   // tokens sigue siendo mínimo. Tope de 500 filas como salvaguarda ante una pareja muy activa
   // durante mucho tiempo (30-INTEGRACION-IA.md: "el costo de IA < 20% del precio").
-  const { data: gastos } = await supabase
-    .from('expenses')
-    .select('monto, fecha, nota, categories(nombre)')
-    .eq('couple_id', membresia.couple_id)
-    .order('fecha', { ascending: false })
-    .limit(500);
+  const coupleId = membresia.couple_id as string;
+  const [{ data: gastos }, { data: pareja }, { data: viajes }, { data: metas }, { data: miembros }] = await Promise.all([
+    supabase
+      .from('expenses')
+      .select('monto, fecha, nota, moneda, viaje_id, subcategoria, registrado_por, categories(nombre)')
+      .eq('couple_id', coupleId)
+      .order('fecha', { ascending: false })
+      .limit(500),
+    supabase.from('couples').select('pais, presupuesto_mensual').eq('id', coupleId).maybeSingle(),
+    supabase.from('viajes').select('id, nombre, moneda, presupuesto').eq('couple_id', coupleId),
+    supabase.from('savings_goals').select('nombre, monto_actual, monto_objetivo, fecha_objetivo').eq('couple_id', coupleId),
+    supabase.from('couple_members').select('user_id').eq('couple_id', coupleId),
+  ]);
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, nombre')
+    .in('id', (miembros ?? []).map((m) => m.user_id as string));
+  const nombrePorId = new Map((perfiles ?? []).map((x) => [x.id as string, x.nombre as string]));
+  const nombreViaje = new Map((viajes ?? []).map((v) => [v.id as string, v.nombre as string]));
 
-  const gastosParaIA = (gastos ?? []).map((g) => ({
+  const gastosParaIA: GastoParaAsistente[] = (gastos ?? []).map((g) => ({
     categoria: (g.categories as unknown as { nombre: string } | null)?.nombre ?? 'Sin categoría',
     monto: Number(g.monto),
     fecha: g.fecha,
     nota: g.nota,
+    moneda: g.moneda ?? null,
+    viaje: g.viaje_id ? (nombreViaje.get(g.viaje_id as string) ?? null) : null,
+    subcategoria: (g.subcategoria as string | null) ?? null,
+    pagoPor: nombrePorId.get(g.registrado_por as string) ?? null,
   }));
 
-  const stream = streamRespuestaAsistente(pregunta, (historial ?? []).slice(-10), gastosParaIA);
+  // "Hoy" en hora de Colombia/Perú/Ecuador (UTC-5): evita que "este mes" cambie unas horas antes de tiempo.
+  const hoy = new Date(Date.now() - 5 * 3600 * 1000).toISOString().slice(0, 10);
+
+  const stream = streamRespuestaAsistente(pregunta, (historial ?? []).slice(-10), {
+    hoy,
+    monedaCasa: paisPorCodigo(pareja?.pais ?? null)?.moneda ?? 'COP',
+    presupuestoMensual: pareja?.presupuesto_mensual !== null && pareja?.presupuesto_mensual !== undefined ? Number(pareja.presupuesto_mensual) : null,
+    nombres: [...nombrePorId.values()],
+    gastos: gastosParaIA,
+    metas: (metas ?? []).map((m) => ({ nombre: m.nombre as string, actual: Number(m.monto_actual), objetivo: Number(m.monto_objetivo), fecha: (m.fecha_objetivo as string | null) ?? null })),
+    viajes: (viajes ?? []).map((v) => ({ nombre: v.nombre as string, moneda: v.moneda as string, presupuesto: v.presupuesto !== null ? Number(v.presupuesto) : null })),
+  });
 
   const codificador = new TextEncoder();
   const cuerpo = new ReadableStream({
