@@ -1,5 +1,5 @@
 # ESTADO — Fairsy
-Última actualización: 2026-10-05 | Sesión actual: 8
+Última actualización: 2026-10-09 | Sesión actual: 8
 
 ## Webhook de Hotmart construido (2026-10-06) — falta registrarlo en Hotmart
 - Endpoint `app/api/webhooks/hotmart/route.ts` + `lib/hotmart/{fsm,procesar}.ts`. Pipeline: cuerpo crudo → hottok en tiempo constante (sin `HOTMART_HOTTOK` responde 503, nunca procesa) → frescura 72 h → dedupe por id de evento → catálogo por código de oferta (mensual `0kq05mk6`, anual `tif6z4p3`) → máquina de estados → bitácora. Fallo propio = 500 (Hotmart reintenta); evento ajeno = 200.
@@ -9,6 +9,14 @@
 - ✅ 2026-10-06: HOTMART_HOTTOK puesto en Vercel (Secret, Production) y redeploy hecho; webhook registrado en Hotmart ("Fairsy - compras", v2.0.0, producto Fairsy ID 8666599, 8 eventos: aprobada, completa, atrasada, plazo vencido, reembolsada, chargeback, cancelación de suscripción, cambio de plan). "Enviar prueba": los 8 avisos llegaron con hottok válido y Hotmart los marcó 200; la app los rechazó (oferta "test") sin crear suscripciones. Se agregó el chequeo del ID de producto.
 - ⚠️ PENDIENTE (lo que sigue): (3) compra real de prueba con OTRO correo (Hotmart no deja al productor comprar su propio producto) para capturar el JSON real del inicio de prueba y de la cancelación — durante los 7 días no hay cobro; (4) conectar botones de landing/paywall a los enlaces de pago; (5) "ya pagué, conectar mi compra"; (6) el correo de bienvenida solo se verifica en producción.
 - (histórico) antes: (1) poner el HOTTOK real en Vercel como `HOTMART_HOTTOK` (la usuaria lo hace en el panel, jamás en el chat) y redesplegar; (2) registrar el webhook en Hotmart apuntando a `https://www.fairsy.lat/api/webhooks/hotmart` con los eventos del catálogo; (3) "Enviar test" y comprar con una tarjeta real reembolsable para capturar el JSON real del inicio de prueba — la detección de prueba es una SUPOSICIÓN (primer APPROVED = prueba) hasta verlo; (4) recién ahí conectar los botones de la landing/paywall a los enlaces de pago; (5) flujo "ya pagué, conectar mi compra" por si paga con otro correo que el del login; (6) correo de bienvenida solo se ve en producción (la clave de Resend no está en local).
+
+## ▶ PARA RETOMAR (lista corta, 2026-10-09)
+1. ⏰ ANTES DEL 13-OCT: cancelar la suscripción de prueba de `duosyncwallet@gmail.com` en Hotmart (consumer.hotmart.com → Mis compras) o se cobra COP 20.494; verificar que llegue SUBSCRIPTION_CANCELLATION (`webhook_log`).
+2. Conectar los botones de la landing/paywall a los enlaces de pago (mensual `?off=0kq05mk6`, anual `?off=tif6z4p3`) — el webhook ya está probado de punta a punta.
+3. Actualizar el texto de la landing/onboarding ("un código de 4 dígitos une sus cuentas…") para describir el enlace de invitación que entra sin correo.
+4. Revisión de punta a punta con las DOS cuentas (Gastos, Metas, Nosotros, pregunta del día con ambos respondiendo, viajes): hubo un fallo que solo salía con dos integrantes.
+5. Hotmart: renombrar el área de miembros (muestra el nombre completo) y poner soporte@fairsy.lat como contacto del producto. Revisar el correo de bienvenida/Hotmart ("curso").
+6. Pendientes menores: "ya pagué, conectar mi compra" (si paga con otro correo); limpieza/CAPTCHA de cuentas de invitado; enlace de ingreso robusto con token_hash; activar renovación automática del dominio fairsy.lat en Namecheap; correo recordatorio de vencimiento con el valor; confirmar con la usuaria que el aviso de gasto repetido funciona tras recargar (dijo "ya quedó").
 
 ## Asistente con moneda y presupuesto + pagos fijos sin duplicar (2026-10-09) ✅
 - Asistente (`lib/ai/asistente.ts` + `app/api/asistente/route.ts`): antes solo recibía montos sueltos, por eso dio un número en euros sin decir "euros" y dijo que no tenía el presupuesto. Ahora recibe fecha de hoy, moneda de la casa, **presupuesto mensual con las cuentas ya hechas en código** (gastado de la casa a hoy y lo que queda), gastos con su moneda separando casa y cada viaje (nombre + subcategoría), metas, viajes y quién pagó; las reglas del prompt obligan a decir SIEMPRE la moneda y a no sumar monedas distintas ni mezclar ahorro con gasto. Verificado el texto de contexto con datos de ejemplo (6 chequeos); ⚠️ falta preguntarle al asistente real (gasta un uso de IA) para confirmar el tono de la respuesta.
