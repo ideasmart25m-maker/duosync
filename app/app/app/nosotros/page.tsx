@@ -6,13 +6,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock } from 'lucide-react';
+import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { obtenerCoupleId } from '@/lib/gastos';
-import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja, type DiaConexion } from '@/lib/preguntas';
+import { obtenerRachaPareja, obtenerConexionDelMes, obtenerNombresPareja } from '@/lib/preguntas';
 
 const DIAS_SEMANA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const pad2 = (x: number) => String(x).padStart(2, '0');
 
 const DINAMICAS = [
   { titulo: 'Cena a ciegas', detalle: 'Elige el menú de esta semana sin que tu pareja sepa qué es', icon: Utensils },
@@ -21,7 +23,12 @@ const DINAMICAS = [
 
 export default function NosotrosPage() {
   const [racha, setRacha] = useState(0);
-  const [historial, setHistorial] = useState<DiaConexion[]>([]);
+  const [conectados, setConectados] = useState<Set<string>>(new Set());
+  // Mes que se está viendo (el de hoy al abrir); se puede ir a meses anteriores y volver.
+  const [vista, setVista] = useState(() => {
+    const h = new Date();
+    return { anio: h.getFullYear(), mes: h.getMonth() + 1 };
+  });
   const [nombrePropio, setNombrePropio] = useState('Tú');
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
   const [coupleId, setCoupleId] = useState<string | null>(null);
@@ -43,14 +50,9 @@ export default function NosotrosPage() {
       // Racha, historial de 28 días y nombres reales — antes eran datos de ejemplo fijos
       // (hallazgo de la auditoría 2026-09-08: "X y Y llevan N días" nunca reflejaba lo que la
       // pareja de verdad hacía).
-      const [rachaReal, historialReal, nombres] = await Promise.all([
-        obtenerRachaPareja(supabase, cid),
-        obtenerHistorialConexion(supabase, cid),
-        obtenerNombresPareja(supabase, cid, user.id),
-      ]);
+      const [rachaReal, nombres] = await Promise.all([obtenerRachaPareja(supabase, cid), obtenerNombresPareja(supabase, cid, user.id)]);
       if (cancelado) return;
       setRacha(rachaReal);
-      setHistorial(historialReal);
       setNombrePropio(nombres.propio);
       setNombreOtro(nombres.otro);
     })();
@@ -59,18 +61,39 @@ export default function NosotrosPage() {
     };
   }, [supabase]);
 
-  // Últimos 28 días acomodados por día REAL de la semana (columnas D L M M J V S), de la semana más antigua
-  // arriba a la de hoy abajo. Los huecos antes del primer día y después de hoy quedan vacíos.
+  // Conexiones del mes visible: se recarga al cambiar de mes.
+  useEffect(() => {
+    if (!coupleId) return;
+    let cancelado = false;
+    obtenerConexionDelMes(supabase, coupleId, vista.anio, vista.mes)
+      .then((f) => !cancelado && setConectados(new Set(f)))
+      .catch(() => !cancelado && setConectados(new Set()));
+    return () => {
+      cancelado = true;
+    };
+  }, [supabase, coupleId, vista]);
+
+  const ahora = new Date();
+  const hoyClave = `${ahora.getFullYear()}-${pad2(ahora.getMonth() + 1)}-${pad2(ahora.getDate())}`;
+  const esMesActual = vista.anio === ahora.getFullYear() && vista.mes === ahora.getMonth() + 1;
+
+  // Calendario del mes real: columnas D L M M J V S, con los huecos antes del día 1 y después del último.
   const semanas = useMemo(() => {
-    if (historial.length === 0) return [] as (DiaConexion | null)[][];
-    const primero = new Date(`${historial[0].fecha}T12:00:00`);
-    const celdas: (DiaConexion | null)[] = [...Array<null>(primero.getDay()).fill(null), ...historial];
+    const primero = new Date(vista.anio, vista.mes - 1, 1);
+    const diasDelMes = new Date(vista.anio, vista.mes, 0).getDate();
+    const celdas: (number | null)[] = [...Array<null>(primero.getDay()).fill(null)];
+    for (let d = 1; d <= diasDelMes; d++) celdas.push(d);
     while (celdas.length % 7 !== 0) celdas.push(null);
-    const filas: (DiaConexion | null)[][] = [];
-    for (let i = 0; i < celdas.length; i += 7) filas.push(celdas.slice(i, i + 7));
+    const filas: (number | null)[][] = [];
+    for (let k = 0; k < celdas.length; k += 7) filas.push(celdas.slice(k, k + 7));
     return filas;
-  }, [historial]);
-  const hoyClave = historial.length ? historial[historial.length - 1].fecha : null;
+  }, [vista]);
+
+  const cambiarMes = (delta: number) =>
+    setVista((v) => {
+      const d = new Date(v.anio, v.mes - 1 + delta, 1);
+      return { anio: d.getFullYear(), mes: d.getMonth() + 1 };
+    });
 
   return (
     <div className="flex flex-col gap-5">
@@ -93,10 +116,33 @@ export default function NosotrosPage() {
           {nombreOtro ? `${nombrePropio} y ${nombreOtro} han` : `${nombrePropio} ha`} respondido su pregunta diaria sin cortar la racha.
         </p>
 
-        <div className="mt-4 flex flex-col gap-1.5">
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => cambiarMes(-1)}
+            aria-label="Mes anterior"
+            className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--bg)_15%,transparent)] [touch-action:manipulation]"
+          >
+            <ChevronLeft size={18} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+          <p className="text-[15px] font-semibold capitalize">
+            {MESES[vista.mes - 1]} {vista.anio}
+          </p>
+          <button
+            type="button"
+            onClick={() => cambiarMes(1)}
+            disabled={esMesActual}
+            aria-label="Mes siguiente"
+            className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--bg)_15%,transparent)] disabled:opacity-30 [touch-action:manipulation]"
+          >
+            <ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-1.5">
           <div className="flex justify-between text-[12px] font-medium uppercase tracking-[0.04em] opacity-70">
             {DIAS_SEMANA.map((d, i) => (
-              <span key={i} className="w-6 text-center">
+              <span key={i} className="w-8 text-center">
                 {d}
               </span>
             ))}
@@ -104,26 +150,27 @@ export default function NosotrosPage() {
           {semanas.map((semana, i) => (
             <div key={i} className="flex justify-between">
               {semana.map((dia, j) => {
-                if (!dia) return <span key={j} className="size-6" aria-hidden="true" />;
-                const activo = dia.conectado;
-                const esHoy = dia.fecha === hoyClave;
-                const nombreDia = new Date(`${dia.fecha}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
-                // Índice global del día en la grilla (fila × 7 + columna) — sirve para escalonar
-                // la entrada como si se "dibujara" casilla por casilla, mismo lenguaje de
-                // movimiento que la barra de Metas (FICHA-ARTE: firma de "dibujado").
-                const indiceGlobal = i * 7 + j;
+                if (dia === null) return <span key={j} className="size-8" aria-hidden="true" />;
+                const clave = `${vista.anio}-${pad2(vista.mes)}-${pad2(dia)}`;
+                const activo = conectados.has(clave);
+                const esHoy = clave === hoyClave;
+                const futuro = clave > hoyClave;
+                const nombreDia = new Date(vista.anio, vista.mes - 1, dia).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
                 return (
-                  <motion.span
+                  <span
                     key={j}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.25, delay: 0.25 + indiceGlobal * 0.015, ease: [0.16, 1, 0.3, 1] }}
-                    className={`flex size-6 items-center justify-center rounded-[8px] ${
-                      activo ? 'bg-[var(--bg)]' : 'bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]'
+                    title={nombreDia}
+                    aria-label={`${nombreDia}${esHoy ? ', hoy' : ''}: ${futuro ? 'todavía no llega' : activo ? 'día conectado' : 'sin registrar'}`}
+                    className={`flex size-8 items-center justify-center rounded-[10px] text-[12px] font-semibold tabular-nums ${
+                      activo
+                        ? 'bg-[var(--bg)] text-[var(--accent-2)]'
+                        : futuro
+                          ? 'opacity-35'
+                          : 'bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]'
                     } ${esHoy ? 'ring-2 ring-[var(--bg)] ring-offset-2 ring-offset-[var(--accent-2)]' : ''}`}
-                    title={`${nombreDia}${esHoy ? ' (hoy)' : ''}`}
-                    aria-label={`${nombreDia}${esHoy ? ', hoy' : ''}: ${activo ? 'día conectado' : 'sin registrar'}`}
-                  />
+                  >
+                    {dia}
+                  </span>
                 );
               })}
             </div>
