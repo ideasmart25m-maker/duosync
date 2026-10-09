@@ -32,15 +32,15 @@ export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient
 
   if (!codigo || !falta) return null;
 
-  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Entra aquí y toca "Entrar ahora": ${window.location.origin}/unirme?${token ? `t=${token}&` : ''}codigo=${codigo}`;
+  const mensaje = `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada, se abre directo en el navegador). Te envío el código único de enlace: ${codigo}. Entra aquí y toca "Entrar ahora": ${window.location.origin}/unirme?${token ? `t=${token}&` : ''}codigo=${codigo}`;
 
   return (
     <div className="rounded-[var(--radius-card)] border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--surface))] p-4">
-      <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--text-tertiary)]">
-        <KeyRound size={13} strokeWidth={2.2} aria-hidden="true" />
-        Inviten a su pareja
+      <p className="flex items-start gap-2 text-[17px] font-semibold leading-snug text-[var(--text-primary)]">
+        <KeyRound size={18} strokeWidth={2.2} className="mt-0.5 shrink-0" aria-hidden="true" />
+        Vamos a organizar nuestras cuentas juntos
       </p>
-      <p className="mt-1 text-[14px] text-[var(--text-secondary)]">Todavía no se ha unido. Este es el código de su pareja:</p>
+      <p className="mt-1 text-[14px] text-[var(--text-secondary)]">Te envío el código único de enlace:</p>
       <div className="mt-2 flex items-center justify-between gap-3">
         <span className="text-[32px] font-bold tabular-nums tracking-[0.15em] text-[var(--text-primary)] [font-family:var(--font-display)]">{codigo}</span>
         <button
@@ -63,7 +63,7 @@ export function InvitarPareja({ supabase, coupleId }: { supabase: SupabaseClient
         className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--surface)] text-[14px] font-semibold text-[var(--text-primary)] [touch-action:manipulation]"
       >
         <MessageCircle size={17} strokeWidth={2} aria-hidden="true" />
-        Enviar el código por WhatsApp
+        Enviar por WhatsApp
       </a>
     </div>
   );

@@ -53,6 +53,7 @@ function FormularioGasto({
   inicial,
   esEdicion,
   gastosDelMes,
+  nombreOtro,
   creandoCategoria,
   onGuardar,
   onCerrar,
@@ -64,6 +65,7 @@ function FormularioGasto({
   inicial?: { categoriaId: string | null; monto: number; nota?: string | null; splitPercent?: number | null };
   esEdicion?: boolean;
   gastosDelMes?: { categoriaId: string; monto: number }[];
+  nombreOtro?: string | null;
   creandoCategoria: boolean;
   onGuardar: (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => void;
   onCerrar: () => void;
@@ -212,12 +214,12 @@ function FormularioGasto({
             className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--text-secondary)] [touch-action:manipulation]"
           >
             <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
-            Reparto: {reparto}% tú · {100 - reparto}% tu pareja — ajustar
+            Reparto: {reparto}% tú · {100 - reparto}% {nombreOtro ?? 'tu pareja'} — ajustar
           </button>
         ) : (
           <div className="mt-3 rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
             <p className="text-[12px] text-[var(--text-secondary)]">
-              Tú: <span className="font-semibold text-[var(--text-primary)]">{reparto}%</span> · Tu pareja:{' '}
+              Tú: <span className="font-semibold text-[var(--text-primary)]">{reparto}%</span> · {nombreOtro ?? 'Tu pareja'}:{' '}
               <span className="font-semibold text-[var(--text-primary)]">{100 - reparto}%</span>
             </p>
             <div className="mt-2 flex items-center gap-3">
@@ -288,6 +290,7 @@ function FilaGasto({
   categoriaPorId,
   pais,
   userId,
+  nombreOtro,
   confirmandoEliminar,
   eliminando,
   onEditar,
@@ -298,6 +301,7 @@ function FilaGasto({
   categoriaPorId: (id: string) => CategoriaDB | undefined;
   pais: string | null;
   userId: string | null;
+  nombreOtro: string | null;
   confirmandoEliminar: string | null;
   eliminando: string | null;
   onEditar: (g: GastoDB) => void;
@@ -318,7 +322,7 @@ function FilaGasto({
         <span className="flex-1 min-w-0">
           <span className="block truncate text-[15px] font-medium text-[var(--text-primary)]">{g.nota || cat?.nombre || 'Gasto'}</span>
           <span className="block text-[12px] text-[var(--text-tertiary)]">
-            {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : 'Tu pareja'}
+            {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : (nombreOtro ?? 'Tu pareja')}
           </span>
         </span>
         <span className="shrink-0 tabular-nums text-[15px] font-semibold text-[var(--text-primary)]">
@@ -799,6 +803,7 @@ function GastosInner() {
           <FormularioGasto
             categorias={categorias}
             miUserId={userId}
+            nombreOtro={nombres.otro}
             guardando={guardando}
             gastosDelMes={gastos}
             inicial={datosDelEscaneo ?? undefined}
@@ -819,6 +824,7 @@ function GastosInner() {
           <FormularioGasto
             categorias={categorias}
             miUserId={userId}
+            nombreOtro={nombres.otro}
             guardando={guardando}
             esEdicion
             inicial={{
@@ -915,7 +921,7 @@ function GastosInner() {
                           {formatear(Math.abs(s.saldo))}
                         </p>
                         <p className="text-[12px] text-[var(--text-secondary)]">
-                          {s.saldo > 0 ? 'Tu pareja te debe esto' : 'Le debes esto a tu pareja'}
+                          {s.saldo > 0 ? `${nombres.otro ?? 'Tu pareja'} te debe esto` : `Le debes esto a ${nombres.otro ?? 'tu pareja'}`}
                         </p>
                         <button
                           type="button"
@@ -1008,6 +1014,7 @@ function GastosInner() {
                     categoriaPorId={categoriaPorId}
                     pais={pais}
                     userId={userId}
+                    nombreOtro={nombres.otro}
                     confirmandoEliminar={confirmandoEliminar}
                     eliminando={eliminando}
                     onEditar={empezarEdicion}
