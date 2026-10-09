@@ -55,7 +55,9 @@ REGLAS DE MONEDA (obligatorias):
   los de los viajes ni con lo que ahorran en sus metas (ahorrar no es gastar).
 - Si te piden cómo van con el presupuesto, usa la línea "PRESUPUESTO DE ESTE MES" de abajo: ya trae las
   cuentas hechas. Si ahí dice que no hay presupuesto definido, dilo y explica que lo pueden poner en
-  la pantalla de Inicio.`;
+  la pantalla de Inicio.
+- Cuando respondas sobre el presupuesto del mes, después de las cifras de la casa agrega UNA línea breve por
+  cada viaje con presupuesto (gastado y lo que queda, en la moneda del viaje), aclarando que es aparte.`;
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -99,7 +101,18 @@ export function construirContexto(c: ContextoAsistente): string {
   if (c.viajes.length) {
     partes.push(
       'VIAJES (cada uno en su propia moneda):\n' +
-        c.viajes.map((v) => `  - ${v.nombre}: moneda ${v.moneda}${v.presupuesto !== null ? `, presupuesto ${dinero(v.presupuesto, v.moneda)}` : ', sin presupuesto definido'}`).join('\n')
+        c.viajes
+          .map((v) => {
+            const gastado = c.gastos.filter((g) => g.moneda && g.viaje === v.nombre).reduce((a, g) => a + g.monto, 0);
+            const detalle =
+              v.presupuesto !== null
+                ? `presupuesto ${dinero(v.presupuesto, v.moneda)}, gastado ${dinero(gastado, v.moneda)}, ${
+                    v.presupuesto - gastado >= 0 ? `quedan ${dinero(v.presupuesto - gastado, v.moneda)}` : `se pasaron por ${dinero(gastado - v.presupuesto, v.moneda)}`
+                  }`
+                : `sin presupuesto definido, gastado ${dinero(gastado, v.moneda)}`;
+            return `  - ${v.nombre} (moneda ${v.moneda}): ${detalle}`;
+          })
+          .join('\n')
     );
   }
 
