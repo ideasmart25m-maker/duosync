@@ -10,7 +10,7 @@ import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock } from 'lucide-reac
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { obtenerCoupleId } from '@/lib/gastos';
-import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja } from '@/lib/preguntas';
+import { obtenerRachaPareja, obtenerHistorialConexion, obtenerNombresPareja, type DiaConexion } from '@/lib/preguntas';
 
 const DIAS_SEMANA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -21,7 +21,7 @@ const DINAMICAS = [
 
 export default function NosotrosPage() {
   const [racha, setRacha] = useState(0);
-  const [historial, setHistorial] = useState<boolean[]>(Array(28).fill(false));
+  const [historial, setHistorial] = useState<DiaConexion[]>([]);
   const [nombrePropio, setNombrePropio] = useState('Tú');
   const [nombreOtro, setNombreOtro] = useState<string | null>(null);
   const [coupleId, setCoupleId] = useState<string | null>(null);
@@ -59,11 +59,18 @@ export default function NosotrosPage() {
     };
   }, [supabase]);
 
-  // Últimos 28 días, hoy primero — se muestran en 4 filas de 7 (semanas), más reciente arriba.
-  const semanas: boolean[][] = [];
-  for (let i = 0; i < 4; i++) {
-    semanas.push(historial.slice(i * 7, i * 7 + 7));
-  }
+  // Últimos 28 días acomodados por día REAL de la semana (columnas D L M M J V S), de la semana más antigua
+  // arriba a la de hoy abajo. Los huecos antes del primer día y después de hoy quedan vacíos.
+  const semanas = useMemo(() => {
+    if (historial.length === 0) return [] as (DiaConexion | null)[][];
+    const primero = new Date(`${historial[0].fecha}T12:00:00`);
+    const celdas: (DiaConexion | null)[] = [...Array<null>(primero.getDay()).fill(null), ...historial];
+    while (celdas.length % 7 !== 0) celdas.push(null);
+    const filas: (DiaConexion | null)[][] = [];
+    for (let i = 0; i < celdas.length; i += 7) filas.push(celdas.slice(i, i + 7));
+    return filas;
+  }, [historial]);
+  const hoyClave = historial.length ? historial[historial.length - 1].fecha : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -96,7 +103,11 @@ export default function NosotrosPage() {
           </div>
           {semanas.map((semana, i) => (
             <div key={i} className="flex justify-between">
-              {semana.map((activo, j) => {
+              {semana.map((dia, j) => {
+                if (!dia) return <span key={j} className="size-6" aria-hidden="true" />;
+                const activo = dia.conectado;
+                const esHoy = dia.fecha === hoyClave;
+                const nombreDia = new Date(`${dia.fecha}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
                 // Índice global del día en la grilla (fila × 7 + columna) — sirve para escalonar
                 // la entrada como si se "dibujara" casilla por casilla, mismo lenguaje de
                 // movimiento que la barra de Metas (FICHA-ARTE: firma de "dibujado").
@@ -109,8 +120,9 @@ export default function NosotrosPage() {
                     transition={{ duration: 0.25, delay: 0.25 + indiceGlobal * 0.015, ease: [0.16, 1, 0.3, 1] }}
                     className={`flex size-6 items-center justify-center rounded-[8px] ${
                       activo ? 'bg-[var(--bg)]' : 'bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]'
-                    }`}
-                    aria-label={activo ? 'Día conectado' : 'Día sin registrar'}
+                    } ${esHoy ? 'ring-2 ring-[var(--bg)] ring-offset-2 ring-offset-[var(--accent-2)]' : ''}`}
+                    title={`${nombreDia}${esHoy ? ' (hoy)' : ''}`}
+                    aria-label={`${nombreDia}${esHoy ? ', hoy' : ''}: ${activo ? 'día conectado' : 'sin registrar'}`}
                   />
                 );
               })}

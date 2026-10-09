@@ -53,15 +53,27 @@ export async function obtenerRachaPareja(supabase: SupabaseClient, coupleId: str
 // (mismo criterio que la racha). La tabla `streaks` solo guarda el número de días seguidos, no
 // un historial día a día — se reconstruye aquí a partir de `daily_answers`, que sí tiene fecha
 // por fila.
-export async function obtenerHistorialConexion(supabase: SupabaseClient, coupleId: string): Promise<boolean[]> {
+export interface DiaConexion {
+  fecha: string; // yyyy-mm-dd en el día LOCAL de quien mira (no en UTC)
+  conectado: boolean;
+}
+
+function claveLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Devuelve 28 días con su fecha real, del más antiguo al de hoy — la pantalla los acomoda por día de la
+// semana. Antes devolvía solo true/false "hoy primero" y las fechas salían en UTC: el jueves aparecía como
+// domingo y de noche el día corría uno.
+export async function obtenerHistorialConexion(supabase: SupabaseClient, coupleId: string): Promise<DiaConexion[]> {
   const hoy = new Date();
+  hoy.setHours(12, 0, 0, 0); // mediodía: evita saltos por cambios de horario
   const desde = new Date(hoy);
   desde.setDate(desde.getDate() - 27);
-  const desdeStr = desde.toISOString().slice(0, 10);
 
   const [{ count: totalMiembros }, { data: respuestas }] = await Promise.all([
     supabase.from('couple_members').select('*', { count: 'exact', head: true }).eq('couple_id', coupleId),
-    supabase.from('daily_answers').select('fecha, user_id').eq('couple_id', coupleId).gte('fecha', desdeStr),
+    supabase.from('daily_answers').select('fecha, user_id').eq('couple_id', coupleId).gte('fecha', claveLocal(desde)),
   ]);
 
   const porFecha = new Map<string, Set<string>>();
@@ -70,13 +82,13 @@ export async function obtenerHistorialConexion(supabase: SupabaseClient, coupleI
     porFecha.get(r.fecha)!.add(r.user_id);
   }
 
-  const historial: boolean[] = [];
-  for (let i = 0; i < 28; i++) {
-    const fecha = new Date(hoy);
-    fecha.setDate(fecha.getDate() - i);
-    const clave = fecha.toISOString().slice(0, 10);
+  const historial: DiaConexion[] = [];
+  for (let k = 27; k >= 0; k--) {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() - k);
+    const clave = claveLocal(d);
     const usuarios = porFecha.get(clave);
-    historial.push(!!usuarios && !!totalMiembros && usuarios.size >= totalMiembros);
+    historial.push({ fecha: clave, conectado: !!usuarios && !!totalMiembros && usuarios.size >= totalMiembros });
   }
   return historial;
 }
