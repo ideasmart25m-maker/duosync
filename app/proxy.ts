@@ -24,6 +24,13 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Quien ya tiene sesión y abre fairsy.lat (o /login sin invitación) entra directo a la app, sin pasar por la
+  // página de ventas ni pedir el correo otra vez.
+  const ruta = request.nextUrl.pathname;
+  if (user && (ruta === '/' || (ruta === '/login' && request.nextUrl.search === ''))) {
+    return NextResponse.redirect(new URL('/app/hoy', request.url));
+  }
+
   // La app interna (Hoy/Gastos/Metas/Nosotros) exige sesión real — antes cualquiera
   // podía entrar sin haberse registrado (hallazgo crítico de la auditoría: no había
   // ninguna puerta real antes de estas pantallas). RLS ya protege los DATOS; esto

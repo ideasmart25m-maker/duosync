@@ -26,6 +26,7 @@ import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
+import { InstalarApp } from '@/components/app/InstalarApp';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
@@ -585,6 +586,8 @@ export default function HoyPage() {
       {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
 
       <GuardarAcceso supabase={supabase} />
+
+      <InstalarApp />
 
       <motion.div {...entrada(0.06)}>
         {userId ? (
