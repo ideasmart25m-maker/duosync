@@ -292,12 +292,12 @@ function PasoReconocimiento({ respuestas, onContinuar }: { respuestas: Respuesta
   const texto = useMemo(() => {
     const quien = respuestas.quienLleva;
     if (quien === 'Nadie — por eso estamos aquí') {
-      return 'Que nadie lleve las cuentas no es desorganización: es que hasta hoy no tenían un lugar donde los dos vieran lo mismo al mismo tiempo. El Código de Pareja arregla exactamente eso — en un minuto, sus cuentas quedan conectadas.';
+      return 'Que nadie lleve las cuentas no es desorganización: es que hasta hoy no tenían un lugar donde los dos vieran lo mismo al mismo tiempo. El Código de Pareja arregla exactamente eso — en segundos, sus cuentas quedan conectadas.';
     }
     if (quien === 'Los dos, pero sin orden') {
       return 'No es falta de comunicación. Es falta de claridad y de un lugar único donde ambos puedan mirar, entender y decidir. Por eso existe un Código de Pareja: para crear acuerdos, ordenar las cuentas y construir confianza desde la claridad.';
     }
-    return 'Cuando uno solo lleva las cuentas, el otro no se desentiende por falta de interés — es que nunca tuvo un lugar claro donde ver lo mismo. El Código de Pareja termina con eso: conecta sus cuentas en un minuto, para que dejen de ser trabajo de una sola persona.';
+    return 'Cuando uno solo lleva las cuentas, el otro no se desentiende por falta de interés — es que nunca tuvo un lugar claro donde ver lo mismo. El Código de Pareja termina con eso: conecta sus cuentas en segundos, para que dejen de ser trabajo de una sola persona.';
   }, [respuestas.quienLleva]);
 
   return (
@@ -420,7 +420,7 @@ function PasoVinculacion({
       {!tengoCodigo ? (
         <>
           <p className="mt-3 text-center text-[16px] leading-relaxed text-[var(--text-secondary)]">
-            Compártanlo para conectar sus cuentas. Su pareja lo ingresa en su celular y quedan sincronizados.
+            Compártanlo por WhatsApp: su pareja toca el enlace y entra al instante, sin correo ni contraseña.
           </p>
           <div className="mt-6 flex justify-center">
             <div className="flex items-center gap-3 rounded-[var(--radius-card)] border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))] px-6 py-4">
@@ -451,7 +451,7 @@ function PasoVinculacion({
               contra apps líderes del nicho). */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Este es nuestro código de pareja: ${codigo}. Entra aquí y toca "Entrar ahora": ${
+              `Vamos a organizar nuestras cuentas juntos en Fairsy (no hay que bajar nada de Play Store ni App Store, se abre directo en el navegador). Te envío el código único de enlace: ${codigo}. Entra aquí y toca "Entrar ahora": ${
                 typeof window !== 'undefined' ? window.location.origin : ''
               }/unirme?${token ? `t=${token}&` : ''}codigo=${codigo}`
             )}`}

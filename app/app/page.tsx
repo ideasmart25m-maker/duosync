@@ -77,7 +77,7 @@ export default function FairsyLanding() {
         mecanismo="el Código de Pareja"
         bigIdeaMarked="No falta organización, falta un lugar donde los dos vean lo mismo. El Código de Pareja los conecta y el [b]saldo se actualiza solo[/b]."
         pasos={[
-          { titulo: 'Vinculan sus teléfonos', detalle: 'Un código de 4 dígitos une sus cuentas en menos de un minuto.', color: 'var(--cat-blue)' },
+          { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y su pareja entra al instante: sin correo y sin contraseña.', color: 'var(--cat-blue)' },
           { titulo: 'Registran gastos en 2 toques', detalle: 'Arriendo, servicios o mercado — con categorías que ustedes eligen.', color: 'var(--cat-amber)' },
           { titulo: 'Ven el mismo saldo', detalle: 'Lo que uno registra, el otro lo ve al instante, sin preguntar.', color: 'var(--cat-teal)' },
         ]}

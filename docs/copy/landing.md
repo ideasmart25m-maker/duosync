@@ -27,7 +27,7 @@
 - Mecanismo bautizado: "el Código de Pareja"
 - Título: `Cuentas claras [acento]sin pelear[/acento]`
 - Big idea: "No falta amor, falta un lugar donde los dos vean lo mismo. El Código de Pareja los conecta y el [b]saldo se actualiza solo[/b]."
-- Pasos: (1) Vinculan sus teléfonos — código de 4 dígitos, menos de un minuto (2) Registran gastos en 2 toques — con categorías que ustedes eligen (3) Ven el mismo saldo — actualizado al instante para los dos
+- Pasos: (1) Vinculan sus teléfonos — un enlace por WhatsApp y su pareja entra al instante, sin correo ni contraseña (2) Registran gastos en 2 toques — con categorías que ustedes eligen (3) Ven el mismo saldo — actualizado al instante para los dos
 - Antes/Después: cada uno con su Excel sin saber cuánto puso el otro → un saldo único, actualizado al instante para los dos
 
 ## 5. App por dentro (placeholders honestos — sin screenshots reales todavía)

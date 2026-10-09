@@ -16,6 +16,7 @@ import { animate, motion, useReducedMotion } from 'motion/react';
 import { X, Lock, Loader2 } from 'lucide-react';
 import { FunnelShell } from '@/components/onboarding/ui';
 import { CheckCustom, Hairline } from '@/components/landing/ui';
+import { urlCheckout, guardarVinculacionPendiente } from '@/lib/hotmart/checkout';
 
 function fechaEnDias(dias: number): string {
   const d = new Date();
@@ -74,7 +75,9 @@ function PaywallInner() {
     if (cargando) return;
     setErrorNav(false);
     setCargando(true);
-    router.push(siguienteLogin(plan));
+    // El plan pago se cobra en Hotmart (con la prueba gratis de 7 días); al volver a /gracias se retoma la vinculación.
+    guardarVinculacionPendiente({ modo, codigo, tk });
+    window.location.href = urlCheckout(plan);
     // Si la navegación no resolvió en 8s (conexión lenta/colgada), se lo decimos y
     // reactivamos el botón — nunca dejarlo muerto sin explicación (defecto real detectado).
     setTimeout(() => {
