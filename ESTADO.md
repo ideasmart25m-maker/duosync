@@ -10,6 +10,11 @@
 - ⚠️ PENDIENTE (lo que sigue): (3) compra real de prueba con OTRO correo (Hotmart no deja al productor comprar su propio producto) para capturar el JSON real del inicio de prueba y de la cancelación — durante los 7 días no hay cobro; (4) conectar botones de landing/paywall a los enlaces de pago; (5) "ya pagué, conectar mi compra"; (6) el correo de bienvenida solo se verifica en producción.
 - (histórico) antes: (1) poner el HOTTOK real en Vercel como `HOTMART_HOTTOK` (la usuaria lo hace en el panel, jamás en el chat) y redesplegar; (2) registrar el webhook en Hotmart apuntando a `https://www.fairsy.lat/api/webhooks/hotmart` con los eventos del catálogo; (3) "Enviar test" y comprar con una tarjeta real reembolsable para capturar el JSON real del inicio de prueba — la detección de prueba es una SUPOSICIÓN (primer APPROVED = prueba) hasta verlo; (4) recién ahí conectar los botones de la landing/paywall a los enlaces de pago; (5) flujo "ya pagué, conectar mi compra" por si paga con otro correo que el del login; (6) correo de bienvenida solo se ve en producción (la clave de Resend no está en local).
 
+## Recorrido de pago revisado en vivo (2026-10-10) ✅
+- Hotmart configurado por la usuaria: URL de compras aprobadas `/gracias`, correo de atención `soporte@fairsy.lat`, nombre en factura `HTM*FAIRSY`. El nombre completo del área de miembros viene del perfil de la cuenta Hotmart (no editable en el producto): se deja así, no lo ven los clientes.
+- Recorrido real en fairsy.lat (375px): landing → onboarding (5 preguntas) → paywall → checkout Hotmart anual (7 días gratis, tarjeta/PayPal) OK, sin comprar.
+- BUG corregido: `/gracias` armaba el enlace "Entrar a Fairsy" en el servidor y salía con código y clave vacíos (el cliente habría entrado con una pareja nueva). Ahora lo completa en el navegador tras cargar. ⚠️ Requiere push + despliegue para estar en vivo.
+
 ## Revisión con dos cuentas (2026-10-09) ✅
 - `scripts/dos-cuentas.e2e.mjs`: 40 comprobaciones contra la base real con 2 integrantes + 1 cuenta ajena: pagos fijos, gastos, saldo, viajes, metas/aportes, pregunta del día (revelado y racha), presupuesto y aislamiento. TODO OK, sin datos residuales. Lo que NO cubre: el aspecto visual en el celular (se mira en vivo).
 

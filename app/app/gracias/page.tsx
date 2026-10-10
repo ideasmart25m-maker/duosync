@@ -3,7 +3,7 @@
 // Página a la que Hotmart devuelve a quien acaba de pagar (se configura en el producto como "página de
 // agradecimiento"). Explica qué pasó y retoma la vinculación que se guardó antes de irse a pagar.
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CheckCircle2, Mail } from 'lucide-react';
@@ -11,10 +11,14 @@ import { FunnelShell, CtaFijo } from '@/components/onboarding/ui';
 import { leerVinculacionPendiente } from '@/lib/hotmart/checkout';
 
 export default function GraciasPage() {
-  const destino = useMemo(() => {
-    const v = typeof window === 'undefined' ? null : leerVinculacionPendiente();
-    const p = new URLSearchParams({ plan: 'pro', modo: v?.modo ?? 'crear', codigo: v?.codigo ?? '', tk: v?.tk ?? '' });
-    return `/login?${p.toString()}`;
+  // El servidor no tiene acceso a lo guardado en el navegador: el enlace se completa al cargar (si se calculara
+  // en el render, el HTML del servidor se quedaría con código y clave vacíos).
+  const [destino, setDestino] = useState('/login?plan=pro&modo=crear');
+  useEffect(() => {
+    const v = leerVinculacionPendiente();
+    if (!v) return;
+    const p = new URLSearchParams({ plan: 'pro', modo: v.modo, codigo: v.codigo, tk: v.tk });
+    setDestino(`/login?${p.toString()}`);
   }, []);
 
   return (
