@@ -9,6 +9,7 @@ import { motion } from 'motion/react';
 import { Flame, Sparkles, MessageCircleHeart, Utensils, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
+import { TuPlan } from '@/components/app/TuPlan';
 import { obtenerCoupleId } from '@/lib/gastos';
 import { obtenerRachaPareja, obtenerConexionDelMes, obtenerNombresPareja } from '@/lib/preguntas';
 
@@ -100,6 +101,7 @@ export default function NosotrosPage() {
       <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Nosotros</h1>
 
       {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
+      {coupleId && <TuPlan supabase={supabase} coupleId={coupleId} />}
 
       <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
         <div className="flex items-center gap-2">
