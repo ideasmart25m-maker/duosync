@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
   // de que llegue un aviso de Hotmart) y purga la bitácora del webhook de más de 90 días.
   const { error: errorPlanes } = await admin.rpc('recalcular_planes_vencidos');
   if (errorPlanes) console.error('[cron] no se pudieron recalcular los planes:', errorPlanes.message);
+  // Cuentas de invitado que nunca llegaron a una pareja (más de 7 días sin entrar): se borran.
+  const { data: invitadosBorrados, error: errorInvitados } = await admin.rpc('limpiar_invitados_huerfanos');
+  if (errorInvitados) console.error('[cron] no se pudieron limpiar invitados huérfanos:', errorInvitados.message);
+  else if (invitadosBorrados) console.log(`[cron] invitados huérfanos borrados: ${invitadosBorrados}`);
   const hace90 = new Date(Date.now() - 90 * 86_400_000).toISOString();
   await admin.from('webhook_log').delete().lt('received_at', hace90);
   await admin.from('processed_events').delete().lt('processed_at', hace90);
