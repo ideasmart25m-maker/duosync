@@ -40,7 +40,7 @@ function PrecioAnimado({ valor }: { valor: number }) {
     return () => controls.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- corre una vez al montar por cada card
   }, []);
-  return <>${mostrado.toFixed(2)}</>;
+  return <>US${mostrado.toFixed(2)}</>;
 }
 
 function PaywallInner() {
@@ -190,7 +190,7 @@ function PaywallInner() {
                 <span className="text-[12px] text-[var(--text-secondary)]">/mes</span>
               </span>
             </div>
-            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Se cobra $35.94/año · 7 días gratis</p>
+            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Se cobra US$35.94/año · 7 días gratis</p>
           </motion.button>
         </Hairline>
 
@@ -237,7 +237,7 @@ function PaywallInner() {
           // aparte debajo — defecto real detectado: redundancia que sumaba altura sin sumar
           // claridad). Explícito que el cobro llega DESPUÉS del trial, no antes.
           <p className="mt-2 text-center text-[12px] text-[var(--text-secondary)]">
-            Gratis 7 días, se cobra recién el {fechaCobro}. ¿No les convence? 15 días de garantía.
+            Gratis 7 días, se cobra recién el {fechaCobro}, en su moneda al valor del día (en Colombia, en pesos). ¿No les convence? 15 días de garantía.
           </p>
         )}
         <motion.button

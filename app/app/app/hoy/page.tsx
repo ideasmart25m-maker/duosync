@@ -294,6 +294,7 @@ export default function HoyPage() {
   const [avatarPropio, setAvatarPropio] = useState<string | null>(null);
   const [avatarOtro, setAvatarOtro] = useState<string | null>(null);
   const [subiendoAvatar, setSubiendoAvatar] = useState(false);
+  const [errorAvatar, setErrorAvatar] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [racha, setRacha] = useState(0);
 
@@ -397,12 +398,13 @@ export default function HoyPage() {
   const elegirFotoDePerfil = async (archivo: File | undefined) => {
     if (!archivo || !userId) return;
     setSubiendoAvatar(true);
+    setErrorAvatar(null);
     try {
       const url = await subirAvatar(supabase, userId, archivo);
       setAvatarPropio(url);
     } catch {
-      // Silencioso a propósito: no es una acción crítica, y el usuario ve que la foto
-      // simplemente no cambió — puede intentar de nuevo cuando quiera.
+      // Antes era silencioso y quien lo intentaba creía que la app no dejaba subir fotos.
+      setErrorAvatar('No pudimos subir la foto. Prueba con otra imagen (JPG o PNG) o inténtalo de nuevo.');
     } finally {
       setSubiendoAvatar(false);
     }
@@ -531,6 +533,12 @@ export default function HoyPage() {
           )}
         </div>
       </motion.div>
+
+      {errorAvatar && (
+        <p role="alert" className="text-[13px] font-medium text-[var(--danger)]">
+          {errorAvatar}
+        </p>
+      )}
 
       {avisoVinculacion && (
         <div role="alert" className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-4 text-[14px] text-[var(--danger)]">

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { comprimirImagen } from '@/lib/imagen';
 
 export interface PreguntaDB {
   id: string;
@@ -108,9 +109,13 @@ export async function obtenerNombresPareja(supabase: SupabaseClient, coupleId: s
 // Sube/reemplaza la foto de perfil del usuario actual (bucket público "avatares", un archivo
 // por persona en su propia carpeta — política RLS lo garantiza) y guarda la URL en su perfil.
 export async function subirAvatar(supabase: SupabaseClient, userId: string, archivo: File): Promise<string> {
-  const extension = archivo.name.split('.').pop() ?? 'jpg';
-  const ruta = `${userId}/foto.${extension}`;
-  const { error: errorSubida } = await supabase.storage.from('avatares').upload(ruta, archivo, { upsert: true, cacheControl: '3600' });
+  // Siempre se guarda como foto.jpg reducida a 512 px: pesa poco (el bucket limita a 5 MB), nunca queda una foto
+  // vieja con otra extensión y funciona igual con fotos grandes del celular.
+  const reducida = await comprimirImagen(archivo, 512, 0.85);
+  const ruta = `${userId}/foto.jpg`;
+  const { error: errorSubida } = await supabase.storage
+    .from('avatares')
+    .upload(ruta, reducida, { upsert: true, cacheControl: '3600', contentType: 'image/jpeg' });
   if (errorSubida) throw errorSubida;
 
   const {

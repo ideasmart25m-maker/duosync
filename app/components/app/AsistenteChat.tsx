@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Send, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 interface Mensaje {
   rol: 'user' | 'assistant';
@@ -104,6 +105,11 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
               </div>
             ))}
             {error && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
+            {error?.startsWith('Llegaron al límite') && (
+              <Link href="/app/nosotros" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
+                Ver mi plan y probar 7 días gratis
+              </Link>
+            )}
             <div ref={finRef} />
           </div>
         </div>

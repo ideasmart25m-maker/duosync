@@ -115,10 +115,10 @@ export default function FairsyLanding() {
         anual={{
           nombre: 'Anual',
           badge: 'MÁS POPULAR',
-          precioMes: '$3.00',
-          totalAnual: 'Se cobra $35.94/año recién al terminar la prueba',
+          precioMes: 'US$3.00',
+          totalAnual: 'Se cobra US$35.94/año al terminar la prueba, en tu moneda al valor del día',
           ahorro: 'Ahorran el 50% vs. mensual',
-          descomposicionDia: 'menos de $0.10 al día',
+          descomposicionDia: 'menos de US$0.10 al día',
           ctaLabel: CTA_LABEL,
           ctaHref: CTA_HREF,
           features: [
@@ -131,8 +131,8 @@ export default function FairsyLanding() {
         }}
         mensual={{
           nombre: 'Mensual',
-          precioMes: '$5.99',
-          descomposicionDia: 'menos de $0.20 al día',
+          precioMes: 'US$5.99',
+          descomposicionDia: 'menos de US$0.20 al día',
           ctaLabel: CTA_LABEL,
           ctaHref: CTA_HREF,
           // El plan mensual da acceso al mismo Premium completo que el anual (mismos beneficios

@@ -8,6 +8,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, Home } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
@@ -961,6 +962,11 @@ function GastosInner() {
 
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
       {escaneoError && <p className="text-[12px] font-medium text-[var(--danger)]">{escaneoError}</p>}
+      {escaneoError?.includes('límite') && (
+        <Link href="/app/nosotros" className="inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
+          Ver mi plan y probar 7 días gratis
+        </Link>
+      )}
 
       {mesOffset === 0 && pagosFijos.length > 0 && (
         <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4">

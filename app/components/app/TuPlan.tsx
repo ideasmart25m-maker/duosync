@@ -126,13 +126,13 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
             href={urlCheckout('anual')}
             className="flex min-h-12 items-center justify-center rounded-[var(--radius-button)] bg-[var(--accent)] px-4 text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation]"
           >
-            Probar 7 días gratis · $35.94 al año
+            Probar 7 días gratis · US$35.94 al año
           </a>
           <a
             href={urlCheckout('mensual')}
             className="flex min-h-11 items-center justify-center text-[14px] font-medium text-[var(--text-secondary)] underline underline-offset-4 [touch-action:manipulation]"
           >
-            Prefiero el plan mensual · $5.99
+            Prefiero el plan mensual · US$5.99
           </a>
         </div>
       )}
