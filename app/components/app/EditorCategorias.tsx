@@ -7,11 +7,12 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Plus, Bell, Trash2, Loader2 } from 'lucide-react';
+import { X, Minus, Plus, Bell, Trash2, Loader2, Scale, Info, Wallet, ChevronDown } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { actualizarCategoria, eliminarCategoria } from '@/lib/gastos';
 import { formatoMoneda } from '@/lib/paises';
+import { InputMonto } from '@/components/ui/InputMonto';
 
 export interface ParejaEditor {
   miUserId: string;
@@ -26,10 +27,9 @@ function MontoInput({ valor, etiqueta, onGuardar }: { valor: number; etiqueta: s
   const [texto, setTexto] = useState(valor ? String(valor) : '');
   useEffect(() => setTexto(valor ? String(valor) : ''), [valor]);
   return (
-    <input
-      inputMode="numeric"
+    <InputMonto
       value={texto}
-      onChange={(e) => setTexto(e.target.value.replace(/\D/g, ''))}
+      onValueChange={setTexto}
       onBlur={() => {
         const n = Number(texto) || 0;
         if (n !== valor) onGuardar(n);
@@ -38,6 +38,94 @@ function MontoInput({ valor, etiqueta, onGuardar }: { valor: number; etiqueta: s
       aria-label={etiqueta}
       className="h-9 w-24 border-l border-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)] bg-transparent pl-2 text-[13px] tabular-nums text-[var(--text-primary)] outline-none"
     />
+  );
+}
+
+// Ayuda de una línea que se abre al tocar la (i) junto a un control: explica para qué sirve sin salir de la fila.
+function AyudaBreve({ texto, etiqueta }: { texto: string; etiqueta: string }) {
+  const [abierta, setAbierta] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setAbierta((v) => !v)}
+        aria-expanded={abierta}
+        aria-label={`¿Para qué sirve? ${etiqueta}`}
+        className="flex size-6 shrink-0 items-center justify-center rounded-full text-[var(--text-tertiary)] [touch-action:manipulation]"
+      >
+        <Info size={14} strokeWidth={2.2} aria-hidden="true" />
+      </button>
+      {abierta && (
+        <p className="basis-full rounded-[var(--radius-button)] bg-[var(--surface-2)] p-2.5 text-[12px] leading-relaxed text-[var(--text-secondary)]">{texto}</p>
+      )}
+    </>
+  );
+}
+
+const CLAVE_GUIA = 'fairsy-guia-categorias-vista';
+
+// Instructivo de la pantalla: se muestra abierto la primera vez y queda plegado después (siempre se puede volver
+// a abrir). Lenguaje de todos los días, con un ejemplo con números.
+function GuiaCategorias() {
+  const [abierta, setAbierta] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(CLAVE_GUIA)) {
+        setAbierta(true);
+        localStorage.setItem(CLAVE_GUIA, '1');
+      }
+    } catch {
+      setAbierta(true);
+    }
+  }, []);
+  const pasos = [
+    {
+      Icono: Scale,
+      titulo: 'Reparto: cuánto pone cada uno',
+      texto: 'Es la parte de cada gasto de esa categoría que le toca a cada uno. 50% / 50% es por mitades; 70% / 30% si uno gana más. Se cambia con los botones + y −.',
+    },
+    {
+      Icono: Bell,
+      titulo: 'Se repite cada mes: pagos fijos',
+      texto: 'Actívenlo en lo que pagan todos los meses (arriendo, servicios, internet). Pongan el día que vence y el valor: Fairsy les avisa un día antes y lo deja en "Pagos fijos del mes" para registrarlo con un toque.',
+    },
+    {
+      Icono: Wallet,
+      titulo: '¿Quién lo paga?',
+      texto: 'Elijan quién suele pagarlo. Al registrarlo, la app calcula lo que el otro le debe y lo suma en "Cuentas entre ustedes".',
+    },
+  ];
+  return (
+    <div className="mb-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_25%,transparent)] bg-[color-mix(in_oklab,var(--accent)_6%,transparent)]">
+      <button
+        type="button"
+        onClick={() => setAbierta((v) => !v)}
+        aria-expanded={abierta}
+        className="flex min-h-11 w-full items-center justify-between gap-2 px-3 text-left [touch-action:manipulation]"
+      >
+        <span className="text-[14px] font-semibold text-[var(--text-primary)]">¿Para qué sirve esto?</span>
+        <ChevronDown size={18} strokeWidth={2.2} className={`shrink-0 transition-transform ${abierta ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {abierta && (
+        <div className="space-y-3 px-3 pb-3">
+          {pasos.map(({ Icono, titulo, texto }) => (
+            <div key={titulo} className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]">
+                <Icono size={14} strokeWidth={2.2} color="var(--bg)" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-[13px] font-semibold text-[var(--text-primary)]">{titulo}</p>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--text-secondary)]">{texto}</p>
+              </div>
+            </div>
+          ))}
+          <p className="rounded-[var(--radius-button)] bg-[var(--bg)] p-2.5 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+            <span className="font-semibold text-[var(--text-primary)]">Ejemplo:</span> Arriendo de $1.200.000, vence el día 5, reparto 50% / 50%. Cada mes el 5 les
+            aparece para pagar, y cada uno aporta $600.000.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -165,8 +253,12 @@ function FilaCategoria({
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-[12px] text-[var(--text-secondary)]">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-y-2">
+        <span className="flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
+          <AyudaBreve
+            etiqueta="reparto"
+            texto="El reparto es cuánto del gasto le toca a cada uno. Usen + y − para cambiar tu parte; la de tu pareja es lo que sobra hasta 100%."
+          />
           Reparto: <span className="font-semibold text-[var(--text-primary)]">{miParte}%</span> tú ·{' '}
           <span className="font-semibold text-[var(--text-primary)]">{100 - miParte}%</span> {nombreOtro}
         </span>
@@ -192,10 +284,14 @@ function FilaCategoria({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-3">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-y-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-3">
         <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
           <Bell size={13} strokeWidth={2} aria-hidden="true" />
           Se repite cada mes
+          <AyudaBreve
+            etiqueta="se repite cada mes"
+            texto="Actívenlo si este pago llega todos los meses. Les aviso un día antes de que venza y aparece en Pagos fijos del mes para registrarlo con un toque."
+          />
         </span>
         <button
           type="button"
@@ -383,9 +479,7 @@ export function EditorCategorias({
             <X size={18} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </div>
-        <p className="mb-3 text-[13px] text-[var(--text-secondary)]">
-          Ajusten cómo se reparte cada categoría y marquen las que se repiten cada mes para avisarles antes de que venzan.
-        </p>
+        <GuiaCategorias />
         <div className="flex-1 space-y-3 overflow-y-auto">
           {categorias.map((c) => (
             <FilaCategoria key={c.id} categoria={c} supabase={supabase} pareja={pareja} otras={categorias.filter((o) => o.id !== c.id)} onActualizada={onActualizada} onEliminada={onEliminada} />

@@ -18,6 +18,7 @@ import { listarMetas, crearMeta, actualizarMeta, aportarAMeta, listarAportesDelM
 import { obtenerNombresPareja } from '@/lib/preguntas';
 import { ViajesMetas } from '@/components/app/ViajesMetas';
 import { formatoMoneda } from '@/lib/paises';
+import { InputMonto } from '@/components/ui/InputMonto';
 
 // Anima CADA VEZ que cambia `target` (desde el último valor mostrado, no siempre desde 0) —
 // antes solo corría una vez al montar (`useEffect(..., [])`), así que un aporte nuevo cambiaba
@@ -126,10 +127,9 @@ function FormularioMeta({
         maxLength={60}
         className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
       />
-      <input
-        inputMode="numeric"
+      <InputMonto
         value={montoObjetivo}
-        onChange={(e) => setMontoObjetivo(e.target.value.replace(/\D/g, ''))}
+        onValueChange={setMontoObjetivo}
         placeholder="Monto objetivo"
         className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
       />
@@ -344,11 +344,10 @@ function TarjetaMeta({
                   confirmarAporte();
                 }}
               >
-                <input
+                <InputMonto
                   autoFocus
-                  inputMode="numeric"
                   value={montoAporte}
-                  onChange={(e) => setMontoAporte(e.target.value.replace(/\D/g, ''))}
+                  onValueChange={setMontoAporte}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') e.preventDefault();
                   }}

@@ -28,6 +28,9 @@ import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
 import { InstalarApp } from '@/components/app/InstalarApp';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { InputMonto } from '@/components/ui/InputMonto';
+import { AlertaPresupuesto } from '@/components/app/AlertaPresupuesto';
+import { evaluarPresupuesto } from '@/lib/presupuesto';
 
 // Enlaces internos animados: `motion.a` nativo disparaba una recarga completa del navegador
 // en cada tap (flash blanco, se pierde el estado de la app) — defecto real detectado por el
@@ -636,11 +639,10 @@ export default function HoyPage() {
             }}
           >
             <label className="text-[12px] font-medium text-[var(--text-tertiary)]">Nuestro presupuesto mensual</label>
-            <input
+            <InputMonto
               autoFocus
-              inputMode="numeric"
               value={borradorPresupuesto}
-              onChange={(e) => setBorradorPresupuesto(e.target.value.replace(/\D/g, ''))}
+              onValueChange={setBorradorPresupuesto}
               placeholder="¿Cuánto quieren gastar como máximo?"
               className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             />
@@ -706,12 +708,15 @@ export default function HoyPage() {
                     </span>
                   </div>
                 </div>
+                <div className="mt-3 empty:hidden">
+                  <AlertaPresupuesto estado={evaluarPresupuesto(gastado, presupuesto)} formatear={(n) => formatoMoneda(n, pais)} />
+                </div>
               </>
             )}
             </div>
 
             <div className="mt-3">
-              <Link href="/app/gastos" className="flex w-fit items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
+              <Link href="/app/gastos"className="flex w-fit items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
                 Ver todo
                 <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
               </Link>

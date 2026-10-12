@@ -23,6 +23,7 @@ import {
 import { DESTINOS, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { eliminarGasto } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
+import { InputMonto } from '@/components/ui/InputMonto';
 
 // Cada viaje tiene su propio color de fondo (siempre el mismo para el mismo viaje) para distinguirlos de un vistazo.
 const COLORES_VIAJE = ['teal', 'coral', 'amber', 'rose', 'blue', 'violet'];
@@ -79,10 +80,9 @@ function FormularioNuevoViaje({ guardando, onGuardar, onCancelar }: { guardando:
       <p className="text-[12px] text-[var(--text-secondary)]">
         Los gastos de este viaje se llevan en <span className="font-semibold">{nombreMoneda(moneda).toLowerCase()} ({moneda})</span>, sin convertir.
       </p>
-      <input
-        inputMode="numeric"
+      <InputMonto
         value={presupuesto}
-        onChange={(e) => setPresupuesto(e.target.value.replace(/\D/g, ''))}
+        onValueChange={setPresupuesto}
         placeholder={`Presupuesto del viaje en ${nombreMoneda(moneda).toLowerCase()} (opcional)`}
         className={campo}
       />
@@ -214,10 +214,10 @@ function FormularioGastoViaje({
         }}
       />
       {errorEscaneo && <p className="text-[12px] font-medium text-[var(--danger)]">{errorEscaneo}</p>}
-      <input
-        inputMode="decimal"
+      <InputMonto
+        decimal
         value={monto}
-        onChange={(e) => setMonto(e.target.value.replace(/[^\d.,]/g, ''))}
+        onValueChange={setMonto}
         placeholder={`Monto en ${nombreMoneda(moneda).toLowerCase()}`}
         className={campo}
       />

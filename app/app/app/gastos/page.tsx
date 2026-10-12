@@ -24,6 +24,7 @@ import {
   iniciarEscaneoRecibo,
   consultarEscaneoRecibo,
   obtenerSaldoPareja,
+  obtenerPresupuestoPareja,
   liquidarSaldo,
   type GastoDB,
   type SaldoPorMoneda,
@@ -35,6 +36,9 @@ import { formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
 import { AsistenteChat } from '@/components/app/AsistenteChat';
 import { EditorCategorias, NOMBRES_SERVICIOS } from '@/components/app/EditorCategorias';
 import { obtenerNombresPareja } from '@/lib/preguntas';
+import { InputMonto } from '@/components/ui/InputMonto';
+import { AlertaPresupuesto } from '@/components/app/AlertaPresupuesto';
+import { evaluarPresupuesto } from '@/lib/presupuesto';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -184,12 +188,11 @@ function FormularioGasto({
           </div>
         )}
 
-        <input
+        <InputMonto
           autoFocus
-          inputMode="numeric"
           value={monto}
-          onChange={(e) => {
-            setMonto(e.target.value.replace(/\D/g, ''));
+          onValueChange={(v) => {
+            setMonto(v);
             setRepetidoConfirmado(false);
           }}
           onKeyDown={(e) => {
@@ -384,6 +387,7 @@ function GastosInner() {
   const [userId, setUserId] = useState<string | null>(null);
   const [coupleId, setCoupleId] = useState<string | null>(null);
   const [pais, setPais] = useState<string | null>(null);
+  const [presupuesto, setPresupuesto] = useState<number | null>(null);
   const [categorias, setCategorias] = useState<CategoriaDB[]>([]);
   const [gastos, setGastos] = useState<GastoDB[]>([]);
   const [guardando, setGuardando] = useState(false);
@@ -444,9 +448,10 @@ function GastosInner() {
         if (cancelado) return;
         setCoupleId(cid);
 
-        const [cats, paisPareja, saldoActual] = await Promise.all([
+        const [cats, paisPareja, presupuestoActual, saldoActual] = await Promise.all([
           listarCategorias(supabase, cid),
           obtenerPaisPareja(supabase, cid).catch(() => null),
+          obtenerPresupuestoPareja(supabase, cid).catch(() => null),
           // El saldo es secundario: si falla, NO debe dejar la pantalla sin categorías (ya pasó con una pareja de dos).
           obtenerSaldoPareja(supabase, cid, user.id).catch(() => 'fallo' as const),
           cargarGastos(cid, prefijoMes),
@@ -454,6 +459,7 @@ function GastosInner() {
         if (cancelado) return;
         setCategorias(cats);
         setPais(paisPareja);
+        setPresupuesto(presupuestoActual);
         setSaldoFallo(saldoActual === 'fallo');
         setSaldos(saldoActual === 'fallo' ? null : saldoActual);
         setSaldoCargado(true);
@@ -557,6 +563,12 @@ function GastosInner() {
     return mapa;
   }, [gastos]);
   const totalMesSinFiltro = useMemo(() => gastos.filter((g) => !g.moneda).reduce((a, g) => a + g.monto, 0), [gastos]);
+  // Pagos fijos del mes que todavía no se registran: un servicio público o el arriendo llegan aunque el
+  // presupuesto ya esté casi lleno, así que cuentan para saber si se van a pasar.
+  const estadoPresupuesto = useMemo(() => {
+    const pendientes = pagosFijos.filter((p) => !p.registrado).reduce((a, p) => a + p.monto, 0);
+    return evaluarPresupuesto(totalMesSinFiltro, presupuesto, pendientes);
+  }, [pagosFijos, totalMesSinFiltro, presupuesto]);
 
   const guardarGasto = async (g: { categoriaId: string; monto: number; nota?: string; splitPercent?: number }) => {
     if (!coupleId || !userId) return;
@@ -729,6 +741,8 @@ function GastosInner() {
         </button>
       </div>
 
+      {mesOffset === 0 && <AlertaPresupuesto estado={estadoPresupuesto} formatear={(n) => formatoMoneda(n, pais)} />}
+
       <div className="flex flex-col gap-1.5">
         <button
           type="button"
@@ -740,7 +754,10 @@ function GastosInner() {
           }`}
         >
           Todas las categorías
-          <span className="tabular-nums text-[12px] text-[var(--text-tertiary)]">{formatoMoneda(totalMesSinFiltro, pais)}</span>
+          <span className="tabular-nums text-[12px] text-[var(--text-tertiary)]">
+            {formatoMoneda(totalMesSinFiltro, pais)}
+            {presupuesto !== null && presupuesto > 0 && <span className="font-normal"> de {formatoMoneda(presupuesto, pais)}</span>}
+          </span>
         </button>
         {categorias.map((c) => {
           const Icono = iconoDeCategoria(c.icono);
@@ -795,7 +812,7 @@ function GastosInner() {
         className="flex items-center gap-1.5 self-end text-[12px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
       >
         <Tag size={13} strokeWidth={2.2} aria-hidden="true" />
-        Editar reparto y recurrencia
+        Editar reparto y pagos que se repiten
       </button>
 
       <AnimatePresence initial={false}>
