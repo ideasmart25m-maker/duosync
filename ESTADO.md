@@ -10,6 +10,9 @@
 - ⚠️ PENDIENTE (lo que sigue): (3) compra real de prueba con OTRO correo (Hotmart no deja al productor comprar su propio producto) para capturar el JSON real del inicio de prueba y de la cancelación — durante los 7 días no hay cobro; (4) conectar botones de landing/paywall a los enlaces de pago; (5) "ya pagué, conectar mi compra"; (6) el correo de bienvenida solo se verifica en producción.
 - (histórico) antes: (1) poner el HOTTOK real en Vercel como `HOTMART_HOTTOK` (la usuaria lo hace en el panel, jamás en el chat) y redesplegar; (2) registrar el webhook en Hotmart apuntando a `https://www.fairsy.lat/api/webhooks/hotmart` con los eventos del catálogo; (3) "Enviar test" y comprar con una tarjeta real reembolsable para capturar el JSON real del inicio de prueba — la detección de prueba es una SUPOSICIÓN (primer APPROVED = prueba) hasta verlo; (4) recién ahí conectar los botones de la landing/paywall a los enlaces de pago; (5) flujo "ya pagué, conectar mi compra" por si paga con otro correo que el del login; (6) correo de bienvenida solo se ve en producción (la clave de Resend no está en local).
 
+## Correos de fairsy.lat funcionando (2026-10-13) ✅
+- Namecheap Email Forwarding: `soporte@` y comodín `*@fairsy.lat` → duosyncwallet@gmail.com. Probado por la usuaria: soporte@ y legal@ llegan. Antes rebotaban con "554 5.7.1 Relay access denied" (no había alias). Cubre también hola@ (remitente de Resend). ⚠️ Los correos entran a la bandeja duosyncwallet@gmail.com: revisarla a diario; para responder DESDE soporte@ haría falta configurar "Enviar como" en Gmail o un buzón real.
+
 ## Auditoría: bloques 1 y 2 aplicados (2026-10-12) ✅ — falta push y arreglar correos en Namecheap
 - Precio: landing, paywall y "Tu plan" dicen "US$" y aclaran que se cobra en su moneda al valor del día (en Colombia, pesos). Evita que "$5.99" se lea como pesos.
 - Tope de IA (asistente y escaneo): ahora lleva a "Tu plan" con "Ver mi plan y probar 7 días gratis".
