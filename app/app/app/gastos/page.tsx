@@ -40,6 +40,7 @@ import { obtenerNombresPareja } from '@/lib/preguntas';
 import { InputMonto } from '@/components/ui/InputMonto';
 import { AlertaPresupuesto } from '@/components/app/AlertaPresupuesto';
 import { evaluarPresupuesto } from '@/lib/presupuesto';
+import { GuiaPagina } from '@/components/app/GuiaPagina';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -218,12 +219,12 @@ function FormularioGasto({
             className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-[var(--text-secondary)] [touch-action:manipulation]"
           >
             <Scale size={13} strokeWidth={2.2} aria-hidden="true" />
-            Reparto: {reparto}% tú · {100 - reparto}% {nombreOtro ?? 'tu pareja'} — ajustar
+            Reparto: {reparto}% tú · {100 - reparto}% {nombreOtro ?? 'la otra persona'} — ajustar
           </button>
         ) : (
           <div className="mt-3 rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
             <p className="text-[12px] text-[var(--text-secondary)]">
-              Tú: <span className="font-semibold text-[var(--text-primary)]">{reparto}%</span> · {nombreOtro ?? 'Tu pareja'}:{' '}
+              Tú: <span className="font-semibold text-[var(--text-primary)]">{reparto}%</span> · {nombreOtro ?? 'La otra persona'}:{' '}
               <span className="font-semibold text-[var(--text-primary)]">{100 - reparto}%</span>
             </p>
             <div className="mt-2 flex items-center gap-3">
@@ -326,7 +327,7 @@ function FilaGasto({
         <span className="flex-1 min-w-0">
           <span className="block truncate text-[15px] font-medium text-[var(--text-primary)]">{g.nota || cat?.nombre || 'Gasto'}</span>
           <span className="block text-[12px] text-[var(--text-tertiary)]">
-            {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : (nombreOtro ?? 'Tu pareja')}
+            {formatoFecha(g.fecha)} · {g.registradoPor === userId ? 'Tú' : (nombreOtro ?? 'La otra persona')}
           </span>
         </span>
         <span className="shrink-0 tabular-nums text-[15px] font-semibold text-[var(--text-primary)]">
@@ -445,7 +446,7 @@ function GastosInner() {
         setUserId(user.id);
 
         const cid = await obtenerCoupleId(supabase);
-        if (!cid) throw new Error('Todavía no tienen una pareja vinculada.');
+        if (!cid) throw new Error('Todavía no tienen su espacio compartido vinculado.');
         if (cancelado) return;
         setCoupleId(cid);
 
@@ -721,6 +722,17 @@ function GastosInner() {
     <div className="flex flex-col gap-4">
       <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Gastos</h1>
 
+      <GuiaPagina
+        id="gastos"
+        abrirPrimeraVez={false}
+        items={[
+          { titulo: 'Sus gastos del mes', texto: 'Anoten cada gasto en segundos (o con la foto de un recibo) y elijan en qué categoría va. Cambien de mes con las flechas.' },
+          { titulo: 'Categorías y pagos fijos', texto: 'Con "Editar reparto y pagos que se repiten" definen cuánto pone cada uno y qué pagos llegan todos los meses.' },
+          { titulo: 'Cuentas entre ustedes', texto: 'Quién le debe a quién según lo que cada uno pagó. Cuando se ponen al día, tocan "Liquidar".' },
+          { titulo: 'El asistente', texto: 'El botón del robot responde preguntas sobre sus gastos, por ejemplo cuánto les queda del presupuesto.' },
+        ]}
+      />
+
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -920,7 +932,7 @@ function GastosInner() {
             </p>
           ) : saldos === null ? (
             <p className="mt-1.5 text-[15px] font-medium text-[var(--text-primary)]">
-              Cuando tu pareja se una con el código de invitación, aquí van a ver cuánto le corresponde a cada uno.
+              Cuando la otra persona se una con el código de conexión, aquí van a ver cuánto le corresponde a cada uno.
             </p>
           ) : (
             <div className="mt-2 flex flex-col gap-3">
@@ -939,7 +951,7 @@ function GastosInner() {
                           {formatear(Math.abs(s.saldo))}
                         </p>
                         <p className="text-[12px] text-[var(--text-secondary)]">
-                          {s.saldo > 0 ? `${nombres.otro ?? 'Tu pareja'} te debe esto` : `Le debes esto a ${nombres.otro ?? 'tu pareja'}`}
+                          {s.saldo > 0 ? `${nombres.otro ?? 'La otra persona'} te debe esto` : `Le debes esto a ${nombres.otro ?? 'la otra persona'}`}
                         </p>
                         <button
                           type="button"
@@ -963,7 +975,7 @@ function GastosInner() {
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
       {escaneoError && <p className="text-[12px] font-medium text-[var(--danger)]">{escaneoError}</p>}
       {escaneoError?.includes('límite') && (
-        <Link href="/app/nosotros" className="inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
+        <Link href="/app/cuenta" className="inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
           Ver mi plan y probar 7 días gratis
         </Link>
       )}
@@ -974,7 +986,7 @@ function GastosInner() {
           <ul className="mt-2 flex flex-col divide-y divide-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)]">
             {pagosFijos.map((p) => {
               const quien =
-                p.categoria.pagaUserId === null ? null : p.categoria.pagaUserId === userId ? 'Pagas tú' : `Paga ${nombres.otro ?? 'tu pareja'}`;
+                p.categoria.pagaUserId === null ? null : p.categoria.pagaUserId === userId ? 'Pagas tú' : `Paga ${nombres.otro ?? 'la otra persona'}`;
               return (
                 <li key={p.clave} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                   <span className="min-w-0 flex-1">

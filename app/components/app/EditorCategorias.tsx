@@ -178,11 +178,11 @@ function FilaCategoria({
     guardar({ montosMensuales: copia });
   };
   const nombrePagador =
-    categoria.pagaUserId === null ? null : categoria.pagaUserId === pareja.miUserId ? pareja.nombrePropio : (pareja.nombreOtro ?? 'Tu pareja');
+    categoria.pagaUserId === null ? null : categoria.pagaUserId === pareja.miUserId ? pareja.nombrePropio : (pareja.nombreOtro ?? 'La otra persona');
   // Reparto por PERSONA (no por quien paga): mi parte es splitPercent si el reparto es mío, o lo que sobra si es de mi pareja.
   const miParte = categoria.repartoUserId && categoria.repartoUserId !== pareja.miUserId ? 100 - categoria.splitPercent : categoria.splitPercent;
   const cambiarMiParte = (nuevo: number) => guardar({ splitPercent: Math.min(100, Math.max(0, nuevo)), repartoUserId: pareja.miUserId });
-  const nombreOtro = pareja.nombreOtro ?? 'Tu pareja';
+  const nombreOtro = pareja.nombreOtro ?? 'La otra persona';
   const valorMio = Math.round((totalMes * miParte) / 100);
   const valorOtro = totalMes - valorMio;
 
@@ -257,7 +257,7 @@ function FilaCategoria({
         <span className="flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
           <AyudaBreve
             etiqueta="reparto"
-            texto="El reparto es cuánto del gasto le toca a cada uno. Usen + y − para cambiar tu parte; la de tu pareja es lo que sobra hasta 100%."
+            texto="El reparto es cuánto del gasto le toca a cada uno. Usen + y − para cambiar tu parte; la de la otra persona es lo que sobra hasta 100%."
           />
           Reparto: <span className="font-semibold text-[var(--text-primary)]">{miParte}%</span> tú ·{' '}
           <span className="font-semibold text-[var(--text-primary)]">{100 - miParte}%</span> {nombreOtro}
@@ -426,7 +426,7 @@ function FilaCategoria({
               {[
                 { id: null as string | null, texto: 'Quien toque "Registrar pago"' },
                 { id: pareja.miUserId as string | null, texto: pareja.nombrePropio },
-                ...(pareja.otroUserId ? [{ id: pareja.otroUserId as string | null, texto: pareja.nombreOtro ?? 'Tu pareja' }] : []),
+                ...(pareja.otroUserId ? [{ id: pareja.otroUserId as string | null, texto: pareja.nombreOtro ?? 'La otra persona' }] : []),
               ].map((op) => (
                 <button
                   key={op.id ?? 'nadie'}

@@ -105,7 +105,7 @@ export default function OnboardingPage() {
               titulo="¿Quién termina llevando las cuentas del hogar?"
               opciones={[
                 { label: 'Yo' },
-                { label: 'Mi pareja' },
+                { label: 'La otra persona' },
                 { label: 'Los dos, pero sin orden' },
                 { label: 'Nadie — por eso estamos aquí' },
               ]}
@@ -292,12 +292,12 @@ function PasoReconocimiento({ respuestas, onContinuar }: { respuestas: Respuesta
   const texto = useMemo(() => {
     const quien = respuestas.quienLleva;
     if (quien === 'Nadie — por eso estamos aquí') {
-      return 'Que nadie lleve las cuentas no es desorganización: es que hasta hoy no tenían un lugar donde los dos vieran lo mismo al mismo tiempo. El Código de Pareja arregla exactamente eso — en segundos, sus cuentas quedan conectadas.';
+      return 'Que nadie lleve las cuentas no es desorganización: es que hasta hoy no tenían un lugar donde los dos vieran lo mismo al mismo tiempo. El Código de Conexión arregla exactamente eso — en segundos, sus cuentas quedan conectadas.';
     }
     if (quien === 'Los dos, pero sin orden') {
-      return 'No es falta de comunicación. Es falta de claridad y de un lugar único donde ambos puedan mirar, entender y decidir. Por eso existe un Código de Pareja: para crear acuerdos, ordenar las cuentas y construir confianza desde la claridad.';
+      return 'No es falta de comunicación. Es falta de claridad y de un lugar único donde ambos puedan mirar, entender y decidir. Por eso existe un Código de Conexión: para crear acuerdos, ordenar las cuentas y construir confianza desde la claridad.';
     }
-    return 'Cuando uno solo lleva las cuentas, el otro no se desentiende por falta de interés — es que nunca tuvo un lugar claro donde ver lo mismo. El Código de Pareja termina con eso: conecta sus cuentas en segundos, para que dejen de ser trabajo de una sola persona.';
+    return 'Cuando uno solo lleva las cuentas, el otro no se desentiende por falta de interés — es que nunca tuvo un lugar claro donde ver lo mismo. El Código de Conexión termina con eso: conecta sus cuentas en segundos, para que dejen de ser trabajo de una sola persona.';
   }, [respuestas.quienLleva]);
 
   return (
@@ -383,7 +383,7 @@ function PasoMeta({
   );
 }
 
-/* ── Vinculación: el Código de Pareja — la primera victoria real (ACTIVAR) ── */
+/* ── Vinculación: el Código de Conexión — la primera victoria real (ACTIVAR) ── */
 
 function PasoVinculacion({
   codigo,
@@ -414,13 +414,13 @@ function PasoVinculacion({
         </span>
       </div>
       <h1 className="mt-6 text-balance text-center text-[24px] font-bold leading-[1.2] text-[var(--text-primary)] [font-family:var(--font-display)]">
-        El Código de Pareja
+        El Código de Conexión
       </h1>
 
       {!tengoCodigo ? (
         <>
           <p className="mt-3 text-center text-[16px] leading-relaxed text-[var(--text-secondary)]">
-            Compártanlo por WhatsApp: su pareja toca el enlace y entra al instante, sin correo ni contraseña.
+            Compártanlo por WhatsApp: la otra persona toca el enlace y entra al instante, sin correo ni contraseña.
           </p>
           <div className="mt-6 flex justify-center">
             <div className="flex items-center gap-3 rounded-[var(--radius-card)] border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))] px-6 py-4">
@@ -467,7 +467,7 @@ function PasoVinculacion({
               un bloqueo — defecto real detectado al comparar contra el manejo async de
               Splitwise/Honeydue (no forzar a esperar). */}
           <p className="mt-4 text-center text-[12px] leading-relaxed text-[var(--text-tertiary)]">
-            No hace falta esperar a que se una para seguir: pueden armar su plan ahora y tu pareja
+            No hace falta esperar a que se una para seguir: pueden armar su plan ahora y la otra persona
             se conecta con este mismo código cuando quiera.
           </p>
 
@@ -479,13 +479,13 @@ function PasoVinculacion({
             onClick={() => setTengoCodigo(true)}
             className="mt-4 text-center text-[12px] font-semibold text-[var(--text-secondary)] underline underline-offset-2"
           >
-            Mi pareja ya generó un código — voy a ingresarlo
+            La otra persona ya generó un código — voy a ingresarlo
           </button>
         </>
       ) : (
         <>
           <p className="mt-3 text-center text-[16px] leading-relaxed text-[var(--text-secondary)]">
-            Ingresen el código de 4 dígitos que les compartió su pareja.
+            Ingresen el código de 4 dígitos que les compartió la otra persona.
           </p>
           <form
             onSubmit={(e) => {
@@ -512,7 +512,7 @@ function PasoVinculacion({
           </form>
           {codigoInvalido ? (
             <p className="mt-3 text-center text-[12px] font-medium text-[var(--danger)]">
-              Ese es SU propio código. Pídanle a su pareja el que le apareció a ella.
+              Ese es SU propio código. Pídanle a la otra persona el que le apareció a ella.
             </p>
           ) : (
             <p className="mt-3 text-center text-[12px] text-[var(--text-tertiary)]">
@@ -538,7 +538,7 @@ function PasoVinculacion({
   );
 }
 
-/* ── Loading "Construyendo su Plan de Pareja" — el argumento de apertura del paywall ── */
+/* ── Loading "Construyendo su plan" — el argumento de apertura del paywall ── */
 
 function PasoLoading({
   respuestas,
@@ -554,7 +554,7 @@ function PasoLoading({
 }) {
   const reducido = useReducedMotion();
   const lineas = [
-    `Guardando su Código de Pareja`,
+    `Guardando su Código de Conexión`,
     `Ajustando categorías para: ${respuestas.gastoDificil ?? 'su gasto principal'}`,
     `Preparando su meta: ${respuestas.meta ?? 'su meta juntos'}`,
     `Activando su ritual: ${respuestas.momentoDia ?? 'revisión diaria'}`,
@@ -624,7 +624,7 @@ function PasoLoading({
         </span>
       </div>
       <h1 className="mt-6 text-[24px] font-bold text-[var(--text-primary)] [font-family:var(--font-display)]">
-        Armando su Plan de Pareja…
+        Armando su plan…
       </h1>
       <ul className="mt-8 w-full max-w-xs space-y-3">
         {lineas.map((l, i) => (
@@ -703,7 +703,7 @@ function PasoResultado({
           <ul className="flex flex-col gap-3 text-[16px] text-[var(--text-primary)]">
             <li className="flex items-start gap-3">
               <Check size={20} strokeWidth={2.4} color="var(--accent)" aria-hidden="true" className="mt-0.5 shrink-0" />
-              Código de Pareja listo para conectarlos a los dos
+              Código de Conexión listo para conectarlos a los dos
             </li>
             <li className="flex items-start gap-3">
               <Check size={20} strokeWidth={2.4} color="var(--accent)" aria-hidden="true" className="mt-0.5 shrink-0" />
@@ -718,7 +718,7 @@ function PasoResultado({
       </div>
 
       <div className="mt-auto pt-8">
-        <CtaFijo href={siguiente}>{modo === 'unirse' ? 'Entrar y unirme a mi pareja' : `Ver el Plan ${nombreMeta}`}</CtaFijo>
+        <CtaFijo href={siguiente}>{modo === 'unirse' ? 'Entrar y unirme' : `Ver el Plan ${nombreMeta}`}</CtaFijo>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Fairsy', statusBarStyle: 'default' },
   title: "Fairsy — Cuentas claras, sin pelear",
   description:
-    "Fairsy ordena el gasto del hogar y la conexión diaria de la pareja en un solo lugar, con un pago que cubre a los dos.",
+    "Fairsy ordena el gasto del hogar y la conexión diaria de los dos en un solo lugar, con un pago que cubre a los dos.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

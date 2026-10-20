@@ -109,7 +109,7 @@ function LoginInner() {
             </h1>
             <p className="mt-2 text-[16px] leading-relaxed text-[var(--text-secondary)]">
               {seUne
-                ? `Te unes a tu pareja con el código ${codigo}. Escribe tu correo para entrar.`
+                ? `Te unes con el código ${codigo}. Escribe tu correo para entrar.`
                 : esGratis
                 ? 'Con su correo, sus cuentas quedan conectadas y listas cuando vuelvan.'
                 : 'Con su correo activamos su plan y les avisamos antes de cada cobro.'}

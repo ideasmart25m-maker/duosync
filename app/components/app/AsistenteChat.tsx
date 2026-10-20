@@ -106,7 +106,7 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
             ))}
             {error && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
             {error?.startsWith('Llegaron al límite') && (
-              <Link href="/app/nosotros" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
+              <Link href="/app/cuenta" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--accent)] underline underline-offset-4">
                 Ver mi plan y probar 7 días gratis
               </Link>
             )}

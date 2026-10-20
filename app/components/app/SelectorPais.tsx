@@ -55,7 +55,7 @@ export function SelectorPais({
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-secondary)]">
           No el país donde están ahora mismo (por ejemplo, de viaje) — el de siempre, donde manejan su
           dinero. Así les mostramos los montos en su moneda. Pueden cambiarlo cuando quieran desde
-          Nosotros.
+          Mi cuenta.
         </p>
 
         <div className="mt-4 flex h-12 items-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4">

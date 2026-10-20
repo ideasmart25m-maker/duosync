@@ -37,7 +37,7 @@ function construirTool(categorias: CategoriaParaIA[]) {
         categoria_id: {
           type: 'string',
           enum: categorias.length > 0 ? categorias.map((c) => c.id) : ['sin_categorias'],
-          description: 'El id de la categoría que mejor describe este gasto, de la lista de categorías reales de la pareja.',
+          description: 'El id de la categoría que mejor describe este gasto, de la lista de categorías reales del hogar.',
         },
       },
       required: ['es_recibo', 'monto_total', 'categoria_id'],

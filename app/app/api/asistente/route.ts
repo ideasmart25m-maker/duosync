@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Sin sesión activa.' }, { status: 401 });
 
   const { data: membresia } = await supabase.from('couple_members').select('couple_id').limit(1).maybeSingle();
-  if (!membresia) return NextResponse.json({ error: 'Todavía no tienen una pareja vinculada.' }, { status: 400 });
+  if (!membresia) return NextResponse.json({ error: 'Todavía no tienen su espacio compartido vinculado.' }, { status: 400 });
 
   // Tope de uso de IA (verificado y registrado atómico en el servidor) — 3 preguntas de por
   // vida en el plan gratis, 50 al mes en el plan pago.

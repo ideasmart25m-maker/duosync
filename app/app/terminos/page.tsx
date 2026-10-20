@@ -4,7 +4,7 @@ export default function TerminosPage() {
       <h1 className="text-2xl font-bold [font-family:var(--font-display)] mb-2">
         Términos y condiciones
       </h1>
-      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 21 de septiembre de 2026</p>
+      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 20 de octubre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
         Fairsy es un servicio operado por Gloria Alvarado, persona natural, desde Colombia. Al
@@ -14,7 +14,7 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Qué es Fairsy (y qué no es)</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Fairsy es una app para que una pareja registre y organice sus gastos compartidos y
+        Fairsy es una app para que dos personas (una pareja, amigos o quienes comparten casa) registren y organicen sus gastos compartidos y
         mantenga una dinámica diaria de conexión. Es una herramienta de registro y organización:
         no es un producto financiero regulado, no da asesoría financiera, y no se conecta a sus
         cuentas bancarias ni mueve su dinero.
@@ -22,7 +22,7 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Suscripción y cobro</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        La suscripción es un solo pago que cubre a los dos integrantes de la pareja, mensual o
+        La suscripción es un solo pago que cubre a los dos integrantes, mensual o
         anual según el plan que elijan. Tienen 7 días de prueba gratis; si no cancelan antes de que
         termine, el cobro se hace automáticamente al precio vigente del plan elegido y se repite
         cada mes o cada año hasta que cancelen. El pago lo procesa Hotmart, nuestra pasarela de
@@ -63,8 +63,8 @@ export default function TerminosPage() {
 
       <h2 className="text-lg font-semibold mb-2">Suspensión de cuenta</h2>
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-        Podemos suspender una cuenta si detectamos uso indebido (compartir el acceso fuera de la
-        pareja registrada, intentar vulnerar la seguridad de la app, o falta de pago), avisando
+        Podemos suspender una cuenta si detectamos uso indebido (compartir el acceso fuera de los
+        dos integrantes registrados, intentar vulnerar la seguridad de la app, o falta de pago), avisando
         primero por correo salvo que el riesgo sea inmediato.
       </p>
 

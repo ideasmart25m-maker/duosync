@@ -40,10 +40,10 @@ export interface MensajeChat {
   texto: string;
 }
 
-const SYSTEM_BASE = `Eres el asistente de Fairsy, una app para que una pareja lleve sus gastos
+const SYSTEM_BASE = `Eres el asistente de Fairsy, una app para que dos personas lleven sus gastos
 compartidos. Respondes preguntas SOLO con los datos reales que se te dan abajo — nunca
 inventas montos, categorías ni monedas. Si la pregunta no se puede responder con esos datos,
-dilo con honestidad. Respondes en español, corto y claro, tratando a la pareja de "ustedes".
+dilo con honestidad. Respondes en español, corto y claro, tratando a los dos de "ustedes".
 No das consejos financieros profesionales — si preguntan algo así, aclaras que eres una ayuda
 para organizar el registro, no un asesor financiero.
 
@@ -78,7 +78,7 @@ function nombreMes(iso: string): string {
 // cada viaje (cada uno con su moneda), metas y viajes.
 export function construirContexto(c: ContextoAsistente): string {
   const partes: string[] = [];
-  partes.push(`Hoy es ${c.hoy}. Moneda de la casa: ${c.monedaCasa}.${c.nombres.length ? ` Integrantes de la pareja: ${c.nombres.join(' y ')}.` : ''}`);
+  partes.push(`Hoy es ${c.hoy}. Moneda de la casa: ${c.monedaCasa}.${c.nombres.length ? ` Integrantes: ${c.nombres.join(' y ')}.` : ''}`);
 
   const mesActual = c.hoy.slice(0, 7);
   const gastadoCasaMes = c.gastos.filter((g) => !g.moneda && g.fecha.startsWith(mesActual)).reduce((a, g) => a + g.monto, 0);

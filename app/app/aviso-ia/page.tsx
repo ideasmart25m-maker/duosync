@@ -4,7 +4,7 @@ export default function AvisoIaPage() {
       <h1 className="text-2xl font-bold [font-family:var(--font-display)] mb-2">
         Aviso sobre el uso de inteligencia artificial
       </h1>
-      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 5 de septiembre de 2026</p>
+      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 20 de octubre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
         El plan Premium de Fairsy incluye dos funciones con inteligencia artificial: lectura
@@ -23,7 +23,7 @@ export default function AvisoIaPage() {
         <li>La IA puede equivocarse: siempre van a poder revisar y corregir lo que sugiere antes de guardarlo.</li>
         <li>Nunca guarda un monto o una categoría sin que ustedes lo confirmen.</li>
         <li>No reemplaza asesoría financiera profesional — es una ayuda para registrar más rápido, no una recomendación sobre qué hacer con su dinero.</li>
-        <li>El asistente solo conoce los gastos de su propia pareja — nunca los de otras parejas.</li>
+        <li>El asistente solo conoce los gastos de su propio espacio compartido — nunca los de otros.</li>
       </ul>
 
       <p className="text-[var(--text-secondary)] leading-relaxed">

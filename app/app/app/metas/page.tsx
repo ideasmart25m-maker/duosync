@@ -19,6 +19,7 @@ import { obtenerNombresPareja } from '@/lib/preguntas';
 import { ViajesMetas } from '@/components/app/ViajesMetas';
 import { formatoMoneda } from '@/lib/paises';
 import { InputMonto } from '@/components/ui/InputMonto';
+import { GuiaPagina } from '@/components/app/GuiaPagina';
 
 // Anima CADA VEZ que cambia `target` (desde el último valor mostrado, no siempre desde 0) —
 // antes solo corría una vez al montar (`useEffect(..., [])`), así que un aporte nuevo cambiaba
@@ -408,14 +409,14 @@ export default function MetasPage() {
   const [guardandoMeta, setGuardandoMeta] = useState(false);
   const [aportes, setAportes] = useState<AporteDelMes[]>([]);
   const [mesLabel, setMesLabel] = useState('');
-  const [nombreOtro, setNombreOtro] = useState('Tu pareja');
+  const [nombreOtro, setNombreOtro] = useState('La otra persona');
 
   useEffect(() => {
     let cancelado = false;
     (async () => {
       try {
         const cid = await obtenerCoupleId(supabase);
-        if (!cid) throw new Error('Todavía no tienen una pareja vinculada.');
+        if (!cid) throw new Error('Todavía no tienen su espacio compartido vinculado.');
         if (cancelado) return;
         setCoupleId(cid);
         const [paisPareja, metasReales] = await Promise.all([obtenerPaisPareja(supabase, cid), listarMetas(supabase, cid)]);
@@ -486,6 +487,15 @@ export default function MetasPage() {
   return (
     <div className={`flex flex-1 flex-col gap-4 ${sinMetasNiFormulario ? 'justify-center' : ''}`}>
       <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Metas</h1>
+
+      <GuiaPagina
+        id="metas"
+        items={[
+          { titulo: 'Metas de ahorro', texto: 'Algo que quieren lograr juntos, con su monto y, si quieren, una fecha. Cada uno puede aportar cuando pueda.' },
+          { titulo: 'Aportes', texto: 'Cada aporte suma a la meta y queda registrado quién lo hizo. El ahorro no cuenta como gasto.' },
+          { titulo: 'Viajes', texto: 'Un espacio aparte para un viaje, con su moneda y su presupuesto, sin mezclarlo con los gastos de la casa.' },
+        ]}
+      />
 
       {error && coupleId && <p className="text-[12px] font-medium text-[var(--danger)]">{error}</p>}
 

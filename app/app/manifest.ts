@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Fairsy',
     short_name: 'Fairsy',
-    description: 'Las cuentas claras de la pareja, en un solo lugar.',
+    description: 'Las cuentas claras de los dos, en un solo lugar.',
     start_url: '/app/hoy',
     scope: '/',
     display: 'standalone',

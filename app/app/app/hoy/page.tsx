@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { Fire, Sparkle, Plus, ArrowRight, PencilSimple, Check, CircleNotch, Camera, GlobeHemisphereWest, CaretRight } from '@phosphor-icons/react';
+import { GearSix, Sparkle, Plus, ArrowRight, PencilSimple, X, Check, CircleNotch, Camera, GlobeHemisphereWest, CaretRight } from '@phosphor-icons/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
 import {
@@ -26,7 +26,8 @@ import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
 import { SelectorPais } from '@/components/app/SelectorPais';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
-import { InstalarApp } from '@/components/app/InstalarApp';
+import { MomentoFairsy } from '@/components/app/MomentoFairsy';
+import { GuiaPagina } from '@/components/app/GuiaPagina';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { InputMonto } from '@/components/ui/InputMonto';
 import { AlertaPresupuesto } from '@/components/app/AlertaPresupuesto';
@@ -83,13 +84,11 @@ function PreguntaDelDia({
   supabase,
   miUserId,
   nombreOtro,
-  racha,
   onRachaActualizada,
 }: {
   supabase: SupabaseClient;
   miUserId: string;
   nombreOtro: string | null;
-  racha: number;
   onRachaActualizada: (dias: number) => void;
 }) {
   const [cargando, setCargando] = useState(true);
@@ -149,24 +148,17 @@ function PreguntaDelDia({
   };
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-[12px] font-medium uppercase tracking-[0.08em] opacity-80">Pregunta de hoy</p>
-        <motion.span
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.15 }}
-          className="flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--bg)_18%,transparent)] px-2 py-1 text-[12px] font-semibold"
-        >
-          <Fire size={11} strokeWidth={2.5} aria-hidden="true" />
-          {racha} días
-        </motion.span>
-      </div>
+    <div id="pregunta-del-dia" className="scroll-mt-4 rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
+      <p className="text-[12px] font-medium uppercase tracking-[0.08em] opacity-80">Pregunta para los dos</p>
 
       {cargando || !pregunta ? (
         <div className="mt-1 h-16 animate-pulse rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]" />
       ) : (
-        <p className="text-balance text-[28px] font-bold leading-snug [font-family:var(--font-display)]">{pregunta.texto}</p>
+        <p className="text-balance text-[24px] font-bold leading-snug [font-family:var(--font-display)]">{pregunta.texto}</p>
+      )}
+
+      {respuestaPropia === null && !ambosRespondieron && !cargando && pregunta && (
+        <p className="mt-2 text-[13px] leading-snug opacity-85">Cada uno responde aparte; al terminar los dos, se revelan.</p>
       )}
 
       {error && <p className="mt-2 text-[12px] font-medium opacity-90">{error}</p>}
@@ -181,7 +173,7 @@ function PreguntaDelDia({
               className="mt-4 flex flex-col gap-2"
             >
               <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">{nombreOtro ?? 'Tu pareja'}</p>
+                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] opacity-70">{nombreOtro ?? 'La otra persona'}</p>
                 <p className="mt-0.5 text-[15px] leading-snug">{respuestaOtro}</p>
               </div>
               <div className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_24%,transparent)] p-3 shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
@@ -192,7 +184,7 @@ function PreguntaDelDia({
           ) : respuestaPropia !== null ? (
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="text-[15px] leading-relaxed opacity-85">
-                Ya respondiste. En cuanto {nombreOtro ?? 'tu pareja'} conteste, se revelan las dos respuestas.
+                Ya respondiste. En cuanto {nombreOtro ?? 'la otra persona'} conteste, se revelan las dos respuestas.
               </p>
               {/* Un typo antes quedaba irrecuperable hasta que ambos respondían — defecto real
                   detectado por el revisor-visual. Editar reescribe la misma fila (la función
@@ -317,10 +309,10 @@ export default function HoyPage() {
   useEffect(() => {
     const motivo = new URLSearchParams(window.location.search).get('vinculacion');
     const mensajes: Record<string, string> = {
-      codigo: 'Ese código de pareja no existe. Pídele a tu pareja que te lo envíe de nuevo.',
+      codigo: 'Ese código de conexión no existe. Pídele a la otra persona que te lo envíe de nuevo.',
       intentos: 'Probaste demasiados códigos seguidos. Espera 15 minutos y vuelve a intentarlo.',
-      ya_tienes_pareja: 'Esta cuenta ya tiene su propia pareja con datos, así que no puede unirse a otra. Usa otro correo para unirte.',
-      error: 'No pudimos unirte a tu pareja. Pídele que te envíe el código otra vez.',
+      ya_tienes_pareja: 'Esta cuenta ya tiene su propio espacio con datos, así que no puede unirse a otro. Usa otro correo para unirte.',
+      error: 'No pudimos unirte. Pídele a la otra persona que te envíe el código otra vez.',
     };
     if (motivo) setAvisoVinculacion(mensajes[motivo] ?? mensajes.error);
     setSaludo(saludoDelDia());
@@ -335,7 +327,8 @@ export default function HoyPage() {
         error: errorSesion,
       } = await supabase.auth.getUser();
       if (!user) {
-        setErrorCarga(`Sin sesión${errorSesion ? `: ${errorSesion.message}` : ''}`);
+        console.error('[hoy] sin sesión', errorSesion);
+        setErrorCarga('Tu sesión no está activa. Vuelve a entrar con tu correo.');
         return;
       }
       setUserId(user.id);
@@ -343,7 +336,7 @@ export default function HoyPage() {
 
       const cid = await obtenerCoupleId(supabase);
       if (!cid) {
-        setErrorCarga('No se encontró tu pareja en esta cuenta');
+        setErrorCarga('No encontramos tu espacio compartido en esta cuenta.');
         return;
       }
       setCoupleId(cid);
@@ -376,10 +369,14 @@ export default function HoyPage() {
       if (rMostrar.status === 'fulfilled') setMostrarAhorro(rMostrar.value);
       if (rAhorro.status === 'fulfilled') setAhorrado(rAhorro.value.reduce((a, x) => a + x.total, 0));
       const fallos = [rPais, rPresupuesto, rGastado, rNombres, rRacha, rMetas, rAhorro, rMostrar].filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
-      if (fallos.length > 0) setErrorCarga(fallos.map((f) => (f.reason instanceof Error ? f.reason.message : JSON.stringify(f.reason))).join(' | '));
+      if (fallos.length > 0) {
+        console.error('[hoy] no cargó:', fallos.map((f) => (f.reason instanceof Error ? f.reason.message : JSON.stringify(f.reason))).join(' | '));
+        setErrorCarga('Revisa tu conexión e inténtalo de nuevo.');
+      }
       setCargandoMeta(false);
       } catch (e) {
-        setErrorCarga(e instanceof Error ? e.message : JSON.stringify(e));
+        console.error('[hoy] error inesperado', e);
+        setErrorCarga('Revisa tu conexión e inténtalo de nuevo.');
         setCargandoMeta(false);
       }
     })();
@@ -391,6 +388,9 @@ export default function HoyPage() {
     setGuardandoPais(false);
     if (!error) {
       setPais(codigo);
+      setCambiandoPais(false);
+    } else {
+      setErrorCarga('No pudimos cambiar el país. Inténtalo de nuevo en un momento.');
       setCambiandoPais(false);
     }
   };
@@ -417,7 +417,10 @@ export default function HoyPage() {
 
   const guardarPresupuesto = async () => {
     const valor = Number(borradorPresupuesto);
-    if (!valor || valor <= 0) return;
+    if (!valor || valor <= 0) {
+      setErrorPresupuesto('Escribe un valor mayor que cero.');
+      return;
+    }
     setGuardandoPresupuesto(true);
     setErrorPresupuesto(null);
     try {
@@ -432,8 +435,8 @@ export default function HoyPage() {
   };
 
   // Si todavía se llama como el inicio de su correo (así se crea la cuenta), se le pregunta cómo se llama.
-  // (o 'Tu pareja': el nombre provisional de quien entró como invitado, sin correo).
-  const nombreAutomatico = nombrePropio === 'Tu pareja' || (!!emailPropio && nombrePropio.trim().toLowerCase() === emailPropio.split('@')[0].toLowerCase());
+  // (o 'Invitado': el nombre provisional de quien entró con el enlace, sin correo).
+  const nombreAutomatico = nombrePropio === 'Invitado' || nombrePropio === 'Tu pareja' || (!!emailPropio && nombrePropio.trim().toLowerCase() === emailPropio.split('@')[0].toLowerCase());
   const mostrarPreguntaNombre = editandoNombre || (nombreAutomatico && !nombreDescartado && !cargandoMeta);
 
   const guardarNombre = async () => {
@@ -481,13 +484,21 @@ export default function HoyPage() {
                 setEditandoNombre(true);
               }}
               aria-label="Cambiar mi nombre"
-              className="flex size-7 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+              className="-mx-2 -my-2 flex size-11 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
             >
               <PencilSimple size={13} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </h1>
         </div>
-        <div className="flex -space-x-2">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/app/cuenta"
+            aria-label="Mi cuenta"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--text-secondary)] [touch-action:manipulation]"
+          >
+            <GearSix size={20} strokeWidth={2} aria-hidden="true" />
+          </Link>
+          <div className="flex -space-x-2">
           {/* Burbuja propia: sube/cambia la foto de perfil real (pedido del usuario) — antes
               solo mostraba la inicial, sin forma de ponerle una foto de verdad. */}
           <button
@@ -531,6 +542,7 @@ export default function HoyPage() {
               )}
             </span>
           )}
+          </div>
         </div>
       </motion.div>
 
@@ -542,12 +554,47 @@ export default function HoyPage() {
 
       {avisoVinculacion && (
         <div role="alert" className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-4 text-[14px] text-[var(--danger)]">
-          <p className="font-semibold">No pudimos unirte a tu pareja</p>
+          <p className="font-semibold">No pudimos unirte</p>
           <p className="mt-1">{avisoVinculacion}</p>
         </div>
       )}
 
-      {mostrarPreguntaNombre && (
+      {coupleId && userId && !cargandoMeta ? (
+        <motion.div {...entrada(0.07)}>
+          <MomentoFairsy supabase={supabase} coupleId={coupleId} racha={racha} tienePresupuesto={presupuesto !== null && presupuesto > 0} tieneMeta={metaPrincipal !== null} />
+        </motion.div>
+      ) : (
+        <div className="h-[236px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" aria-hidden="true" />
+      )}
+
+      {mostrarPreguntaNombre && !editandoNombre && (
+        <div className="flex items-center gap-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-[color-mix(in_oklab,var(--accent)_6%,var(--surface))] pl-3">
+          <button
+            type="button"
+            onClick={() => {
+              setBorradorNombre(nombrePropio);
+              setErrorNombre(null);
+              setEditandoNombre(true);
+            }}
+            className="flex min-h-11 flex-1 items-center gap-2 text-left text-[14px] text-[var(--text-primary)] [touch-action:manipulation]"
+          >
+            <PencilSimple size={14} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
+            <span>
+              <span className="font-semibold">¿Cómo te llamas?</span> Toca para escribir tu nombre
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setNombreDescartado(true)}
+            aria-label="Ahora no"
+            className="flex size-11 shrink-0 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+          >
+            <X size={16} strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {mostrarPreguntaNombre && editandoNombre && (
         <form
           className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_30%,transparent)] bg-[color-mix(in_oklab,var(--accent)_6%,var(--surface))] p-4"
           onSubmit={(e) => {
@@ -558,7 +605,7 @@ export default function HoyPage() {
           <label htmlFor="mi-nombre" className="text-[15px] font-semibold text-[var(--text-primary)]">
             ¿Cómo te llamas?
           </label>
-          <p className="text-[12px] text-[var(--text-secondary)]">Es el nombre que verá tu pareja en la app.</p>
+          <p className="text-[12px] text-[var(--text-secondary)]">Es el nombre que verá la otra persona en la app.</p>
           <input
             id="mi-nombre"
             value={borradorNombre}
@@ -598,19 +645,28 @@ export default function HoyPage() {
 
       <GuardarAcceso supabase={supabase} />
 
-      <InstalarApp />
-
-      <motion.div {...entrada(0.06)}>
+      <motion.div {...entrada(0.14)}>
         {userId ? (
-          <PreguntaDelDia supabase={supabase} miUserId={userId} nombreOtro={nombreOtro} racha={racha} onRachaActualizada={setRacha} />
+          <PreguntaDelDia supabase={supabase} miUserId={userId} nombreOtro={nombreOtro} onRachaActualizada={setRacha} />
         ) : (
           <div className="h-[220px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
         )}
       </motion.div>
 
+      <MotionLink
+        {...entrada(0.21)}
+        whileTap={{ scale: 0.98 }}
+        href="/app/gastos?nuevo=1"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[16px] font-semibold text-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_28%,transparent)] [touch-action:manipulation]"
+      >
+        <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
+        Registrar gasto
+      </MotionLink>
+
       <motion.div
-        {...entrada(0.12)}
-        className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
+        id="presupuesto-mensual"
+        {...entrada(0.28)}
+        className="scroll-mt-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
       >
         {/* País/moneda — antes vivía al fondo de Nosotros, lejos de donde de verdad se usa
             (define en qué moneda se ven presupuesto/gastado/saldo, justo debajo). */}
@@ -697,12 +753,12 @@ export default function HoyPage() {
               <>
                 {/* 20px (título), no 32px (display) — la pregunta de arriba es el dispositivo
                     protagonista de esta pantalla (FICHA-ARTE.md), este monto es secundario. */}
-                <p className="mt-1 text-[20px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                <p className="mt-1 text-[20px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                   {formatoMoneda(presupuesto, pais)}
                 </p>
                 <div className="mt-3 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-[15px]">
-                    <span className="text-[var(--text-secondary)]">Gastado a hoy{mesLabel ? ` (${mesLabel})` : ''}</span>
+                    <span className="text-[var(--text-secondary)]">Gastado este mes</span>
                     <span
                       className={`tabular-nums font-semibold ${gastado > presupuesto ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
                     >
@@ -724,7 +780,7 @@ export default function HoyPage() {
             </div>
 
             <div className="mt-3">
-              <Link href="/app/gastos"className="flex w-fit items-center gap-1 text-[12px] font-semibold text-[var(--accent)]">
+              <Link href="/app/gastos" className="flex min-h-11 w-fit items-center gap-1 text-[13px] font-semibold text-[var(--accent)]">
                 Ver todo
                 <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
               </Link>
@@ -732,20 +788,21 @@ export default function HoyPage() {
 
             {ahorrado > 0 && mostrarAhorro && (
               <div className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent-2)_10%,transparent)] p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[12px] font-medium text-[var(--accent-2)]">Ahorro en metas (no hace parte de los gastos)</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-semibold text-[var(--accent-2)]">Ahorro en metas</p>
                   <button
                     type="button"
                     onClick={() => cambiarMostrarAhorro(false)}
                     aria-label="Ocultar el ahorro de Inicio"
-                    className="shrink-0 text-[12px] font-semibold text-[var(--accent-2)] underline [touch-action:manipulation]"
+                    className="-my-2 flex min-h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-[var(--accent-2)] underline [touch-action:manipulation]"
                   >
                     Ocultar
                   </button>
                 </div>
-                <p className="mt-0.5 text-[20px] font-bold tabular-nums text-[var(--accent-2)] [font-family:var(--font-display)]">
+                <p className="mt-0.5 text-[20px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--accent-2)] [font-family:var(--font-display)]">
                   {formatoMoneda(ahorrado, pais)}
                 </p>
+                <p className="mt-0.5 text-[12px] text-[var(--text-secondary)]">No cuenta como gasto.</p>
               </div>
             )}
             {ahorrado > 0 && !mostrarAhorro && (
@@ -761,21 +818,11 @@ export default function HoyPage() {
         )}
       </motion.div>
 
-      <MotionLink
-        {...entrada(0.18)}
-        whileTap={{ scale: 0.98 }}
-        href="/app/gastos?nuevo=1"
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[16px] font-semibold text-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_28%,transparent)] [touch-action:manipulation]"
-      >
-        <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
-        Registrar gasto
-      </MotionLink>
-
       {cargandoMeta ? (
         <div className="h-[72px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />
       ) : metaPrincipal ? (
         <MotionLink
-          {...entrada(0.24)}
+          {...entrada(0.35)}
           whileTap={{ scale: 0.98 }}
           href="/app/metas"
           className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)] [touch-action:manipulation]"
@@ -806,7 +853,7 @@ export default function HoyPage() {
         </MotionLink>
       ) : (
         <MotionLink
-          {...entrada(0.24)}
+          {...entrada(0.35)}
           whileTap={{ scale: 0.98 }}
           href="/app/metas"
           className="flex items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[color-mix(in_oklab,var(--accent)_35%,transparent)] p-4 [touch-action:manipulation]"
@@ -818,6 +865,17 @@ export default function HoyPage() {
           <ArrowRight size={16} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
         </MotionLink>
       )}
+
+      <GuiaPagina
+        id="hoy"
+        abrirPrimeraVez={false}
+        items={[
+          { titulo: 'Tu momento Fairsy', texto: 'Un mensaje y una acción pequeña cada día. La planta crece con los días seguidos en que los dos responden la pregunta.' },
+          { titulo: 'La pregunta para los dos', texto: 'Cada uno responde por separado; cuando terminan los dos, se muestran las respuestas. Sirve para hablar de dinero sin tensión.' },
+          { titulo: 'Presupuesto del mes', texto: 'Cuánto llevan gastado frente a lo que definieron, y cuánto les queda. Con un aviso cuando se acercan al límite.' },
+          { titulo: 'Registrar gasto y metas', texto: 'Desde aquí anotan un gasto en segundos y ven cómo va su meta de ahorro.' },
+        ]}
+      />
 
       {cambiandoPais && (
         <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />

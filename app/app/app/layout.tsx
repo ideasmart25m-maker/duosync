@@ -1,6 +1,6 @@
 'use client';
 
-// Shell de la app interna — Sesión 5. 4 secciones (Hoy · Gastos · Metas · Nosotros), cada una
+// Shell de la app interna — Sesión 5. 4 secciones (Hoy · Gastos · Metas · Reportes), cada una
 // con 1 protagonista (SECUENCIA-MAESTRA-CONSTRUCCION §Paso 5). Bottom-nav fijo con safe-area,
 // altura dinámica de viewport + flex-col (DESIGN-CORE §2: "nav al fondo, cero vacío muerto").
 
@@ -12,7 +12,7 @@ import { crearClienteNavegador } from '@/lib/supabase/client';
 import { SelectorPais } from '@/components/app/SelectorPais';
 
 // Set de íconos propio (pedido del usuario) en vez del set de Phosphor genérico — cada ícono
-// ya trae su propio color (naranja Inicio, verde azulado Gastos/Metas/Nosotros), así que el
+// ya trae su propio color (naranja Inicio, verde azulado Gastos/Metas/Reportes), así que el
 // estado activo/inactivo ya no se resuelve cambiando de color: el ícono siempre se ve a color
 // completo, y lo que cambia es la opacidad + el fondo detrás (mismo lenguaje del resto de la
 // app: pill neutro detrás del elemento en foco, nunca un color de acento distinto por pestaña).
@@ -20,7 +20,7 @@ const DESTINOS = [
   { href: '/app/hoy', label: 'Hoy', icono: '/icons/nav-inicio.png' },
   { href: '/app/gastos', label: 'Gastos', icono: '/icons/nav-gastos.png' },
   { href: '/app/metas', label: 'Metas', icono: '/icons/nav-metas.png' },
-  { href: '/app/nosotros', label: 'Nosotros', icono: '/icons/nav-nosotros.png' },
+  { href: '/app/reportes', label: 'Reportes', icono: '/icons/nav-reportes.svg' },
 ];
 
 export default function AppInternaLayout({ children }: { children: ReactNode }) {
@@ -77,7 +77,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
             'radial-gradient(560px 380px at 50% 55%, var(--surface-2) 0%, transparent 65%)',
         }}
       />
-      {/* Transición entre pestañas (Hoy/Gastos/Metas/Nosotros) — antes el cambio de tab era un
+      {/* Transición entre pestañas (Hoy/Gastos/Metas/Reportes) — antes el cambio de tab era un
           corte seco sin animación, una de las 7 baseline de movimiento que faltaba (defecto real
           detectado por el revisor-visual). `key={pathname}` fuerza a Motion a tratar cada
           pestaña como una entrada/salida propia. */}

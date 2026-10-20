@@ -40,7 +40,7 @@ export default function FairsyLanding() {
         subtitleMarked="Fairsy automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
-        socialProof={<span>Un pago cubre a los dos — hasta 60% más barato que otras apps para parejas</span>}
+        socialProof={<span>Un pago cubre a los dos — hasta 60% más barato que otras apps para compartir gastos</span>}
         visual={<HeroVisual />}
       />
 
@@ -61,7 +61,7 @@ export default function FairsyLanding() {
         frases={[
           'Cada mes que pasa así, el gasto sigue mal repartido y la cuenta pendiente crece entre los dos.',
           'En un año, esa tensión se acumula y la meta de [acento]viajar juntos[/acento] sigue esperando.',
-          'Otra hoja de Excel no ayuda: [b]el problema no es la plata, es que nadie la ve igual[/b].',
+          'Otra hoja de Excel no ayuda: [b]el problema no es el dinero, es que nadie lo ve igual[/b].',
         ]}
         contraste={{
           labelHoy: 'Hoy',
@@ -74,10 +74,10 @@ export default function FairsyLanding() {
       {/* 4. SOLUCIÓN */}
       <Solucion
         tituloMarked="Cuentas claras [acento]sin discusiones[/acento]"
-        mecanismo="el Código de Pareja"
-        bigIdeaMarked="No falta organización, falta un lugar donde los dos vean lo mismo. El Código de Pareja los conecta y el [b]saldo se actualiza solo[/b]."
+        mecanismo="el Código de Conexión"
+        bigIdeaMarked="No falta organización, falta un lugar donde los dos vean lo mismo. El Código de Conexión los conecta y el [b]saldo se actualiza solo[/b]."
         pasos={[
-          { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y su pareja entra al instante: sin correo y sin contraseña.', color: 'var(--cat-blue)' },
+          { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y la otra persona entra al instante: sin correo y sin contraseña.', color: 'var(--cat-blue)' },
           { titulo: 'Registran gastos en 2 toques', detalle: 'Arriendo, servicios o mercado — con categorías que ustedes eligen.', color: 'var(--cat-amber)' },
           { titulo: 'Ven el mismo saldo', detalle: 'Lo que uno registra, el otro lo ve al instante, sin preguntar.', color: 'var(--cat-teal)' },
         ]}
@@ -93,10 +93,10 @@ export default function FairsyLanding() {
       <AppPorDentro
         tituloMarked="Así se ve [acento]llevar las cuentas en equipo[/acento]"
         frames={[
-          { label: 'Su pregunta del día, para no perder la conexión', nombrePantalla: 'Hoy' },
+          { label: 'Su mensaje del día y la planta que crece con ustedes', nombrePantalla: 'Hoy' },
           { label: 'Cada gasto, categorizado a su manera', nombrePantalla: 'Gastos' },
           { label: 'La meta que están construyendo juntos', nombrePantalla: 'Metas' },
-          { label: 'Su racha de días conectados', nombrePantalla: 'Nosotros' },
+          { label: 'En qué se va el dinero, mes a mes', nombrePantalla: 'Reportes' },
         ]}
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
@@ -125,7 +125,6 @@ export default function FairsyLanding() {
             '[b]Historial ilimitado[/b] de gastos compartidos',
             '[b]Escaneo de recibos con IA[/b], sin teclear',
             '[b]Categorías propias[/b] e ilimitadas',
-            'Catálogo completo de [b]dinámicas de pareja[/b]',
             '[b]Metas de ahorro[/b] en conjunto',
           ],
         }}
@@ -140,7 +139,6 @@ export default function FairsyLanding() {
           features: [
             '[b]Escaneo de recibos con IA[/b], sin teclear',
             '[b]Categorías propias[/b] e ilimitadas',
-            'Catálogo completo de [b]dinámicas de pareja[/b]',
             '[b]Metas de ahorro[/b] en conjunto',
           ],
         }}
@@ -160,7 +158,7 @@ export default function FairsyLanding() {
           {
             pregunta: '¿Nos van a cobrar a cada uno por separado?',
             respuestaMarked:
-              'No. Un solo pago cubre a los dos — por eso cuesta [b]la mitad o menos[/b] que otras apps para parejas.',
+              'No. Un solo pago cubre a los dos — por eso cuesta [b]la mitad o menos[/b] que otras apps para compartir gastos.',
           },
           {
             pregunta: '¿Es seguro poner nuestros gastos ahí?',
@@ -168,7 +166,7 @@ export default function FairsyLanding() {
               'Sí, es seguro porque no guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros están [b]100% seguros y bajo su control[/b].',
           },
           {
-            pregunta: '¿Y si mi pareja deja de usarla a los pocos días?',
+            pregunta: '¿Y si la otra persona deja de usarla a los pocos días?',
             respuestaMarked:
               'La pregunta diaria y el registro de gastos toman segundos, y no necesitan estar los dos a la vez para mantener la racha.',
           },

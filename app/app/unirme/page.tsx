@@ -17,9 +17,9 @@ import { FunnelShell, CtaFijo } from '@/components/onboarding/ui';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 
 const MENSAJES: Record<string, string> = {
-  TOKEN_INVALIDO: 'Esta invitación no es válida, o tu pareja todavía no termina de crear su cuenta. Pídele que te la envíe otra vez en un momento.',
-  PAREJA_COMPLETA: 'Esta pareja ya tiene sus dos integrantes. Si crees que es un error, pídele a tu pareja que revise.',
-  YA_TIENES_PAREJA: 'Este navegador ya tiene una cuenta con su propia pareja y datos, así que no puede unirse a otra. Ábrela en otro navegador o usa tu correo.',
+  TOKEN_INVALIDO: 'Esta invitación no es válida, o la otra persona todavía no termina de crear su cuenta. Pídele que te la envíe otra vez en un momento.',
+  PAREJA_COMPLETA: 'Este espacio ya tiene sus dos integrantes. Si crees que es un error, pídele a la otra persona que revise.',
+  YA_TIENES_PAREJA: 'Este navegador ya tiene una cuenta con su propio espacio y datos, así que no puede unirse a otro. Ábrela en otro navegador o usa tu correo.',
 };
 
 function UnirmeInner() {
@@ -52,7 +52,7 @@ function UnirmeInner() {
     const { error: errorUnirse } = await supabase.rpc('unirse_con_token', { p_token: token });
     if (errorUnirse) {
       const clave = Object.keys(MENSAJES).find((k) => (errorUnirse.message ?? '').includes(k));
-      setError(clave ? MENSAJES[clave] : 'No pudimos unirte a tu pareja. Intenta de nuevo en un momento.');
+      setError(clave ? MENSAJES[clave] : 'No pudimos unirte. Intenta de nuevo en un momento.');
       setEntrando(false);
       return;
     }
@@ -84,7 +84,7 @@ function UnirmeInner() {
             Te invitaron a Fairsy
           </h1>
           <p className="mt-2 text-[16px] leading-relaxed text-[var(--text-secondary)]">
-            Tu pareja ya armó su espacio para llevar las cuentas juntos.{' '}
+            Te invitaron a llevar las cuentas juntos: ya armaron su espacio.{' '}
             {conClave ? 'Toca el botón y entras al instante: no tienes que pagar, ni escribir un correo, ni responder preguntas.' : 'Con este código te unes: no tienes que pagar ni responder preguntas.'}
           </p>
 
@@ -97,7 +97,7 @@ function UnirmeInner() {
           {conCorreo && (
             <>
               <label htmlFor="codigo-pareja" className="mt-8 text-[13px] font-medium text-[var(--text-secondary)]">
-                Código de pareja
+                Código de conexión
               </label>
               <input
                 id="codigo-pareja"

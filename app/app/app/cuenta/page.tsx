@@ -1,0 +1,117 @@
+'use client';
+
+// "Mi cuenta": lo que antes estaba repartido entre Nosotros e Inicio y la gente no encontraba. Aquí viven su plan,
+// la invitación a la otra persona, guardar el acceso (cuentas de invitado), instalar la app, el país y la moneda, y
+// cerrar sesión.
+
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Globe2, LogOut, ChevronRight } from 'lucide-react';
+import { crearClienteNavegador } from '@/lib/supabase/client';
+import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
+import { paisPorCodigo } from '@/lib/paises';
+import { TuPlan } from '@/components/app/TuPlan';
+import { InvitarPareja } from '@/components/app/InvitarPareja';
+import { GuardarAcceso } from '@/components/app/GuardarAcceso';
+import { InstalarApp } from '@/components/app/InstalarApp';
+import { SelectorPais } from '@/components/app/SelectorPais';
+
+export default function CuentaPage() {
+  const supabase = useMemo(() => crearClienteNavegador(), []);
+  const [coupleId, setCoupleId] = useState<string | null>(null);
+  const [correo, setCorreo] = useState<string | null>(null);
+  const [pais, setPais] = useState<string | null>(null);
+  const [cambiandoPais, setCambiandoPais] = useState(false);
+  const [guardandoPais, setGuardandoPais] = useState(false);
+  const [saliendo, setSaliendo] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!cancelado) setCorreo(user?.email ?? null);
+      const cid = await obtenerCoupleId(supabase).catch(() => null);
+      if (!cid || cancelado) return;
+      setCoupleId(cid);
+      const p = await obtenerPaisPareja(supabase, cid).catch(() => null);
+      if (!cancelado) setPais(p);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [supabase]);
+
+  const cambiarPais = async (codigo: string) => {
+    setGuardandoPais(true);
+    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
+    setGuardandoPais(false);
+    if (!error) {
+      setPais(codigo);
+      setCambiandoPais(false);
+    }
+  };
+
+  const cerrarSesion = async () => {
+    setSaliendo(true);
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
+  const datosPais = paisPorCodigo(pais);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Link href="/app/hoy" aria-label="Volver a Inicio" className="flex size-9 items-center justify-center rounded-full text-[var(--text-secondary)] [touch-action:manipulation]">
+          <ArrowLeft size={20} strokeWidth={2.2} aria-hidden="true" />
+        </Link>
+        <div>
+          <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Mi cuenta</h1>
+          {correo && <p className="text-[12px] text-[var(--text-tertiary)]">{correo}</p>}
+        </div>
+      </div>
+
+      {coupleId && <TuPlan supabase={supabase} coupleId={coupleId} />}
+
+      {/* Se ocultan solas cuando no aplican: la invitación cuando ya son dos, el guardado cuando la cuenta ya tiene correo. */}
+      {coupleId && <InvitarPareja supabase={supabase} coupleId={coupleId} />}
+      <GuardarAcceso supabase={supabase} />
+
+      {coupleId && (
+        <button
+          type="button"
+          onClick={() => setCambiandoPais(true)}
+          className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_22%,transparent)] bg-[var(--surface)] p-4 text-left [touch-action:manipulation]"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-[color-mix(in_oklab,var(--accent-2)_12%,transparent)]">
+            <Globe2 size={20} strokeWidth={2} color="var(--accent-2)" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12px] font-medium text-[var(--text-tertiary)]">País y moneda</span>
+            <span className="block text-[15px] font-semibold text-[var(--text-primary)]">{datosPais ? datosPais.nombre : 'Sin elegir'}</span>
+          </span>
+          <ChevronRight size={18} strokeWidth={2.2} className="shrink-0 text-[var(--text-tertiary)]" aria-hidden="true" />
+        </button>
+      )}
+
+      <InstalarApp />
+
+      <button
+        type="button"
+        onClick={cerrarSesion}
+        disabled={saliendo}
+        className="flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] text-[15px] font-medium text-[var(--text-secondary)] disabled:opacity-60 [touch-action:manipulation]"
+      >
+        <LogOut size={16} strokeWidth={2.2} aria-hidden="true" />
+        {saliendo ? 'Saliendo…' : 'Cerrar sesión'}
+      </button>
+      <p className="text-center text-[12px] text-[var(--text-tertiary)]">
+        ¿Necesitas ayuda? Escribe a <a href="mailto:soporte@fairsy.lat" className="underline">soporte@fairsy.lat</a>
+      </p>
+
+      {cambiandoPais && <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />}
+    </div>
+  );
+}

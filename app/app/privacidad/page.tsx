@@ -4,7 +4,7 @@ export default function PrivacidadPage() {
       <h1 className="text-2xl font-bold [font-family:var(--font-display)] mb-2">
         Política de privacidad
       </h1>
-      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 27 de agosto de 2026</p>
+      <p className="text-[12px] text-[var(--text-tertiary)] mb-8">Última actualización: 20 de octubre de 2026</p>
 
       <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
         Fairsy es operada por Gloria Alvarado, persona natural, desde Colombia. Esta página
@@ -16,7 +16,7 @@ export default function PrivacidadPage() {
       <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
         Su correo electrónico (para dejarlos entrar sin contraseña), los gastos, categorías y
         montos que registran, las respuestas a la pregunta diaria, y el código que vincula a los
-        dos miembros de la pareja. No pedimos ni guardamos claves de banco ni datos de tarjetas: el
+        dos integrantes. No pedimos ni guardamos claves de banco ni datos de tarjetas: el
         pago lo procesa Hotmart directamente, nunca pasa por nuestros servidores.
       </p>
 
@@ -49,7 +49,7 @@ export default function PrivacidadPage() {
         Escríbannos a{' '}
         <a href="mailto:legal@fairsy.lat" className="underline">legal@fairsy.lat</a> pidiendo el
         borrado de su cuenta. Eliminamos su perfil, sus gastos, sus respuestas y la vinculación con
-        su pareja en un plazo máximo de 15 días hábiles, y les confirmamos por correo cuando esté
+        la otra persona en un plazo máximo de 15 días hábiles, y les confirmamos por correo cuando esté
         hecho. Si más adelante activamos un botón de borrado dentro de la app, esta página se
         actualiza para reflejarlo.
       </p>
