@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/app/hoy', request.url));
   }
 
-  // La app interna (Hoy/Gastos/Metas/Nosotros) exige sesión real — antes cualquiera
+  // La app interna (Hoy/Gastos/Metas/Reportes) exige sesión real — antes cualquiera
   // podía entrar sin haberse registrado (hallazgo crítico de la auditoría: no había
   // ninguna puerta real antes de estas pantallas). RLS ya protege los DATOS; esto
   // protege la RUTA, para no mostrar ni un layout vacío a quien no inició sesión.
