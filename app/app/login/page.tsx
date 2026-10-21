@@ -140,6 +140,9 @@ function LoginInner() {
                 <BotonGoogle onClick={entrarConGoogle} cargando={conGoogle}>
                   Continuar con Google
                 </BotonGoogle>
+                <p className="text-center text-[12px] leading-snug text-[var(--text-secondary)]">
+                  Google te pedirá permiso y mostrará una dirección técnica (supabase.co): es normal, es el servicio seguro que guarda tu acceso. Solo recibimos tu nombre, correo y foto.
+                </p>
                 <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)]">
                   <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)]" />
                   o con tu correo

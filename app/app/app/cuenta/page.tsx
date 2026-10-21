@@ -84,6 +84,7 @@ export default function CuentaPage() {
         items={[
           { titulo: 'No te pedimos nada mientras no cierres sesión', texto: 'Tu sesión queda guardada en tu celular: abres Fairsy y entras directo, sin códigos ni contraseñas.' },
           { titulo: 'Entrar con Google', texto: 'Si activaste “Continuar con Google”, entras con un toque. Si usas el mismo correo con el que pagaste, tu plan se activa solo.' },
+          { titulo: '¿Por qué Google muestra “supabase.co”?', texto: 'Es el servicio seguro que guarda tu acceso. Es normal y no es un aviso de peligro: Fairsy solo recibe tu nombre, tu correo y tu foto, nunca tu contraseña de Google.' },
           { titulo: 'Entrar con tu correo', texto: 'Te enviamos un código de 8 números: lo escribes y entras. No hay contraseñas que recordar.' },
           { titulo: 'Instala Fairsy en tu pantalla de inicio', texto: 'Se abre con un toque y tu sesión dura más. En el celular compartido, mejor no la instales.' },
           { titulo: 'Si entraste como invitado', texto: 'Guarda tu acceso (con Google o con tu correo) antes de cerrar sesión, cambiar de celular o borrar el navegador; si no, pierdes esa cuenta.' },
