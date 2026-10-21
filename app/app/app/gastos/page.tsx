@@ -915,7 +915,7 @@ function GastosInner() {
           <Home size={13} strokeWidth={2.2} aria-hidden="true" />
           Total del mes en casa
         </div>
-        <span className="mt-0.5 block text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+        <span className="mt-0.5 block text-[32px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
           {formatoMoneda(totalMes, pais)}
         </span>
       </div>
@@ -947,7 +947,7 @@ function GastosInner() {
                       <p className="mt-1 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
                     ) : (
                       <>
-                        <p className="mt-1 text-[32px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                        <p className="mt-1 text-[32px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                           {formatear(Math.abs(s.saldo))}
                         </p>
                         <p className="text-[12px] text-[var(--text-secondary)]">

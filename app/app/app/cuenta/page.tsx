@@ -90,7 +90,7 @@ export default function CuentaPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[12px] font-medium text-[var(--text-tertiary)]">País y moneda</span>
-            <span className="block text-[15px] font-semibold text-[var(--text-primary)]">{datosPais ? datosPais.nombre : 'Sin elegir'}</span>
+            <span className="block text-[15px] font-semibold text-[var(--text-primary)]">{datosPais ? `${datosPais.nombre} · ${datosPais.moneda}` : 'Sin elegir'}</span>
           </span>
           <ChevronRight size={18} strokeWidth={2.2} className="shrink-0 text-[var(--text-tertiary)]" aria-hidden="true" />
         </button>

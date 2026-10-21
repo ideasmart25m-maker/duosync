@@ -112,7 +112,7 @@ function FormularioMeta({
 
   return (
     <form
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
         const valor = Number(montoObjetivo);
@@ -120,26 +120,36 @@ function FormularioMeta({
         onGuardar({ nombre: nombre.trim(), montoObjetivo: valor, fechaObjetivo: fechaObjetivo || null });
       }}
     >
-      <input
-        autoFocus
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        placeholder="Nombre de la meta"
-        maxLength={60}
-        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-      />
-      <InputMonto
-        value={montoObjetivo}
-        onValueChange={setMontoObjetivo}
-        placeholder="Monto objetivo"
-        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-      />
-      <input
-        type="date"
-        value={fechaObjetivo}
-        onChange={(e) => setFechaObjetivo(e.target.value)}
-        className="h-11 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[15px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-      />
+      {/* Tres campos con la misma altura, el mismo ancho y su etiqueta visible (antes el tercero no decía que era la fecha). */}
+      <label className={`flex flex-col gap-1 text-[13px] font-medium ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}>
+        Nombre de la meta
+        <input
+          autoFocus
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          placeholder="Ej. Viaje a Cartagena"
+          maxLength={60}
+          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+        />
+      </label>
+      <label className={`flex flex-col gap-1 text-[13px] font-medium ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}>
+        Monto objetivo
+        <InputMonto
+          value={montoObjetivo}
+          onValueChange={setMontoObjetivo}
+          placeholder="Ej. 4.000.000"
+          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+        />
+      </label>
+      <label className={`flex flex-col gap-1 text-[13px] font-medium ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}>
+        Fecha para lograrla (opcional)
+        <input
+          type="date"
+          value={fechaObjetivo}
+          onChange={(e) => setFechaObjetivo(e.target.value)}
+          className="block h-12 w-full min-w-0 appearance-none rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-left text-[16px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+        />
+      </label>
       <div className="mt-1 flex gap-2">
         <button
           type="button"
@@ -166,12 +176,10 @@ function FormularioMeta({
   );
 }
 
-// Cada meta con su propio tono de fondo (la primera conserva el verde de la marca). Se mezcla el color de
-// categoría con el texto principal para que siempre quede profundo y con contraste para el texto claro.
-const TONOS_META = [null, 'blue', 'violet', 'coral', 'rose', 'amber'];
+// Las metas alternan los dos verdes del logo (pedido de la usuaria: usar la paleta del logo en todas las pantallas).
 function fondoDeMeta(indice: number): string | undefined {
-  const tono = TONOS_META[indice % TONOS_META.length];
-  return tono ? `color-mix(in oklab, var(--cat-${tono}) 58%, var(--text-primary))` : undefined;
+  // Pares: verde oscuro del logo (el de la marca); impares: verde medio del logo, más claro.
+  return indice % 2 === 1 ? 'var(--verde-medio)' : undefined;
 }
 
 function TarjetaMeta({
@@ -294,7 +302,7 @@ function TarjetaMeta({
             </p>
           )}
 
-          <p className="mt-4 text-[32px] font-bold tabular-nums leading-tight [font-family:var(--font-display)]">
+          <p className="mt-4 text-[32px] font-bold [font-variant-numeric:lining-nums_proportional-nums] leading-tight [font-family:var(--font-display)]">
             {formatoMoneda(montoMostrado, pais)}
           </p>
           <p className="mt-0.5 text-[12px] opacity-80">
@@ -538,7 +546,7 @@ export default function MetasPage() {
             <PiggyBank size={13} strokeWidth={2.2} aria-hidden="true" />
             Ahorro de {mesLabel} (no hace parte de los gastos)
           </div>
-          <span className="mt-0.5 block text-[22px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+          <span className="mt-0.5 block text-[22px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
             {formatoMoneda(aportes.reduce((a, x) => a + x.total, 0), pais)}
           </span>
           <ul className="mt-1.5 flex flex-col gap-0.5">

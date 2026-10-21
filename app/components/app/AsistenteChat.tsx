@@ -77,28 +77,28 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="flex h-[85dvh] w-full max-w-md flex-col rounded-t-[var(--radius-card)] bg-[var(--surface)] shadow-[var(--shadow-2)] sm:h-[70dvh] sm:rounded-[var(--radius-card)]"
+        className="flex h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[var(--radius-card)] bg-[color-mix(in_oklab,var(--verde-claro)_16%,var(--bg))] shadow-[var(--shadow-2)] sm:h-[70dvh] sm:rounded-[var(--radius-card)]"
       >
-        <div className="flex items-center justify-between border-b border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] p-4">
-          <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--text-primary)]">
+        <div className="flex shrink-0 items-center justify-between bg-[var(--accent-2)] p-4">
+          <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--bg)]">
             <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-2)]">
               {/* eslint-disable-next-line @next/next/no-img-element -- ícono propio del asistente */}
               <img src="/icons/robot-asistente.png" alt="" className="size-full object-cover" />
             </span>
             Asistente
           </span>
-          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex size-9 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]">
+          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex size-11 items-center justify-center text-[var(--bg)] [touch-action:manipulation]">
             <X size={18} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           <div className="flex flex-col gap-3">
             {mensajes.map((m, i) => (
               <div
                 key={i}
                 className={`max-w-[85%] rounded-[var(--radius-card)] px-4 py-2 text-[14px] leading-relaxed ${
-                  m.rol === 'user' ? 'self-end bg-[var(--accent)] text-[var(--bg)]' : 'self-start bg-[var(--surface-2)] text-[var(--text-primary)]'
+                  m.rol === 'user' ? 'self-end bg-[var(--accent)] text-[var(--bg)]' : 'self-start border border-[color-mix(in_oklab,var(--accent-2)_14%,transparent)] bg-[var(--surface)] text-[var(--text-primary)] shadow-[var(--shadow-1)]'
                 }`}
               >
                 {m.texto || (enviando && i === mensajes.length - 1 ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : '')}
@@ -115,7 +115,7 @@ export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
         </div>
 
         <form
-          className="flex items-center gap-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] p-3"
+          className="flex shrink-0 items-center gap-2 border-t border-[color-mix(in_oklab,var(--accent-2)_18%,transparent)] bg-[var(--surface)] p-3"
           onSubmit={(e) => {
             e.preventDefault();
             enviar();

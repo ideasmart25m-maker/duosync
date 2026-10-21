@@ -33,8 +33,10 @@
      de Fairsy asigna el coral a las llamadas a la acción — por eso aquí --accent
      es el coral y --accent-2 el verde azulado estructural (se ve en el mesh del
      hero y queda disponible si el proyecto necesita una 2ª nota más adelante). */
-  --accent: #c2492d;
-  --accent-2: #1c4f49;
+  --accent: #cf4429; /* coral del logo (un poco más oscuro para que el texto blanco cumpla AA) */
+  --accent-2: #0e5a4c; /* verde oscuro del logo */
+  --verde-medio: #1f8c70; /* verde medio del logo (fondos con texto claro) */
+  --verde-claro: #3cc090; /* verde menta del logo (barras, detalles; no para texto) */
 
   /* ── SEMÁNTICO (solo su función: error de validación — nunca decorativo) ── */
   --danger: #d9483a;

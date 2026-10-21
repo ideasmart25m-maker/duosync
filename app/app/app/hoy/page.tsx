@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { animate, motion, useReducedMotion } from 'motion/react';
-import { GearSix, Sparkle, Plus, ArrowRight, PencilSimple, X, Check, CircleNotch, Camera, GlobeHemisphereWest, CaretRight } from '@phosphor-icons/react';
+import { GearSix, Sparkle, Plus, ArrowRight, PencilSimple, X, Check, CircleNotch, Camera } from '@phosphor-icons/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, actualizarPresupuestoPareja, obtenerGastadoDelMes } from '@/lib/gastos';
 import {
@@ -22,8 +22,7 @@ import {
   type PreguntaDB,
 } from '@/lib/preguntas';
 import { listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarAhorro, type MetaDB } from '@/lib/metas';
-import { formatoMoneda, paisPorCodigo } from '@/lib/paises';
-import { SelectorPais } from '@/components/app/SelectorPais';
+import { formatoMoneda } from '@/lib/paises';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
 import { MomentoFairsy } from '@/components/app/MomentoFairsy';
@@ -292,8 +291,6 @@ export default function HoyPage() {
 
   // País/moneda — antes vivía solo al fondo de Nosotros; el usuario pidió subirlo a esta
   // tarjeta, donde de verdad se usa (define en qué moneda se ven presupuesto/gastado/saldo).
-  const [cambiandoPais, setCambiandoPais] = useState(false);
-  const [guardandoPais, setGuardandoPais] = useState(false);
 
   // Meta real (primera de la pareja) para la tarjeta de vista previa — antes mostraba siempre
   // el dato de ejemplo fijo "Viaje a Cartagena, 31%" (defecto real reportado por el usuario:
@@ -382,19 +379,6 @@ export default function HoyPage() {
     })();
   }, [supabase]);
 
-  const cambiarPais = async (codigo: string) => {
-    setGuardandoPais(true);
-    const { error } = await supabase.rpc('actualizar_pais_pareja', { p_pais: codigo });
-    setGuardandoPais(false);
-    if (!error) {
-      setPais(codigo);
-      setCambiandoPais(false);
-    } else {
-      setErrorCarga('No pudimos cambiar el país. Inténtalo de nuevo en un momento.');
-      setCambiandoPais(false);
-    }
-  };
-
   const elegirFotoDePerfil = async (archivo: File | undefined) => {
     if (!archivo || !userId) return;
     setSubiendoAvatar(true);
@@ -468,14 +452,14 @@ export default function HoyPage() {
     // llegar a mostrar su título ni el % en la vista inicial sin scroll (defecto real detectado
     // por el revisor-visual) — este ajuste libera ~16px para que se note más de esa tarjeta.
     <div className="flex flex-col gap-4">
-      <motion.div {...entrada(0)} className="flex items-center justify-between">
-        <div>
+      <motion.div {...entrada(0)} className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
           {/* Antes repetía el nombre en las dos líneas ("Buenas tardes, Sofía" + "Mateo &
               Sofía") sin sumar información nueva — defecto real detectado por el revisor-visual.
               El saludo solo, los nombres quedan una única vez, en el título. */}
           <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>
-          <h1 className="flex items-center gap-1.5 text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
-            {nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}
+          <h1 className="flex min-w-0 items-center gap-1.5 text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
+            <span className="min-w-0 truncate">{nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}</span>
             <button
               type="button"
               onClick={() => {
@@ -484,13 +468,13 @@ export default function HoyPage() {
                 setEditandoNombre(true);
               }}
               aria-label="Cambiar mi nombre"
-              className="-mx-2 -my-2 flex size-11 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
+              className="-mx-2 -my-2 flex size-11 shrink-0 items-center justify-center text-[var(--text-tertiary)] [touch-action:manipulation]"
             >
               <PencilSimple size={13} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <Link
             href="/app/cuenta"
             aria-label="Mi cuenta"
@@ -668,23 +652,6 @@ export default function HoyPage() {
         {...entrada(0.28)}
         className="scroll-mt-4 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-2)]"
       >
-        {/* País/moneda — antes vivía al fondo de Nosotros, lejos de donde de verdad se usa
-            (define en qué moneda se ven presupuesto/gastado/saldo, justo debajo). */}
-        <button
-          type="button"
-          onClick={() => setCambiandoPais(true)}
-          className="mb-3 flex w-full items-center gap-2 border-b border-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)] pb-3 [touch-action:manipulation]"
-        >
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]">
-            <GlobeHemisphereWest size={14} strokeWidth={2.2} color="var(--accent)" aria-hidden="true" />
-          </span>
-          <span className="flex-1 text-left">
-            <span className="block text-[12px] font-medium text-[var(--text-tertiary)]">País y moneda</span>
-            <span className="block text-[13px] font-medium text-[var(--text-primary)]">{paisPorCodigo(pais) ? `${paisPorCodigo(pais)?.nombre} · ${paisPorCodigo(pais)?.moneda}` : 'Sin elegir todavía'}</span>
-          </span>
-          <CaretRight size={14} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
-        </button>
-
         {errorCarga && (
           <div className="mb-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-3 text-[12px] text-[var(--danger)]">
             <p className="font-semibold">No pudimos cargar todos tus datos.</p>
@@ -877,9 +844,6 @@ export default function HoyPage() {
         ]}
       />
 
-      {cambiandoPais && (
-        <SelectorPais guardando={guardandoPais} onElegir={cambiarPais} onCerrar={() => setCambiandoPais(false)} />
-      )}
     </div>
   );
 }

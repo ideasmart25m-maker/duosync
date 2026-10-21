@@ -65,7 +65,7 @@ function Precio({ plan }: { plan: PlanOferta }) {
   return (
     <div>
       <p className="flex items-baseline gap-1">
-        <span className="text-[36px] font-bold leading-none tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+        <span className="text-[36px] font-bold leading-none [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
           {plan.precioMes}
         </span>
         <span className="text-[14px] text-[var(--text-secondary)]">{plan.sufijo ?? '/mes'}</span>

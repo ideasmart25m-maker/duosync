@@ -115,7 +115,7 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
               ? fechaPrueba
                 ? 'Disfrutan todo Fairsy sin pagar. Si no les convence, cancelan desde su compra en Hotmart antes de esa fecha.'
                 : 'Los dos disfrutan todo Fairsy.'
-              : 'Prueben 7 días gratis todo Fairsy: asistente con IA, escaneo de recibos, metas y viajes sin tope.'}
+              : 'En el plan gratis tienen 3 escaneos de recibos y 3 preguntas al asistente en total. Con el plan completo, hasta 50 de cada uno cada mes. Pruébenlo 7 días gratis.'}
           </p>
         </div>
       </div>

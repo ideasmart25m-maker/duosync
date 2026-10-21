@@ -24,7 +24,7 @@ export function etapaDeRacha(dias: number): EtapaPlanta {
 }
 
 const VERDE = 'var(--accent-2)';
-const VERDE_CLARO = 'color-mix(in oklab, var(--accent-2) 62%, var(--bg))';
+const VERDE_CLARO = 'var(--verde-claro)';
 const CORAL = 'var(--accent)';
 const AMBAR = 'var(--cat-amber)';
 const TIERRA = 'color-mix(in oklab, var(--accent) 55%, var(--text-primary))';

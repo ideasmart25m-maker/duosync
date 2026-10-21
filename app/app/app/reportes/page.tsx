@@ -25,7 +25,7 @@ const tarjeta =
   'rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)]';
 // Cifras con numerales proporcionales: con los de ancho fijo los puntos de miles se veían muy abiertos.
 const cifra = '[font-variant-numeric:lining-nums_proportional-nums]';
-const VERDE_2 = 'color-mix(in oklab, var(--accent-2) 55%, var(--surface-2))';
+const VERDE_2 = 'var(--verde-claro)';
 
 // Cuenta animada del número héroe (de 0 al valor); con "reducir movimiento" aparece directo.
 function Contador({ valor, formatear }: { valor: number; formatear: (n: number) => string }) {
@@ -177,6 +177,17 @@ export default function ReportesPage() {
   const categoriaPorId = (id: string) => categorias.find((c) => c.id === id);
   const nombreMes = MESES[vista.mes - 1];
   const nombreAnterior = MESES[(vista.mes + 10) % 12];
+  // Si el mes anterior tuvo muy poco en el mismo tramo, el porcentaje se dispara (3443 %) y no dice nada útil: ahí se dice en dinero.
+  const diferencia = resumen.total - anterior.total;
+  const altura = esMesActual ? ' a esta altura' : '';
+  const textoVariacion =
+    variacion === null
+      ? null
+      : variacion === 0
+        ? `Igual que en ${nombreAnterior}${altura}`
+        : Math.abs(variacion) > 100
+          ? `${dinero(Math.abs(diferencia))} ${diferencia > 0 ? 'más' : 'menos'} que en ${nombreAnterior}${altura}`
+          : `${Math.abs(variacion)}% ${variacion > 0 ? 'más' : 'menos'} que en ${nombreAnterior}${altura}`;
   const hayPresupuesto = presupuesto !== null && presupuesto > 0;
   const mesesConGastos = totales.filter((t, i) => t.total > 0 && !(esMesActual && i === totales.length - 1));
   const promedio = mesesConGastos.length > 0 ? Math.round(mesesConGastos.reduce((a, t) => a + t.total, 0) / mesesConGastos.length) : 0;
@@ -266,7 +277,7 @@ export default function ReportesPage() {
             {variacion !== null && (
               <p className="mt-2 flex items-center gap-1.5 text-[13px] opacity-90">
                 {variacion > 0 ? <TrendingUp size={15} strokeWidth={2.2} aria-hidden="true" /> : variacion < 0 ? <TrendingDown size={15} strokeWidth={2.2} aria-hidden="true" /> : <Minus size={15} strokeWidth={2.2} aria-hidden="true" />}
-                {variacion === 0 ? `Igual que en ${nombreAnterior}${esMesActual ? ' a esta altura' : ''}` : `${Math.abs(variacion)}% ${variacion > 0 ? 'más' : 'menos'} que en ${nombreAnterior}${esMesActual ? ' a esta altura' : ''}`}
+                {textoVariacion}
               </p>
             )}
             {!hayPresupuesto && (

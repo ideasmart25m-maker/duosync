@@ -5,7 +5,7 @@
 // Sus cuentas entre ustedes siguen saliendo en Gastos ("Cuentas entre ustedes"), por moneda.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, MapPin, Loader2, Minus, Trash2, Check, X, Camera } from 'lucide-react';
+import { Plus, MapPin, Loader2, Minus, Trash2, Check, X, Camera, Pencil } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   listarViajes,
@@ -21,7 +21,7 @@ import {
   type SubcategoriaViaje,
 } from '@/lib/viajes';
 import { DESTINOS, formatoMonedaViaje, nombreMoneda } from '@/lib/monedas';
-import { eliminarGasto } from '@/lib/gastos';
+import { eliminarGasto, actualizarGasto } from '@/lib/gastos';
 import { comprimirImagen } from '@/lib/imagen';
 import { InputMonto } from '@/components/ui/InputMonto';
 
@@ -256,6 +256,7 @@ function TarjetaViaje({
   nombreOtro,
   onGastoRegistrado,
   onGastoEliminado,
+  onGastoActualizado,
   onViajeEliminado,
   supabase,
   coupleId,
@@ -266,6 +267,7 @@ function TarjetaViaje({
   nombreOtro: string;
   onGastoRegistrado: (g: GastoConViaje) => void;
   onGastoEliminado: (id: string) => void;
+  onGastoActualizado: (id: string, cambios: { monto: number; nota: string | null }) => void;
   onViajeEliminado: (id: string) => void;
   supabase: SupabaseClient;
   coupleId: string;
@@ -275,6 +277,11 @@ function TarjetaViaje({
   const [error, setError] = useState<string | null>(null);
   const [confirmandoBorrarViaje, setConfirmandoBorrarViaje] = useState(false);
   const [borrandoGasto, setBorrandoGasto] = useState<string | null>(null);
+  // Edición de un gasto del viaje (corregir el monto o la nota sin tener que borrarlo y volver a anotarlo).
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [montoEdit, setMontoEdit] = useState('');
+  const [notaEdit, setNotaEdit] = useState('');
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
 
   const total = gastos.reduce((a, g) => a + g.monto, 0);
   const extras = Array.from(new Set(gastos.map((g) => g.subcategoria).filter((x): x is string => !!x)));
@@ -315,6 +322,33 @@ function TarjetaViaje({
     }
   };
 
+  const empezarEdicion = (g: GastoConViaje) => {
+    setError(null);
+    setEditandoId(g.id);
+    setMontoEdit(String(g.monto).replace('.', ','));
+    setNotaEdit(g.nota ?? '');
+  };
+
+  const guardarEdicion = async (id: string) => {
+    const valor = Number(montoEdit.replace(',', '.'));
+    if (!valor || valor <= 0) {
+      setError('Escribe un monto mayor que cero.');
+      return;
+    }
+    setGuardandoEdit(true);
+    setError(null);
+    try {
+      const nota = notaEdit.trim() || null;
+      await actualizarGasto(supabase, id, { monto: valor, nota });
+      onGastoActualizado(id, { monto: valor, nota });
+      setEditandoId(null);
+    } catch {
+      setError('No pudimos guardar el cambio. Intenten de nuevo en un momento.');
+    } finally {
+      setGuardandoEdit(false);
+    }
+  };
+
   const borrarViaje = async () => {
     try {
       await eliminarViaje(supabase, viaje.id);
@@ -337,7 +371,7 @@ function TarjetaViaje({
         <span className="shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[12px] font-medium text-[var(--text-secondary)]">{nombreMoneda(viaje.moneda)}</span>
       </div>
 
-      <p className="mt-2 text-[28px] font-bold tabular-nums leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">{f(total)}</p>
+      <p className="mt-2 text-[28px] font-bold [font-variant-numeric:lining-nums_proportional-nums] leading-tight text-[var(--text-primary)] [font-family:var(--font-display)]">{f(total)}</p>
       <p className="text-[12px] text-[var(--text-tertiary)]">
         {viaje.presupuesto ? (
           <>
@@ -388,29 +422,77 @@ function TarjetaViaje({
 
       {gastos.length > 0 && (
         <ul className="mt-3 flex flex-col divide-y divide-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)]">
-          {gastos.map((g) => (
-            <li key={g.id} className="flex items-center gap-2 py-2">
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium text-[var(--text-primary)]">
-                  {nombreSubcategoria(g.subcategoria)}
-                  {g.nota ? ` · ${g.nota}` : ''}
+          {gastos.map((g) =>
+            editandoId === g.id ? (
+              <li key={g.id} className="flex flex-col gap-2 py-3">
+                <InputMonto
+                  decimal
+                  autoFocus
+                  value={montoEdit}
+                  onValueChange={setMontoEdit}
+                  aria-label="Monto del gasto"
+                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                />
+                <input
+                  value={notaEdit}
+                  onChange={(e) => setNotaEdit(e.target.value)}
+                  maxLength={140}
+                  placeholder="Nota (opcional)"
+                  aria-label="Nota del gasto"
+                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditandoId(null)}
+                    disabled={guardandoEdit}
+                    className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => guardarEdicion(g.id)}
+                    disabled={guardandoEdit}
+                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[14px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                  >
+                    {guardandoEdit && <Loader2 size={15} className="animate-spin" aria-hidden="true" />}
+                    Guardar cambios
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li key={g.id} className="flex items-center gap-1 py-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-medium text-[var(--text-primary)]">
+                    {nombreSubcategoria(g.subcategoria)}
+                    {g.nota ? ` · ${g.nota}` : ''}
+                  </span>
+                  <span className="block text-[12px] text-[var(--text-secondary)]">
+                    {formatoFecha(g.fecha)} · {g.registradoPor === miUserId ? 'Tú' : nombreOtro}
+                  </span>
                 </span>
-                <span className="block text-[12px] text-[var(--text-tertiary)]">
-                  {formatoFecha(g.fecha)} · {g.registradoPor === miUserId ? 'Tú' : nombreOtro}
-                </span>
-              </span>
-              <span className="shrink-0 tabular-nums text-[13px] font-semibold text-[var(--text-primary)]">{f(g.monto)}</span>
-              <button
-                type="button"
-                onClick={() => borrarGasto(g.id)}
-                disabled={borrandoGasto === g.id}
-                aria-label="Eliminar gasto del viaje"
-                className="flex size-8 shrink-0 items-center justify-center text-[var(--text-tertiary)] disabled:opacity-50 [touch-action:manipulation]"
-              >
-                {borrandoGasto === g.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} strokeWidth={2.2} aria-hidden="true" />}
-              </button>
-            </li>
-          ))}
+                <span className="shrink-0 tabular-nums text-[13px] font-semibold text-[var(--text-primary)]">{f(g.monto)}</span>
+                <button
+                  type="button"
+                  onClick={() => empezarEdicion(g)}
+                  aria-label="Editar gasto del viaje"
+                  className="flex size-11 shrink-0 items-center justify-center text-[var(--text-secondary)] [touch-action:manipulation]"
+                >
+                  <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => borrarGasto(g.id)}
+                  disabled={borrandoGasto === g.id}
+                  aria-label="Eliminar gasto del viaje"
+                  className="flex size-11 shrink-0 items-center justify-center text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
+                >
+                  {borrandoGasto === g.id ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />}
+                </button>
+              </li>
+            )
+          )}
         </ul>
       )}
 
@@ -502,6 +584,7 @@ export function ViajesMetas({ supabase, coupleId, nombreOtro }: { supabase: Supa
           coupleId={coupleId}
           onGastoRegistrado={(g) => setGastos((prev) => [g, ...prev])}
           onGastoEliminado={(id) => setGastos((prev) => prev.filter((g) => g.id !== id))}
+          onGastoActualizado={(id, c) => setGastos((prev) => prev.map((g) => (g.id === id ? { ...g, monto: c.monto, nota: c.nota } : g)))}
           onViajeEliminado={(id) => {
             setViajes((prev) => prev.filter((x) => x.id !== id));
             setGastos((prev) => prev.filter((g) => g.viajeId !== id));

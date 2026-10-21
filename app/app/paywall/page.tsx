@@ -184,7 +184,7 @@ function PaywallInner() {
             <div className="flex items-center justify-between">
               <span className="text-[16px] font-semibold text-[var(--text-primary)]">Anual</span>
               <span className="flex items-baseline gap-1">
-                <span className="text-[24px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+                <span className="text-[24px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                   <PrecioAnimado valor={3} />
                 </span>
                 <span className="text-[12px] text-[var(--text-secondary)]">/mes</span>
@@ -207,7 +207,7 @@ function PaywallInner() {
           <div className="flex items-center justify-between">
             <span className="text-[16px] font-semibold text-[var(--text-primary)]">Mensual</span>
             <span className="flex items-baseline gap-1">
-              <span className="text-[24px] font-bold tabular-nums text-[var(--text-primary)] [font-family:var(--font-display)]">
+              <span className="text-[24px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                 <PrecioAnimado valor={5.99} />
               </span>
               <span className="text-[12px] text-[var(--text-secondary)]">/mes</span>
