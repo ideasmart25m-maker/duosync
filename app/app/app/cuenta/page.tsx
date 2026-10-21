@@ -20,6 +20,7 @@ export default function CuentaPage() {
   const supabase = useMemo(() => crearClienteNavegador(), []);
   const [coupleId, setCoupleId] = useState<string | null>(null);
   const [correo, setCorreo] = useState<string | null>(null);
+  const [esInvitado, setEsInvitado] = useState(false);
   const [pais, setPais] = useState<string | null>(null);
   const [cambiandoPais, setCambiandoPais] = useState(false);
   const [guardandoPais, setGuardandoPais] = useState(false);
@@ -31,7 +32,10 @@ export default function CuentaPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!cancelado) setCorreo(user?.email ?? null);
+      if (!cancelado) {
+        setCorreo(user?.email ?? null);
+        setEsInvitado(!!user?.is_anonymous);
+      }
       const cid = await obtenerCoupleId(supabase).catch(() => null);
       if (!cid || cancelado) return;
       setCoupleId(cid);
@@ -98,11 +102,16 @@ export default function CuentaPage() {
 
       <InstalarApp />
 
+      {esInvitado && (
+        <p role="note" className="rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--cat-amber)_14%,transparent)] p-3 text-[13px] leading-snug text-[var(--text-primary)]">
+          Entraste como invitado, sin correo. Si cierras sesión ahora <span className="font-semibold">perderías esta cuenta</span>. Primero guarda tu acceso con tu correo (arriba, en “Guardar mi acceso”).
+        </p>
+      )}
       <button
         type="button"
         onClick={cerrarSesion}
-        disabled={saliendo}
-        className="flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] text-[15px] font-medium text-[var(--text-secondary)] disabled:opacity-60 [touch-action:manipulation]"
+        disabled={saliendo || esInvitado}
+        className="flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_30%,transparent)] text-[15px] font-medium text-[var(--text-secondary)] disabled:opacity-50 [touch-action:manipulation]"
       >
         <LogOut size={16} strokeWidth={2.2} aria-hidden="true" />
         {saliendo ? 'Saliendo…' : 'Cerrar sesión'}
