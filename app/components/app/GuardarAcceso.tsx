@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { BotonGoogle, GOOGLE_ACTIVO } from '@/components/ui/BotonGoogle';
 
 export function GuardarAcceso({ supabase }: { supabase: SupabaseClient }) {
   const [esInvitado, setEsInvitado] = useState(false);
@@ -16,6 +17,7 @@ export function GuardarAcceso({ supabase }: { supabase: SupabaseClient }) {
   const [enviado, setEnviado] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conGoogle, setConGoogle] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEsInvitado(!!data.user?.is_anonymous));
@@ -34,6 +36,21 @@ export function GuardarAcceso({ supabase }: { supabase: SupabaseClient }) {
       return;
     }
     setEnviado(true);
+  };
+
+  // Vincula la cuenta de Google a ESTA misma cuenta (con sus gastos y su pareja): no crea una cuenta nueva.
+  const guardarConGoogle = async () => {
+    if (conGoogle) return;
+    setConGoogle(true);
+    setError(null);
+    const { error: e } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/app/cuenta`, queryParams: { prompt: 'select_account' } },
+    });
+    if (e) {
+      setConGoogle(false);
+      setError(/already|exists|registered|linked/i.test(e.message) ? 'Esa cuenta de Google ya está en uso. Usa otra o guarda con tu correo.' : 'No pudimos abrir Google. Puedes guardar tu acceso con tu correo.');
+    }
   };
 
   const confirmar = async (valor: string) => {
@@ -72,6 +89,14 @@ export function GuardarAcceso({ supabase }: { supabase: SupabaseClient }) {
         <ShieldCheck size={18} strokeWidth={2} color="var(--accent-2)" aria-hidden="true" />
         Guarda tu acceso con tu correo
       </p>
+      {!enviado && GOOGLE_ACTIVO && (
+        <>
+          <BotonGoogle onClick={guardarConGoogle} cargando={conGoogle}>
+            Guardar con Google
+          </BotonGoogle>
+          <p className="text-center text-[12px] text-[var(--text-secondary)]">o con tu correo:</p>
+        </>
+      )}
       {!enviado ? (
         <form
           className="flex flex-col gap-2"

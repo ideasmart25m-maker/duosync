@@ -930,3 +930,8 @@ Pulido menor pendiente para Sesión 7 (no bloqueante — ninguno es un bug funci
 
 ## Notas para la próxima sesión
 - El usuario ya trajo una investigación de mercado propia y completa (guardada en DUOSYNC.docx) — no repetirla desde cero, solo re-validar con datos actuales y llenar FICHA-MERCADO.md con fuentes verificables antes de fijar precio/garantía en definitivo.
+
+## Ingreso con Google + instructivo de acceso (2026-10-21)
+- `components/ui/BotonGoogle.tsx`: botón oculto salvo `NEXT_PUBLIC_GOOGLE_LOGIN=1`. Login: "Continuar con Google" (signInWithOAuth → /auth/callback con los mismos params). Invitados: "Guardar con Google" (linkIdentity, requiere "Manual linking" en Supabase).
+- Mi cuenta: `GuiaPagina id="acceso"` "Cómo funciona tu acceso" con recomendaciones.
+- Pendiente (dueña): Google Cloud OAuth client + Supabase Providers→Google + Allow manual linking + env Vercel `NEXT_PUBLIC_GOOGLE_LOGIN=1`. Verificación visual del botón pendiente hasta activar la bandera.

@@ -15,6 +15,7 @@ import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
 import { InstalarApp } from '@/components/app/InstalarApp';
 import { SelectorPais } from '@/components/app/SelectorPais';
+import { GuiaPagina } from '@/components/app/GuiaPagina';
 
 export default function CuentaPage() {
   const supabase = useMemo(() => crearClienteNavegador(), []);
@@ -76,6 +77,20 @@ export default function CuentaPage() {
           {correo && <p className="text-[12px] text-[var(--text-tertiary)]">{correo}</p>}
         </div>
       </div>
+
+      <GuiaPagina
+        id="acceso"
+        titulo="Cómo funciona tu acceso"
+        items={[
+          { titulo: 'No te pedimos nada mientras no cierres sesión', texto: 'Tu sesión queda guardada en tu celular: abres Fairsy y entras directo, sin códigos ni contraseñas.' },
+          { titulo: 'Entrar con Google', texto: 'Si activaste “Continuar con Google”, entras con un toque. Si usas el mismo correo con el que pagaste, tu plan se activa solo.' },
+          { titulo: 'Entrar con tu correo', texto: 'Te enviamos un código de 8 números: lo escribes y entras. No hay contraseñas que recordar.' },
+          { titulo: 'Instala Fairsy en tu pantalla de inicio', texto: 'Se abre con un toque y tu sesión dura más. En el celular compartido, mejor no la instales.' },
+          { titulo: 'Si entraste como invitado', texto: 'Guarda tu acceso (con Google o con tu correo) antes de cerrar sesión, cambiar de celular o borrar el navegador; si no, pierdes esa cuenta.' },
+          { titulo: '¿Pagaste con otro correo?', texto: 'Toca “Conectar mi compra” en “Tu plan” y te mandamos un código al correo de la compra.' },
+          { titulo: 'En un celular que no es tuyo', texto: 'Cierra sesión al terminar para que nadie más vea sus gastos.' },
+        ]}
+      />
 
       {coupleId && <TuPlan supabase={supabase} coupleId={coupleId} />}
 

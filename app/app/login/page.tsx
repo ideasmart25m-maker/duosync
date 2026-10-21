@@ -15,6 +15,7 @@ import { motion } from 'motion/react';
 import { Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { FunnelShell, CtaFijo } from '@/components/onboarding/ui';
 import { crearClienteNavegador } from '@/lib/supabase/client';
+import { BotonGoogle, GOOGLE_ACTIVO } from '@/components/ui/BotonGoogle';
 
 function LoginInner() {
   const params = useSearchParams();
@@ -25,6 +26,7 @@ function LoginInner() {
   const [email, setEmail] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [conGoogle, setConGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [codigoEscrito, setCodigoEscrito] = useState('');
   const [verificando, setVerificando] = useState(false);
@@ -42,6 +44,24 @@ function LoginInner() {
 
   const esGratis = plan === 'free' || !plan;
   const seUne = modo === 'unirse' && /^[0-9]{4}$/.test(codigo);
+
+  // Entrar con Google: un toque, sin códigos. Vuelve a /auth/callback con el mismo código de intercambio que el enlace del correo
+  // y lleva los mismos datos (plan, modo, código de conexión, clave del enlace), así que une o crea el espacio igual que siempre.
+  const entrarConGoogle = async () => {
+    if (conGoogle) return;
+    setConGoogle(true);
+    setError(null);
+    const supabase = crearClienteNavegador();
+    const siguiente = new URLSearchParams({ next: '/app/hoy', modo, codigo, plan: plan ?? 'free', tk });
+    const { error: errorGoogle } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback?${siguiente.toString()}`, queryParams: { prompt: 'select_account' } },
+    });
+    if (errorGoogle) {
+      setConGoogle(false);
+      setError('No pudimos abrir Google en este momento. Puedes entrar con tu correo aquí abajo.');
+    }
+  };
 
   const enviarEnlace = async () => {
     if (enviando || !email.includes('@')) return;
@@ -115,8 +135,21 @@ function LoginInner() {
                 : 'Con su correo activamos su plan y les avisamos antes de cada cobro.'}
             </p>
 
+            {GOOGLE_ACTIVO && (
+              <div className="mt-8 flex flex-col gap-4">
+                <BotonGoogle onClick={entrarConGoogle} cargando={conGoogle}>
+                  Continuar con Google
+                </BotonGoogle>
+                <div className="flex items-center gap-3 text-[13px] text-[var(--text-secondary)]">
+                  <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)]" />
+                  o con tu correo
+                  <span className="h-px flex-1 bg-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)]" />
+                </div>
+              </div>
+            )}
+
             <form
-              className="mt-8 flex flex-col gap-3"
+              className={`${GOOGLE_ACTIVO ? 'mt-4' : 'mt-8'} flex flex-col gap-3`}
               onSubmit={(e) => {
                 e.preventDefault();
                 enviarEnlace();
@@ -165,7 +198,7 @@ function LoginInner() {
               )}
             </CtaFijo>
             <p className="mt-3 text-center text-[12px] text-[var(--text-secondary)]">
-              Sin contraseñas. Les enviamos un enlace para entrar directo, cada vez.
+              Sin contraseñas. Con Google es un toque; con tu correo te llega un código de 8 números.
             </p>
           </div>
         </motion.div>
