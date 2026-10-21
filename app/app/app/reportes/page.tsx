@@ -25,7 +25,7 @@ const tarjeta =
   'rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] p-4 shadow-[var(--shadow-1)]';
 // Cifras con numerales proporcionales: con los de ancho fijo los puntos de miles se veían muy abiertos.
 const cifra = '[font-variant-numeric:lining-nums_proportional-nums]';
-const VERDE_2 = 'var(--verde-claro)';
+const NARANJA = 'var(--accent)';
 
 // Cuenta animada del número héroe (de 0 al valor); con "reducir movimiento" aparece directo.
 function Contador({ valor, formatear }: { valor: number; formatear: (n: number) => string }) {
@@ -349,7 +349,7 @@ export default function ReportesPage() {
                           </span>
                         </div>
                         <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
-                          <motion.div className="h-full rounded-full" style={{ backgroundColor: i === 0 ? 'var(--accent-2)' : VERDE_2 }} {...crecer(ancho)} />
+                          <motion.div className="h-full rounded-full" style={{ backgroundColor: i === 0 ? 'var(--accent-2)' : NARANJA }} {...crecer(ancho)} />
                         </div>
                       </li>
                     );
@@ -432,7 +432,7 @@ export default function ReportesPage() {
                           <>
                             <motion.div
                               className="absolute inset-x-0 bottom-0 rounded-t-[8px]"
-                              style={{ backgroundColor: actual ? 'var(--accent-2)' : VERDE_2 }}
+                              style={{ backgroundColor: actual ? 'var(--accent-2)' : NARANJA }}
                               initial={reducido ? { height: `${alto}%` } : { height: 0 }}
                               animate={{ height: `${alto}%` }}
                               transition={{ duration: 0.6, delay: 0.05 * i + 0.15, ease: [0.16, 1, 0.3, 1] }}
@@ -510,7 +510,7 @@ export default function ReportesPage() {
                       {t.total > 0 && (
                         <motion.div
                           className="w-full rounded-t-[8px]"
-                          style={{ backgroundColor: actual ? 'var(--accent-2)' : VERDE_2 }}
+                          style={{ backgroundColor: actual ? 'var(--accent-2)' : NARANJA }}
                           initial={reducido ? { height: `${alto}%` } : { height: 0 }}
                           animate={{ height: `${alto}%` }}
                           transition={{ duration: 0.6, delay: 0.05 * i + 0.15, ease: [0.16, 1, 0.3, 1] }}

@@ -129,7 +129,7 @@ function FormularioMeta({
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Ej. Viaje a Cartagena"
           maxLength={60}
-          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--campo-bg,var(--bg))] px-4 text-[16px] font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
       </label>
       <label className={`flex flex-col gap-1 text-[13px] font-medium ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}>
@@ -138,7 +138,7 @@ function FormularioMeta({
           value={montoObjetivo}
           onValueChange={setMontoObjetivo}
           placeholder="Ej. 4.000.000"
-          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          className="block h-12 w-full min-w-0 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--campo-bg,var(--bg))] px-4 text-[16px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
       </label>
       <label className={`flex flex-col gap-1 text-[13px] font-medium ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}>
@@ -147,7 +147,7 @@ function FormularioMeta({
           type="date"
           value={fechaObjetivo}
           onChange={(e) => setFechaObjetivo(e.target.value)}
-          className="block h-12 w-full min-w-0 appearance-none rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-4 text-left text-[16px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          className="block h-12 w-full min-w-0 appearance-none rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--campo-bg,var(--bg))] px-4 text-left text-[16px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
         />
       </label>
       <div className="mt-1 flex gap-2">
@@ -165,7 +165,7 @@ function FormularioMeta({
           type="submit"
           disabled={!nombre.trim() || !montoObjetivo || guardando}
           className={`flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] text-[15px] font-semibold disabled:opacity-50 [touch-action:manipulation] ${
-            sobreVerde ? 'bg-[var(--bg)] text-[var(--accent-2)]' : 'bg-[var(--accent)] text-[var(--bg)]'
+            sobreVerde ? 'bg-[var(--boton-bg,var(--bg))] text-[var(--boton-fg,var(--accent-2))]' : 'bg-[var(--accent)] text-[var(--bg)]'
           }`}
         >
           {guardando && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
@@ -177,10 +177,16 @@ function FormularioMeta({
 }
 
 // Las metas alternan los dos verdes del logo (pedido de la usuaria: usar la paleta del logo en todas las pantallas).
-function fondoDeMeta(indice: number): string | undefined {
-  // Pares: verde oscuro del logo (el de la marca); impares: coral/naranja de la marca (el mismo de "Todas las categorías" en Gastos).
-  return indice % 2 === 1 ? 'linear-gradient(150deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 86%, var(--cat-amber)) 100%)' : undefined;
-}
+// Pares: tarjeta sólida en el verde oscuro del logo. Impares: el estilo de la tarjeta "Vamos a organizar nuestras cuentas" de Inicio
+// (fondo coral muy suave, borde coral y texto oscuro). Para no reescribir cada color de la tarjeta, en la versión clara se
+// reasigna localmente qué es "el color del texto" (--bg → tinta) y los botones/campos conservan su fondo claro.
+const ESTILO_META_CLARA = {
+  '--bg': 'var(--text-primary)',
+  '--accent-2': 'var(--surface)',
+  '--boton-bg': 'var(--surface)',
+  '--boton-fg': 'var(--text-primary)',
+  '--campo-bg': 'var(--surface)',
+} as CSSProperties;
 
 function TarjetaMeta({
   meta,
@@ -260,8 +266,12 @@ function TarjetaMeta({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]"
-      style={fondoDeMeta(indice) ? ({ background: fondoDeMeta(indice) } as CSSProperties) : undefined}
+      className={`relative overflow-hidden rounded-[var(--radius-card)] p-5 ${
+        indice % 2 === 1
+          ? 'border-2 border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--surface))] text-[var(--text-primary)] shadow-[var(--shadow-1)]'
+          : 'bg-[var(--accent-2)] text-[var(--bg)] shadow-[var(--shadow-hero)]'
+      }`}
+      style={indice % 2 === 1 ? ESTILO_META_CLARA : undefined}
     >
       {metaCumplida && <ConfettiMeta />}
 
@@ -362,7 +372,7 @@ function TarjetaMeta({
                   }}
                   placeholder="¿Cuánto van a aportar?"
                   style={{ '--focus-ring': 'var(--bg)' } as CSSProperties}
-                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_30%,transparent)] bg-[color-mix(in_oklab,var(--bg)_12%,transparent)] px-4 text-[16px] tabular-nums text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)]"
+                  className="h-12 w-full rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_30%,transparent)] bg-[var(--campo-bg,color-mix(in_oklab,var(--bg)_12%,transparent))] px-4 text-[16px] tabular-nums text-[var(--bg)] placeholder:text-[color-mix(in_oklab,var(--bg)_65%,transparent)] outline-none focus:border-[var(--bg)]"
                 />
                 <div className="mt-2 flex gap-2">
                   <button
@@ -379,7 +389,7 @@ function TarjetaMeta({
                   <button
                     type="submit"
                     disabled={!montoAporte || guardandoAporte}
-                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--bg)] text-[15px] font-semibold text-[var(--accent-2)] disabled:opacity-50 [touch-action:manipulation]"
+                    className="flex h-11 flex-[2] items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--boton-bg,var(--bg))] text-[15px] font-semibold text-[var(--boton-fg,var(--accent-2))] disabled:opacity-50 [touch-action:manipulation]"
                   >
                     {guardandoAporte ? <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" /> : <Plus size={16} strokeWidth={2.4} aria-hidden="true" />}
                     {guardandoAporte ? 'Guardando…' : 'Confirmar aporte'}
@@ -393,7 +403,7 @@ function TarjetaMeta({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setAportando(true)}
                 disabled={pct >= 100}
-                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--bg)] text-[15px] font-semibold text-[var(--accent-2)] disabled:opacity-50 [touch-action:manipulation]"
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--boton-bg,var(--bg))] text-[15px] font-semibold text-[var(--boton-fg,var(--accent-2))] disabled:opacity-50 [touch-action:manipulation]"
               >
                 <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
                 {pct >= 100 ? 'Meta cumplida' : 'Aportar a la meta'}
