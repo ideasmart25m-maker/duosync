@@ -21,7 +21,7 @@ import {
   subirAvatar,
   type PreguntaDB,
 } from '@/lib/preguntas';
-import { listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarAhorro, type MetaDB } from '@/lib/metas';
+import { nombreLegible, listarMetas, listarAportesDelMes, obtenerMostrarAhorro, guardarMostrarAhorro, type MetaDB } from '@/lib/metas';
 import { formatoMoneda } from '@/lib/paises';
 import { InvitarPareja } from '@/components/app/InvitarPareja';
 import { GuardarAcceso } from '@/components/app/GuardarAcceso';
@@ -802,7 +802,7 @@ export default function HoyPage() {
               {/* Meta real (la primera de la pareja) — antes era el dato de ejemplo fijo
                   "Viaje a Cartagena, 31%", que ya no coincidía con las metas reales creadas en
                   Metas (defecto real reportado por el usuario). */}
-              <span className="text-[15px] font-semibold text-[var(--text-primary)]">{metaPrincipal.nombre}</span>
+              <span className="text-[15px] font-semibold text-[var(--text-primary)]">{nombreLegible(metaPrincipal.nombre)}</span>
               <span className="text-[12px] font-semibold tabular-nums text-[var(--accent)]">{pctMeta}%</span>
             </span>
             {/* Barra de progreso animada — antes el % era solo texto, sin señal visual

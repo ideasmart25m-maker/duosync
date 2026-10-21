@@ -14,7 +14,7 @@ import { animate } from 'motion/react';
 import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles, PiggyBank } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
-import { listarMetas, crearMeta, actualizarMeta, aportarAMeta, listarAportesDelMes, type MetaDB, type AporteDelMes } from '@/lib/metas';
+import { nombreLegible, listarMetas, crearMeta, actualizarMeta, aportarAMeta, listarAportesDelMes, type MetaDB, type AporteDelMes } from '@/lib/metas';
 import { obtenerNombresPareja } from '@/lib/preguntas';
 import { ViajesMetas } from '@/components/app/ViajesMetas';
 import { formatoMoneda } from '@/lib/paises';
@@ -178,8 +178,8 @@ function FormularioMeta({
 
 // Las metas alternan los dos verdes del logo (pedido de la usuaria: usar la paleta del logo en todas las pantallas).
 function fondoDeMeta(indice: number): string | undefined {
-  // Pares: verde oscuro del logo (el de la marca); impares: verde medio del logo, más claro.
-  return indice % 2 === 1 ? 'var(--verde-medio)' : undefined;
+  // Pares: verde oscuro del logo (el de la marca); impares: el mismo verde con un degradado hacia el verde menta (translúcido, sin un verde plano).
+  return indice % 2 === 1 ? 'linear-gradient(150deg, var(--accent-2) 0%, color-mix(in oklab, var(--accent-2) 55%, var(--verde-claro)) 100%)' : undefined;
 }
 
 function TarjetaMeta({
@@ -261,7 +261,7 @@ function TarjetaMeta({
   return (
     <div
       className="relative overflow-hidden rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]"
-      style={fondoDeMeta(indice) ? ({ '--accent-2': fondoDeMeta(indice) } as CSSProperties) : undefined}
+      style={fondoDeMeta(indice) ? ({ background: fondoDeMeta(indice) } as CSSProperties) : undefined}
     >
       {metaCumplida && <ConfettiMeta />}
 
@@ -282,7 +282,7 @@ function TarjetaMeta({
               onClick={() => setEditando(true)}
               className="flex items-center gap-1.5 text-left [touch-action:manipulation]"
             >
-              <h2 className="text-[19px] font-semibold">{meta.nombre}</h2>
+              <h2 className="text-[19px] font-semibold">{nombreLegible(meta.nombre)}</h2>
               <Pencil size={13} strokeWidth={2.2} className="opacity-70" aria-hidden="true" />
             </button>
             <motion.span
@@ -552,7 +552,7 @@ export default function MetasPage() {
           <ul className="mt-1.5 flex flex-col gap-0.5">
             {aportes.map((a) => (
               <li key={a.metaId} className="flex items-center justify-between text-[12px] text-[var(--text-secondary)]">
-                <span className="truncate">Ahorro · {a.nombreMeta}</span>
+                <span className="truncate">Ahorro · {nombreLegible(a.nombreMeta)}</span>
                 <span className="shrink-0 tabular-nums font-semibold text-[var(--text-primary)]">{formatoMoneda(a.total, pais)}</span>
               </li>
             ))}

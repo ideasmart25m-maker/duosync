@@ -10,12 +10,12 @@ import { animate, motion, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Inbox, Plus, TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja, obtenerPresupuestoPareja, listarCategorias } from '@/lib/gastos';
-import { listarAportesDelMes } from '@/lib/metas';
+import { listarMetas, listarAportesDeRango, nombreLegible, type MetaDB, type AporteSimple } from '@/lib/metas';
 import { obtenerNombresPareja } from '@/lib/preguntas';
 import { type CategoriaDB } from '@/lib/categorias';
 import { formatoMoneda } from '@/lib/paises';
 import { evaluarPresupuesto } from '@/lib/presupuesto';
-import { claveMes, listarGastosDeRango, porcentajeDe, resumirMes, resumirMesHasta, totalesPorMes, ultimosMeses, variacionPorcentual, type GastoSimple } from '@/lib/reportes';
+import { ahorroPorMes, ahorroPorMeta, claveMes, listarGastosDeRango, porcentajeDe, resumirMes, resumirMesHasta, totalesPorMes, ultimosMeses, variacionPorcentual, type GastoSimple } from '@/lib/reportes';
 import { GuiaPagina } from '@/components/app/GuiaPagina';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -72,7 +72,8 @@ export default function ReportesPage() {
   const [presupuesto, setPresupuesto] = useState<number | null>(null);
   const [nombres, setNombres] = useState<Record<string, string>>({});
   const [iniciales, setIniciales] = useState<Record<string, string>>({});
-  const [ahorroMes, setAhorroMes] = useState<{ total: number; filas: { nombreMeta: string; total: number }[] }>({ total: 0, filas: [] });
+  const [metas, setMetas] = useState<MetaDB[]>([]);
+  const [aportes, setAportes] = useState<AporteSimple[]>([]);
   const [intento, setIntento] = useState(0);
 
   const ahora = new Date();
@@ -130,13 +131,15 @@ export default function ReportesPage() {
     const siguiente = new Date(vista.anio, vista.mes, 1);
     (async () => {
       try {
-        const [lista, aportes] = await Promise.all([
+        const [lista, listaMetas, listaAportes] = await Promise.all([
           listarGastosDeRango(supabase, coupleId, meses[0].clave, claveMes(siguiente.getFullYear(), siguiente.getMonth() + 1)),
-          listarAportesDelMes(supabase, coupleId, clave).catch(() => []),
+          listarMetas(supabase, coupleId).catch(() => [] as MetaDB[]),
+          listarAportesDeRango(supabase, coupleId, new Date(meses[0].anio, meses[0].mes - 1, 1), siguiente).catch(() => [] as AporteSimple[]),
         ]);
         if (cancelado) return;
         setGastos(lista);
-        setAhorroMes({ total: aportes.reduce((a, x) => a + x.total, 0), filas: aportes });
+        setMetas(listaMetas);
+        setAportes(listaAportes);
         setError(null);
       } catch (e) {
         console.error('[reportes] gastos', e);
@@ -175,6 +178,11 @@ export default function ReportesPage() {
   const estado = evaluarPresupuesto(resumen.total, presupuesto);
   const dinero = (n: number) => formatoMoneda(n, pais);
   const categoriaPorId = (id: string) => categorias.find((c) => c.id === id);
+  // Ahorro: por meta (este mes) y mes a mes (últimos 6). El ahorro no cuenta como gasto.
+  const ahorroMeses = useMemo(() => ahorroPorMes(aportes, meses), [aportes, meses]);
+  const ahorroEsteMes = ahorroMeses[ahorroMeses.length - 1]?.total ?? 0;
+  const ahorroMaximo = Math.max(1, ...ahorroMeses.map((t) => t.total));
+  const ahorroPorMetaMes = useMemo(() => new Map(ahorroPorMeta(aportes, clave).map((f) => [f.id, f.total])), [aportes, clave]);
   const nombreMes = MESES[vista.mes - 1];
   const nombreAnterior = MESES[(vista.mes + 10) % 12];
   // Si el mes anterior tuvo muy poco en el mismo tramo, el porcentaje se dispara (3443 %) y no dice nada útil: ahí se dice en dinero.
@@ -208,6 +216,18 @@ export default function ReportesPage() {
   return (
     <div className="relative flex flex-col gap-4">
       <h1 className="text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">Reportes</h1>
+
+        <GuiaPagina
+          id="reportes"
+          abrirPrimeraVez={false}
+          items={[
+            { titulo: 'Resumen del mes', texto: 'Cuánto gastaron frente a su presupuesto y cómo van frente al mes anterior.' },
+            { titulo: 'En qué se va el dinero', texto: 'Las categorías que más pesan este mes.' },
+            { titulo: 'Quién registró qué', texto: 'Lo que anotó cada uno, para ver si el aporte está equilibrado.' },
+            { titulo: 'Últimos 6 meses', texto: 'Para ver si el gasto sube o baja con el tiempo. Cambien de mes con las flechas.' },
+          ]}
+        />
+
 
       <div className="flex items-center justify-between">
         <motion.button type="button" whileTap={{ scale: 0.92 }} onClick={() => cambiarMes(-1)} aria-label="Mes anterior" className={flechaMes}>
@@ -290,17 +310,6 @@ export default function ReportesPage() {
               </p>
             )}
           </motion.section>
-
-          <GuiaPagina
-            id="reportes"
-            abrirPrimeraVez={false}
-            items={[
-              { titulo: 'Resumen del mes', texto: 'Cuánto gastaron frente a su presupuesto y cómo van frente al mes anterior.' },
-              { titulo: 'En qué se va el dinero', texto: 'Las categorías que más pesan este mes.' },
-              { titulo: 'Quién registró qué', texto: 'Lo que anotó cada uno, para ver si el aporte está equilibrado.' },
-              { titulo: 'Últimos 6 meses', texto: 'Para ver si el gasto sube o baja con el tiempo. Cambien de mes con las flechas.' },
-            ]}
-          />
 
           {resumen.cantidad === 0 ? (
             <motion.div {...entrada(1)} className={`${tarjeta} flex flex-col items-center gap-3 py-8 text-center`}>
@@ -450,31 +459,82 @@ export default function ReportesPage() {
             <p className="mt-3 text-[13px] text-[var(--text-secondary)]">Gastos en la moneda de la casa. Los de viajes (otra moneda) están aparte, en{' '}<Link href="/app/metas" className="font-semibold text-[var(--accent)] underline underline-offset-2">Metas</Link>.</p>
           </motion.section>
 
-          {/* 5. Ahorro en metas */}
+          {/* 5. Ahorro en metas: lo de este mes por meta (con lo acumulado de cada una) y mes a mes */}
           <motion.section {...entrada(4)} className={tarjeta} aria-label="Ahorro en metas">
             <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">Ahorro en metas</h2>
-            {ahorroMes.total > 0 ? (
-              <>
-                <p className={`mt-1 text-[22px] font-bold text-[var(--accent-2)] [font-family:var(--font-display)] ${cifra}`}>{dinero(ahorroMes.total)}</p>
-                <ul className="mt-2 flex flex-col gap-1">
-                  {ahorroMes.filas.map((f) => (
-                    <li key={f.nombreMeta} className="flex justify-between text-[14px] text-[var(--text-secondary)]">
-                      <span className="truncate">{f.nombreMeta}</span>
-                      <span className={cifra}>{dinero(f.total)}</span>
+            <p className="mt-1 text-[14px] text-[var(--text-secondary)]">Ahorrado en {nombreMes}</p>
+            <p className={`text-[22px] font-bold text-[var(--accent-2)] [font-family:var(--font-display)] ${cifra}`}>{dinero(ahorroEsteMes)}</p>
+
+            {metas.length > 0 ? (
+              <ul className="mt-4 flex flex-col gap-4">
+                {metas.map((m) => {
+                  const esteMes = ahorroPorMetaMes.get(m.id) ?? 0;
+                  const avance = m.montoObjetivo > 0 ? Math.min(100, Math.round((m.montoActual / m.montoObjetivo) * 100)) : 0;
+                  return (
+                    <li key={m.id}>
+                      <div className="flex items-baseline justify-between gap-2 text-[14px]">
+                        <span className="min-w-0 font-medium text-[var(--text-primary)]">{nombreLegible(m.nombre)}</span>
+                        <span className={`shrink-0 font-semibold text-[var(--text-primary)] ${cifra}`}>{avance}%</span>
+                      </div>
+                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-2)]">
+                        <motion.div className="h-full rounded-full" style={{ backgroundColor: 'var(--accent-2)' }} {...crecer(avance)} />
+                      </div>
+                      <p className={`mt-1 text-[13px] text-[var(--text-secondary)] ${cifra}`}>
+                        Llevan {dinero(m.montoActual)} de {dinero(m.montoObjetivo)}
+                      </p>
+                      <p className={`text-[13px] ${esteMes > 0 ? 'font-semibold text-[var(--accent-2)]' : 'text-[var(--text-secondary)]'} ${cifra}`}>
+                        {esteMes > 0 ? `Este mes: + ${dinero(esteMes)}` : 'Sin aportes este mes'}
+                      </p>
                     </li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-[13px] text-[var(--text-secondary)]">El ahorro no cuenta como gasto.</p>
-              </>
+                  );
+                })}
+              </ul>
             ) : (
-              <p className="mt-1 text-[14px] leading-snug text-[var(--text-secondary)]">
-                Este mes no hubo aportes. Un aporte pequeño también suma:{' '}
+              <p className="mt-3 text-[14px] leading-snug text-[var(--text-secondary)]">
+                Todavía no tienen metas.{' '}
                 <Link href="/app/metas" className="font-semibold text-[var(--accent)] underline underline-offset-2">
-                  ir a Metas
+                  Creen la primera
                 </Link>
                 .
               </p>
             )}
+
+            <h3 className="mt-5 text-[15px] font-semibold text-[var(--text-primary)]">Mes a mes</h3>
+            <div role="img" aria-label={`Ahorro por mes: ${ahorroMeses.map((t) => `${MESES[Number(t.clave.slice(5)) - 1]} ${dinero(t.total)}`).join(', ')}`}>
+              <div className="relative mt-3 flex h-24 items-end gap-2">
+                {ahorroMeses.map((t, i) => {
+                  const alto = Math.max(t.total > 0 ? 4 : 0, (t.total / ahorroMaximo) * 100);
+                  const actual = i === ahorroMeses.length - 1;
+                  return (
+                    <div key={t.clave} className="flex h-full flex-1 items-end">
+                      {t.total > 0 && (
+                        <motion.div
+                          className="w-full rounded-t-[8px]"
+                          style={{ backgroundColor: actual ? 'var(--accent-2)' : VERDE_2 }}
+                          initial={reducido ? { height: `${alto}%` } : { height: 0 }}
+                          animate={{ height: `${alto}%` }}
+                          transition={{ duration: 0.6, delay: 0.05 * i + 0.15, ease: [0.16, 1, 0.3, 1] }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-1.5 flex gap-2">
+                {ahorroMeses.map((t, i) => {
+                  const actual = i === ahorroMeses.length - 1;
+                  return (
+                    <span key={t.clave} className="flex flex-1 flex-col items-center text-center">
+                      <span className={`text-[12px] ${actual ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{MESES_CORTOS[Number(t.clave.slice(5)) - 1]}</span>
+                      <span className={`text-[13px] ${actual ? 'font-bold' : 'font-semibold'} text-[var(--text-primary)] ${cifra}`}>
+                        {t.total > 0 ? compacto(t.total) : <span className="text-[12px] font-normal text-[var(--text-secondary)]">—</span>}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="mt-3 text-[13px] text-[var(--text-secondary)]">El ahorro no cuenta como gasto.</p>
           </motion.section>
         </div>
       ) : null}

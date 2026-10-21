@@ -1,5 +1,5 @@
 // Prueba de las cuentas de Reportes (puras, sin base de datos): node --experimental-strip-types scripts/reportes.prueba.mts
-import { resumirMes, resumirMesHasta, totalesPorMes, ultimosMeses, variacionPorcentual, porcentajeDe, claveMes } from '../app/lib/reportes.ts';
+import { ahorroPorMes, ahorroPorMeta, claveLocalDe, resumirMes, resumirMesHasta, totalesPorMes, ultimosMeses, variacionPorcentual, porcentajeDe, claveMes } from '../app/lib/reportes.ts';
 
 let fallos = 0;
 const ok = (n: string, c: boolean) => {
@@ -41,6 +41,19 @@ ok('claveMes rellena el cero', claveMes(2026, 3) === '2026-03');
 const hasta15 = resumirMesHasta(gastos, '2026-10', 10);
 ok('hasta el día 10 de octubre solo cuentan 2 gastos (1.600.000)', hasta15.cantidad === 2 && hasta15.total === 1600000);
 ok('el 5 de septiembre solo cuenta el gasto del 5 (100.000)', resumirMesHasta(gastos, '2026-09', 5).total === 100000);
+
+const ap = [
+  { metaId: 'cruc', monto: 300000, creadoEn: '2026-10-12T15:00:00' },
+  { metaId: 'cruc', monto: 100000, creadoEn: '2026-10-20T10:00:00' },
+  { metaId: 'cuota', monto: 500000, creadoEn: '2026-10-05T09:00:00' },
+  { metaId: 'cuota', monto: 250000, creadoEn: '2026-09-14T09:00:00' },
+];
+ok('claveLocalDe da el mes del aporte', claveLocalDe('2026-10-12T15:00:00') === '2026-10');
+const am = ahorroPorMes(ap, ultimosMeses(2026, 10, 3));
+ok('ahorro por mes: agosto 0, septiembre 250.000, octubre 900.000', am[0].total === 0 && am[1].total === 250000 && am[2].total === 900000);
+const pm = ahorroPorMeta(ap, '2026-10');
+ok('por meta en octubre: cuota 500.000 y crucero 400.000 (de mayor a menor)', pm[0].id === 'cuota' && pm[0].total === 500000 && pm[1].id === 'cruc' && pm[1].total === 400000);
+ok('una meta sin aportes en el mes no aparece', ahorroPorMeta(ap, '2026-08').length === 0);
 
 console.log(fallos === 0 ? '\nTODO OK' : `\n${fallos} FALLO(S)`);
 process.exit(fallos === 0 ? 0 : 1);

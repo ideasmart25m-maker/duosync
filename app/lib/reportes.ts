@@ -98,3 +98,28 @@ export async function listarGastosDeRango(supabase: SupabaseClient, coupleId: st
     registradoPor: g.registrado_por as string,
   }));
 }
+
+// ── Ahorro en metas ──────────────────────────────────────────────────────────────────────────────────────────────
+export interface AporteBase {
+  metaId: string;
+  monto: number;
+  creadoEn: string; // ISO con hora
+}
+
+/** "yyyy-mm" de un instante, en la hora LOCAL de quien mira (igual que el resto de la app, que cuenta los meses por el calendario del teléfono). */
+export function claveLocalDe(iso: string): string {
+  const d = new Date(iso);
+  return claveMes(d.getFullYear(), d.getMonth() + 1);
+}
+
+/** Total ahorrado en cada mes pedido (0 si no hubo aportes). */
+export function ahorroPorMes(aportes: AporteBase[], meses: { clave: string }[]): { clave: string; total: number }[] {
+  return meses.map((m) => ({ clave: m.clave, total: aportes.filter((a) => claveLocalDe(a.creadoEn) === m.clave).reduce((acc, a) => acc + a.monto, 0) }));
+}
+
+/** Lo ahorrado en UN mes, por meta (de mayor a menor). */
+export function ahorroPorMeta(aportes: AporteBase[], clave: string): FilaTotal[] {
+  const mapa = new Map<string, number>();
+  for (const a of aportes) if (claveLocalDe(a.creadoEn) === clave) mapa.set(a.metaId, (mapa.get(a.metaId) ?? 0) + a.monto);
+  return ordenar(mapa);
+}

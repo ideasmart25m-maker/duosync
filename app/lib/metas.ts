@@ -106,3 +106,29 @@ export async function guardarMostrarAhorro(supabase: SupabaseClient, userId: str
   const { error } = await supabase.from('profiles').update({ mostrar_ahorro_inicio: mostrar }).eq('id', userId);
   if (error) throw error;
 }
+
+/** Un nombre escrito todo en mayúsculas ("CUOTA INICIAL APARTAMENTO") se muestra en minúsculas con la primera en mayúscula, para que todas las metas se vean igual. Solo cambia lo que se ve, no lo guardado. */
+export function nombreLegible(nombre: string): string {
+  const t = nombre.trim();
+  const letras = t.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '');
+  return letras.length >= 4 && t === t.toUpperCase() ? t.charAt(0) + t.slice(1).toLowerCase() : t;
+}
+
+export interface AporteSimple {
+  metaId: string;
+  monto: number;
+  creadoEn: string; // ISO con hora
+}
+
+/** Todos los aportes a metas entre dos instantes (`desde` inclusive, `hasta` exclusivo). */
+export async function listarAportesDeRango(supabase: SupabaseClient, coupleId: string, desde: Date, hasta: Date): Promise<AporteSimple[]> {
+  const { data, error } = await supabase
+    .from('goal_contributions')
+    .select('meta_id, monto, created_at')
+    .eq('couple_id', coupleId)
+    .gte('created_at', desde.toISOString())
+    .lt('created_at', hasta.toISOString())
+    .limit(5000);
+  if (error) throw error;
+  return (data ?? []).map((a) => ({ metaId: a.meta_id as string, monto: Number(a.monto), creadoEn: a.created_at as string }));
+}
