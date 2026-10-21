@@ -24,6 +24,15 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Red de seguridad del ingreso con Google/enlace: si Supabase devuelve el código de entrada a la raíz (por ejemplo
+  // porque no aceptó la dirección de regreso exacta), lo mandamos a /auth/callback para que cree la sesión.
+  if (request.nextUrl.pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    const destino = new URL('/auth/callback', request.url);
+    destino.searchParams.set('code', request.nextUrl.searchParams.get('code')!);
+    destino.searchParams.set('next', '/app/hoy');
+    return NextResponse.redirect(destino);
+  }
+
   // Quien ya tiene sesión y abre fairsy.lat (o /login sin invitación) entra directo a la app, sin pasar por la
   // página de ventas ni pedir el correo otra vez.
   const ruta = request.nextUrl.pathname;
