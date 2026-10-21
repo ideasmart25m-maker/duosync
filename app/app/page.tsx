@@ -93,10 +93,10 @@ export default function FairsyLanding() {
       <AppPorDentro
         tituloMarked="Así se ve [acento]llevar las cuentas en equipo[/acento]"
         frames={[
-          { label: 'Su mensaje del día y la planta que crece con ustedes', nombrePantalla: 'Hoy' },
-          { label: 'Cada gasto, categorizado a su manera', nombrePantalla: 'Gastos' },
-          { label: 'La meta que están construyendo juntos', nombrePantalla: 'Metas' },
-          { label: 'En qué se va el dinero, mes a mes', nombrePantalla: 'Reportes' },
+          { src: '/landing/app-hoy.png', alt: 'Inicio: el mensaje del día, la planta de la racha y la pregunta para los dos', label: 'Su mensaje del día y la planta que crece con ustedes' },
+          { src: '/landing/app-gastos.png', alt: 'Gastos del mes por categoría, con el aviso del presupuesto', label: 'Cada gasto, categorizado a su manera' },
+          { src: '/landing/app-metas.png', alt: 'Metas de ahorro: Viaje a Cartagena con su avance', label: 'La meta que están construyendo juntos' },
+          { src: '/landing/app-reportes.png', alt: 'Reportes: lo gastado en el mes frente al presupuesto y en qué se va', label: 'En qué se va el dinero, mes a mes' },
         ]}
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
@@ -163,7 +163,7 @@ export default function FairsyLanding() {
           {
             pregunta: '¿Es seguro poner nuestros gastos ahí?',
             respuestaMarked:
-              'Sí, es seguro porque no guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros están [b]100% seguros y bajo su control[/b].',
+              'Sí, es seguro porque no guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros [b]quedan bajo su control[/b].',
           },
           {
             pregunta: '¿Y si la otra persona deja de usarla a los pocos días?',

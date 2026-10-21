@@ -108,7 +108,7 @@ export function Hero({
           {/* Visual del producto: asoma en el primer viewport e invita al scroll */}
           <div className="mt-10 w-full max-w-[720px]">
             {visual ? (
-              <div className="overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_18%,transparent)] shadow-[var(--shadow-2)]">
+              <div className="overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_22%,transparent)] shadow-[var(--shadow-2)]">
                 {visual}
               </div>
             ) : (
