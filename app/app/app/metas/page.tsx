@@ -178,8 +178,8 @@ function FormularioMeta({
 
 // Las metas alternan los dos verdes del logo (pedido de la usuaria: usar la paleta del logo en todas las pantallas).
 function fondoDeMeta(indice: number): string | undefined {
-  // Pares: verde oscuro del logo (el de la marca); impares: el mismo verde con un degradado hacia el verde menta (translúcido, sin un verde plano).
-  return indice % 2 === 1 ? 'linear-gradient(150deg, var(--accent-2) 0%, color-mix(in oklab, var(--accent-2) 55%, var(--verde-claro)) 100%)' : undefined;
+  // Pares: verde oscuro del logo (el de la marca); impares: coral/naranja de la marca (el mismo de "Todas las categorías" en Gastos).
+  return indice % 2 === 1 ? 'linear-gradient(150deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 86%, var(--cat-amber)) 100%)' : undefined;
 }
 
 function TarjetaMeta({
