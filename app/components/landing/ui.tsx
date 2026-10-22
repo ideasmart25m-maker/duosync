@@ -141,7 +141,7 @@ export function useReveal(stagger = 0.07): { contenedor: Variants; item: Variant
 }
 
 /* Props estándar para el contenedor con reveal — evita repetir en cada sección. */
-export const VIEWPORT_ONCE = { once: true, amount: 0.2 } as const;
+export const VIEWPORT_ONCE = { once: true, amount: 0.05 } as const;
 
 /* ── <CtaButton> — el CTA vivo del kit: ≥52px, whileTap 0.97, sombra tintada.
    El texto sobre acento usa --bg: si tu FICHA-ARTE rompe el contraste AA ahí,

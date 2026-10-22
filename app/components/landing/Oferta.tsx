@@ -177,6 +177,7 @@ export function Oferta({
                   <CtaButton href={anual.ctaHref} fullMobile>
                     {anual.ctaLabel}
                   </CtaButton>
+                  <p className="mt-3 text-center text-[13px] text-[var(--text-secondary)]">7 días gratis · Garantía de Cuentas Claras: 15 días</p>
                 </div>
               </div>
             </Hairline>
@@ -207,6 +208,7 @@ export function Oferta({
               {cargandoMensual && <Loader2 size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
               {mensual.ctaLabel}
             </motion.a>
+            <p className="mt-3 text-center text-[13px] text-[var(--text-secondary)]">7 días gratis · Garantía de Cuentas Claras: 15 días</p>
           </motion.div>
         </div>
       </motion.div>

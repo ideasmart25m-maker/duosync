@@ -36,7 +36,7 @@ export default function FairsyLanding() {
         appName="Fairsy"
         logo={<Image src="/logo-fairsy.png" alt="" width={233} height={128} priority className="h-7 w-auto" />}
         loginHref="/login"
-        h1Marked="Gestión de gastos juntos, sin hojas de cálculo ni [acento]momentos incómodos[/acento]"
+        h1Marked="Cuentas claras entre los dos. [acento]Sin discutir[/acento], sin cobrarle a nadie."
         subtitleMarked="Fairsy automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
@@ -74,7 +74,7 @@ export default function FairsyLanding() {
       {/* 4. SOLUCIÓN */}
       <Solucion
         tituloMarked="Cuentas claras [acento]sin discusiones[/acento]"
-        mecanismo="el Código de Conexión"
+        mecanismo="Código de Conexión"
         bigIdeaMarked="No falta organización, falta un lugar donde los dos vean lo mismo. El Código de Conexión los conecta y el [b]saldo se actualiza solo[/b]."
         pasos={[
           { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y la otra persona entra al instante: sin correo y sin contraseña.', color: 'var(--accent-2)' },
@@ -146,7 +146,7 @@ export default function FairsyLanding() {
 
       {/* 7. GARANTÍA — 15 días, verificado contra los plazos reales de Hotmart (FICHA-MERCADO §4) */}
       <Garantia
-        nombre="la Garantía de Cuentas Claras"
+        nombre="La Garantía de Cuentas Claras"
         condicionMarked="Prueban 7 días gratis. Si no les convence, [b]piden su dinero de vuelta en 15 días[/b] — sin trámites."
         pisoLegal="Respaldada por la garantía de reembolso de Hotmart"
         color="var(--accent-2)"
