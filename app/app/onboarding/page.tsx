@@ -80,8 +80,8 @@ export default function OnboardingPage() {
     <FunnelShell>
       <FunnelHeader
         onBack={paso > 0 && paso < 7 ? atras : undefined}
-        progreso={paso < 6 ? pct(paso) : undefined}
-        contador={numeroPregunta[paso] ? `Pregunta ${numeroPregunta[paso]} de 5` : undefined}
+        progreso={paso < 7 ? pct(paso) : undefined}
+        contador={numeroPregunta[paso] ? `Pregunta ${numeroPregunta[paso]} de 5` : paso === 2 ? 'Vamos muy bien' : paso === 6 ? 'Último paso' : undefined}
         salida={paso !== 7}
       />
       <AnimatePresence mode="wait">
@@ -531,7 +531,7 @@ function PasoVinculacion({
 
       <div className="mt-auto pt-8">
         <CtaFijo disabled={tengoCodigo && (codigoIngresado.length < 4 || codigoInvalido)} onClick={onContinuar}>
-          {tengoCodigo ? 'Conectar cuentas' : 'Ya lo compartí, continuar'}
+          {tengoCodigo ? 'Conectar cuentas' : 'Seguir, lo comparto después'}
         </CtaFijo>
       </div>
     </div>
@@ -692,7 +692,7 @@ function PasoResultado({
           </motion.span>
         </div>
         <h1 className="mt-5 text-balance text-center text-[24px] font-bold leading-[1.15] text-[var(--text-primary)] [font-family:var(--font-display)]">
-          El Plan {nombreMeta} está listo
+          Su plan «{nombreMeta}» está listo
         </h1>
         {/* "Sus 5 respuestas" — el objeto Respuestas tiene 5 campos (antes decía "6", un
             número que no cuadraba con nada del flujo — defecto real de integridad detectado
@@ -707,11 +707,15 @@ function PasoResultado({
             </li>
             <li className="flex items-start gap-3">
               <Check size={20} strokeWidth={2.4} color="var(--accent)" aria-hidden="true" className="mt-0.5 shrink-0" />
-              Categorías ajustadas a {respuestas.gastoDificil ?? 'su gasto principal'}
+              Su meta compartida: {nombreMeta}
             </li>
             <li className="flex items-start gap-3">
               <Check size={20} strokeWidth={2.4} color="var(--accent)" aria-hidden="true" className="mt-0.5 shrink-0" />
-              Ritual diario activado: {respuestas.momentoDia ?? 'la hora que eligieron'}
+              El gasto que más les cuesta: {respuestas.gastoDificil ?? 'el que elijan'}
+            </li>
+            <li className="flex items-start gap-3">
+              <Check size={20} strokeWidth={2.4} color="var(--accent)" aria-hidden="true" className="mt-0.5 shrink-0" />
+              Su momento para revisar juntos: {respuestas.momentoDia ?? 'el que eligieron'}
             </li>
           </ul>
         </div>

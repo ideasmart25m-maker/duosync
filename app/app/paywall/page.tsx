@@ -133,12 +133,9 @@ function PaywallInner() {
                 S
               </span>
             </div>
-            <span className="rounded-full bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] px-2.5 py-1 text-[12px] font-semibold text-[var(--accent)]">
-              Conectados
-            </span>
           </div>
           <h1 className="text-balance text-[32px] font-bold leading-[1.15] tracking-[-0.02em] text-[var(--text-primary)] [font-family:var(--font-display)]">
-            Su {nombrePlan} <span className="text-[var(--accent)]">está listo</span>
+            Su <span className="text-[var(--accent)]">{nombrePlan}</span> está listo
           </h1>
           <p className="mt-1 text-[16px] leading-snug text-[var(--text-secondary)]">
             Se acabó sentirse <span className="font-semibold text-[var(--text-primary)]">&quot;el cobrador&quot;</span> —
@@ -182,7 +179,10 @@ function PaywallInner() {
               Ahorran 50%
             </span>
             <div className="flex items-center justify-between">
-              <span className="text-[16px] font-semibold text-[var(--text-primary)]">Anual</span>
+              <span className="flex items-center gap-2 text-[16px] font-semibold text-[var(--text-primary)]">
+                <Radio activo={plan === 'anual'} />
+                Anual
+              </span>
               <span className="flex items-baseline gap-1">
                 <span className="text-[24px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                   <PrecioAnimado valor={3} />
@@ -190,7 +190,7 @@ function PaywallInner() {
                 <span className="text-[12px] text-[var(--text-secondary)]">/mes</span>
               </span>
             </div>
-            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">Se cobra US$35.94/año · 7 días gratis</p>
+            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">7 días gratis · US$35.94/año · cancelan cuando quieran</p>
           </motion.button>
         </Hairline>
 
@@ -205,7 +205,10 @@ function PaywallInner() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[16px] font-semibold text-[var(--text-primary)]">Mensual</span>
+            <span className="flex items-center gap-2 text-[16px] font-semibold text-[var(--text-primary)]">
+              <Radio activo={plan === 'mensual'} />
+              Mensual
+            </span>
             <span className="flex items-baseline gap-1">
               <span className="text-[24px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                 <PrecioAnimado valor={5.99} />
@@ -236,20 +239,23 @@ function PaywallInner() {
           // Única mención de la garantía en toda la pantalla (antes se repetía en un badge
           // aparte debajo — defecto real detectado: redundancia que sumaba altura sin sumar
           // claridad). Explícito que el cobro llega DESPUÉS del trial, no antes.
-          <p className="mt-2 text-center text-[12px] text-[var(--text-secondary)]">
-            Gratis 7 días, se cobra recién el {fechaCobro}, en su moneda al valor del día (en Colombia, en pesos). ¿No les convence? 15 días de garantía.
-          </p>
+          <div className="mt-2 text-center text-[12px] leading-snug">
+            <p className="text-[var(--text-secondary)]">
+              Gratis 7 días; el cobro llega el {fechaCobro}, en su moneda al valor del día.
+            </p>
+            <p className="mt-0.5 font-semibold text-[var(--text-primary)]">Garantía de Cuentas Claras: 15 días para pedir su dinero.</p>
+          </div>
         )}
         <motion.button
           type="button"
           whileTap={{ scale: 0.97 }}
           onClick={salir}
           disabled={saliendo}
-          className="flex h-11 w-full items-center justify-center text-[16px] font-medium text-[var(--text-tertiary)] [touch-action:manipulation] disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center text-[16px] font-medium text-[var(--text-secondary)] [touch-action:manipulation] disabled:opacity-60"
         >
           Ahora no, seguir con la versión gratis
         </motion.button>
-        <div className="flex items-center justify-center text-[12px] text-[var(--text-tertiary)]">
+        <div className="flex items-center justify-center text-[12px] text-[var(--text-secondary)]">
           <span className="flex items-center gap-1.5">
             <Lock size={14} strokeWidth={2} aria-hidden="true" />
             Pago seguro con Hotmart
@@ -257,6 +263,19 @@ function PaywallInner() {
         </div>
       </div>
     </FunnelShell>
+  );
+}
+
+function Radio({ activo }: { activo: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${
+        activo ? 'border-[var(--accent)]' : 'border-[color-mix(in_oklab,var(--text-tertiary)_55%,transparent)]'
+      }`}
+    >
+      {activo && <span className="size-2.5 rounded-full bg-[var(--accent)]" />}
+    </span>
   );
 }
 

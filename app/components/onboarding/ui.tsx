@@ -49,15 +49,14 @@ export function FunnelHeader({
         <div className="flex flex-1 items-center gap-3">
           <div className="h-0.5 flex-1 rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_15%,transparent)]">
             <motion.div
-              className="h-full rounded-full bg-[var(--accent)]"
+              className="h-full rounded-full bg-[var(--accent-2)]"
               initial={false}
               animate={{ width: `${progreso}%` }}
               transition={{ duration: reducido ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
           <span className="whitespace-nowrap text-[12px] tabular-nums text-[var(--text-tertiary)]">
-            {contador ? `${contador} · ` : ''}
-            {Math.round(progreso)}%
+            {contador ?? `${Math.round(progreso)}%`}
           </span>
         </div>
       ) : (
