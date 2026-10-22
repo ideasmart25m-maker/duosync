@@ -16,7 +16,7 @@ export function HeroVisual() {
         <span className="text-[13px] font-semibold text-[var(--text-primary)]">Mateo &amp; Sofía, a su manera</span>
       </div>
       <div
-        className="relative aspect-[9/16.4] w-[250px] overflow-hidden rounded-t-[30px] border-[5px] border-b-0 shadow-[var(--shadow-2)]"
+        className="relative aspect-[9/16.1] w-[250px] overflow-hidden rounded-t-[30px] border-[5px] border-b-0 shadow-[var(--shadow-2)]"
         style={{ borderColor: 'color-mix(in oklab, var(--text-primary) 90%, var(--accent))' }}
       >
         <Image
