@@ -8,8 +8,8 @@
 // la card recomendada (el uso canónico de la técnica) · checkmarks custom.
 // El destino de los CTAs sigue al MODELO de 02C (checkout vs /onboarding).
 
-import { useState } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { animate, motion, useInView, useReducedMotion } from 'motion/react';
 import { Star, Loader2 } from 'lucide-react';
 import { CheckCustom, CtaButton, Hairline, Kicker, SectionShell, useReveal, VIEWPORT_ONCE } from './ui';
 import { MarkedCopy, warnCopy, warnRango } from './MarkedCopy';
@@ -61,12 +61,44 @@ function TrialBadge({ dias }: { dias: number }) {
   );
 }
 
+// El precio cuenta de 0 al valor al entrar en pantalla (baseline de movimiento). El texto accesible es el precio
+// completo desde el primer momento; con reduced-motion se muestra directo.
+function PrecioAnimado({ texto }: { texto: string }) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const enVista = useInView(ref, { once: true, amount: 0.6 });
+  const reducido = useReducedMotion() ?? false;
+  const m = texto.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/);
+  const meta = m ? parseFloat(m[2]) : 0;
+  const decimales = m && m[2].includes('.') ? m[2].split('.')[1].length : 0;
+  const [valor, setValor] = useState(reducido ? meta : 0);
+  useEffect(() => {
+    if (!m || !enVista) return;
+    if (reducido) {
+      setValor(meta);
+      return;
+    }
+    const c = animate(0, meta, { duration: 1, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setValor(v) });
+    return () => c.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enVista, reducido, meta]);
+  if (!m) return <span>{texto}</span>;
+  return (
+    <span ref={ref} aria-label={texto}>
+      <span aria-hidden="true">
+        {m[1]}
+        {valor.toFixed(decimales)}
+        {m[3]}
+      </span>
+    </span>
+  );
+}
+
 function Precio({ plan }: { plan: PlanOferta }) {
   return (
     <div>
       <p className="flex items-baseline gap-1">
         <span className="text-[36px] font-bold leading-none [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
-          {plan.precioMes}
+          <PrecioAnimado texto={plan.precioMes} />
         </span>
         <span className="text-[14px] text-[var(--text-secondary)]">{plan.sufijo ?? '/mes'}</span>
       </p>
@@ -196,6 +228,12 @@ export function Oferta({
               <Precio plan={mensual} />
             </div>
             <Features items={mensual.features} origen="Oferta → mensual" />
+            <p className="mt-3 flex items-start gap-3 text-[14px] leading-snug text-[var(--text-secondary)]">
+              <span className="mt-0.5 size-5 shrink-0 rounded-full border border-dashed border-[color-mix(in_oklab,var(--text-tertiary)_50%,transparent)]" aria-hidden="true" />
+              <span>
+                <span className="line-through decoration-[color-mix(in_oklab,var(--text-tertiary)_60%,transparent)]">Historial ilimitado</span> — solo en el plan Anual
+              </span>
+            </p>
             <motion.a
               whileTap={{ scale: 0.97 }}
               href={mensual.ctaHref}

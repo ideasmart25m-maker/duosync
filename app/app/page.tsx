@@ -93,10 +93,10 @@ export default function FairsyLanding() {
       <AppPorDentro
         tituloMarked="Así se ve [acento]llevar las cuentas en equipo[/acento]"
         frames={[
-          { src: '/landing/app-hoy.png', alt: 'Inicio: el mensaje del día, la planta de la racha y la pregunta para los dos', label: 'Su mensaje del día y la planta que crece con ustedes' },
           { src: '/landing/app-gastos.png', alt: 'Gastos del mes por categoría, con el aviso del presupuesto', label: 'Cada gasto, categorizado a su manera' },
           { src: '/landing/app-metas.png', alt: 'Metas de ahorro: Viaje a Cartagena con su avance', label: 'La meta que están construyendo juntos' },
           { src: '/landing/app-reportes.png', alt: 'Reportes: lo gastado en el mes frente al presupuesto y en qué se va', label: 'En qué se va el dinero, mes a mes' },
+          { src: '/landing/app-hoy.png', alt: 'Inicio: el mensaje del día, la planta de la racha y la pregunta para los dos', label: 'Su mensaje del día y la planta que crece con ustedes' },
         ]}
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
