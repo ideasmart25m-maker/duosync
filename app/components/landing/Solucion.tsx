@@ -96,8 +96,8 @@ export function Solucion({
               style={
                 p.color
                   ? {
-                      backgroundColor: `color-mix(in oklab, ${p.color} 8%, var(--bg))`,
-                      border: `1px solid color-mix(in oklab, ${p.color} 22%, transparent)`,
+                      backgroundColor: `color-mix(in oklab, ${p.color} 7%, var(--surface))`,
+                      border: `2px solid ${p.color}`,
                       boxShadow: `0 6px 18px -8px color-mix(in oklab, ${p.color} 40%, transparent)`,
                     }
                   : undefined

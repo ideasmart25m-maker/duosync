@@ -49,8 +49,8 @@ export function Garantia({ nombre, condicionMarked, pisoLegal, icon: Icono = Shi
             <div
               className="rounded-[var(--radius-card)]"
               style={{
-                backgroundColor: `color-mix(in oklab, ${color} 8%, var(--surface))`,
-                border: `1px solid color-mix(in oklab, ${color} 25%, transparent)`,
+                backgroundColor: `color-mix(in oklab, ${color} 7%, var(--surface))`,
+                border: `2px solid ${color}`,
                 boxShadow: `0 16px 40px -16px color-mix(in oklab, ${color} 45%, transparent)`,
               }}
             >

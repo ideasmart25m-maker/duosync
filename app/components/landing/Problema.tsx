@@ -61,8 +61,8 @@ export function Problema({ titulo, preguntas, id }: ProblemaProps) {
               style={
                 p.color
                   ? {
-                      backgroundColor: `color-mix(in oklab, ${p.color} 10%, var(--bg))`,
-                      border: `1px solid color-mix(in oklab, ${p.color} 25%, transparent)`,
+                      backgroundColor: `color-mix(in oklab, ${p.color} 7%, var(--surface))`,
+                      border: `2px solid ${p.color}`,
                       boxShadow: `0 6px 18px -8px color-mix(in oklab, ${p.color} 45%, transparent)`,
                     }
                   : { backgroundColor: 'var(--bg)', boxShadow: 'var(--shadow-1)' }

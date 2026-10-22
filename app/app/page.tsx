@@ -49,10 +49,10 @@ export default function FairsyLanding() {
         id="problema"
         titulo="¿Les suena?"
         preguntas={[
-          { icon: Frown, textoMarked: '¿Sientes que eres el único que ordena las cuentas de la casa?', color: 'var(--cat-rose)' },
-          { icon: HandCoins, textoMarked: '¿Discuten por dinero con frecuencia?', color: 'var(--cat-amber)' },
-          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo?", color: 'var(--cat-blue)' },
-          { icon: CalendarClock, textoMarked: '¿Llegan a fin de mes sin saber en qué gastaron su dinero?', color: 'var(--cat-violet)' },
+          { icon: Frown, textoMarked: '¿Sientes que eres el único que ordena las cuentas de la casa?', color: 'var(--accent-2)' },
+          { icon: HandCoins, textoMarked: '¿Discuten por dinero con frecuencia?', color: 'var(--accent-2)' },
+          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo?", color: 'var(--accent-2)' },
+          { icon: CalendarClock, textoMarked: '¿Llegan a fin de mes sin saber en qué gastaron su dinero?', color: 'var(--accent-2)' },
         ]}
       />
 
@@ -77,9 +77,9 @@ export default function FairsyLanding() {
         mecanismo="el Código de Conexión"
         bigIdeaMarked="No falta organización, falta un lugar donde los dos vean lo mismo. El Código de Conexión los conecta y el [b]saldo se actualiza solo[/b]."
         pasos={[
-          { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y la otra persona entra al instante: sin correo y sin contraseña.', color: 'var(--cat-blue)' },
-          { titulo: 'Registran gastos en 2 toques', detalle: 'Arriendo, servicios o mercado — con categorías que ustedes eligen.', color: 'var(--cat-amber)' },
-          { titulo: 'Ven el mismo saldo', detalle: 'Lo que uno registra, el otro lo ve al instante, sin preguntar.', color: 'var(--cat-teal)' },
+          { titulo: 'Vinculan sus teléfonos', detalle: 'Un enlace por WhatsApp y la otra persona entra al instante: sin correo y sin contraseña.', color: 'var(--accent-2)' },
+          { titulo: 'Registran gastos en 2 toques', detalle: 'Arriendo, servicios o mercado — con categorías que ustedes eligen.', color: 'var(--accent-2)' },
+          { titulo: 'Ven el mismo saldo', detalle: 'Lo que uno registra, el otro lo ve al instante, sin preguntar.', color: 'var(--accent-2)' },
         ]}
         antesDespues={{
           labelAntes: 'Antes',
@@ -149,7 +149,7 @@ export default function FairsyLanding() {
         nombre="la Garantía de Cuentas Claras"
         condicionMarked="Prueban 7 días gratis. Si no les convence, [b]piden su dinero de vuelta en 15 días[/b] — sin trámites."
         pisoLegal="Respaldada por la garantía de reembolso de Hotmart"
-        color="var(--cat-teal)"
+        color="var(--accent-2)"
       />
 
       {/* 8. FAQ */}
