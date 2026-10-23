@@ -15,10 +15,25 @@ const fontBody = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://fairsy.lat"),
   appleWebApp: { capable: true, title: 'Fairsy', statusBarStyle: 'default' },
   title: "Fairsy — Cuentas claras, sin discutir",
   description:
-    "Fairsy ordena el gasto del hogar y la conexión diaria de los dos en un solo lugar, con un pago que cubre a los dos.",
+    "Registren gastos en 2 toques, vean el mismo saldo y ahorren en equipo. Un solo pago cubre a los dos. 7 días gratis.",
+  openGraph: {
+    type: "website",
+    siteName: "Fairsy",
+    locale: "es_LA",
+    url: "https://fairsy.lat",
+    title: "Fairsy — Cuentas claras entre los dos, sin discutir",
+    description:
+      "Registren gastos en 2 toques, vean el mismo saldo y ahorren en equipo. Un solo pago cubre a los dos. 7 días gratis.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fairsy — Cuentas claras entre los dos, sin discutir",
+    description: "Registren gastos en 2 toques, vean el mismo saldo y ahorren en equipo. 7 días gratis.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
