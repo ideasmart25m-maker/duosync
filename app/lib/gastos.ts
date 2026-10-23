@@ -370,3 +370,13 @@ export async function liquidarSaldo(supabase: SupabaseClient, moneda: string | n
   const { error } = await supabase.rpc('liquidar_saldo', { p_moneda: moneda });
   if (error) throw error;
 }
+
+// Anota un abono (pago parcial) del que debe. El servidor decide quién paga según el saldo y no deja abonar más de lo que se debe.
+export async function registrarAbono(supabase: SupabaseClient, monto: number, moneda: string | null = null): Promise<void> {
+  const { error } = await supabase.rpc('registrar_abono', { p_monto: monto, p_moneda: moneda });
+  if (error) {
+    if (error.message.includes('MAYOR_AL_SALDO')) throw new Error('MAYOR_AL_SALDO');
+    if (error.message.includes('SIN_SALDO')) throw new Error('SIN_SALDO');
+    throw error;
+  }
+}

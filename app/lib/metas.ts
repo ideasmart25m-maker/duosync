@@ -66,6 +66,12 @@ export async function actualizarMeta(
 
 // Aporta de forma atómica en el servidor (RPC `aportar_a_meta`) — nunca se suma en el cliente,
 // para que un aporte de cada integrante casi al mismo tiempo no se pise entre sí.
+// Elimina la meta junto con sus aportes (la base los borra en cascada). RLS solo deja borrar las de su propia pareja.
+export async function eliminarMeta(supabase: SupabaseClient, metaId: string): Promise<void> {
+  const { error } = await supabase.from('savings_goals').delete().eq('id', metaId);
+  if (error) throw error;
+}
+
 export async function aportarAMeta(supabase: SupabaseClient, metaId: string, monto: number): Promise<MetaDB> {
   const { data, error } = await supabase.rpc('aportar_a_meta', { p_meta_id: metaId, p_monto: monto });
   if (error) throw error;

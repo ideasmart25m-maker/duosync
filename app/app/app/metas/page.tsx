@@ -11,10 +11,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { animate } from 'motion/react';
-import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles, PiggyBank } from 'lucide-react';
+import { Sprout, TreeDeciduous, Trees, Apple, Plus, CalendarDays, Pencil, Check, X, Loader2, Sparkles, PiggyBank, Trash2 } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId, obtenerPaisPareja } from '@/lib/gastos';
-import { nombreLegible, listarMetas, crearMeta, actualizarMeta, aportarAMeta, listarAportesDelMes, type MetaDB, type AporteDelMes } from '@/lib/metas';
+import { nombreLegible, listarMetas, crearMeta, actualizarMeta, eliminarMeta, aportarAMeta, listarAportesDelMes, type MetaDB, type AporteDelMes } from '@/lib/metas';
 import { obtenerNombresPareja } from '@/lib/preguntas';
 import { ViajesMetas } from '@/components/app/ViajesMetas';
 import { formatoMoneda } from '@/lib/paises';
@@ -96,6 +96,7 @@ function FormularioMeta({
   sobreVerde,
   onGuardar,
   onCancelar,
+  onEliminar,
 }: {
   inicial?: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null };
   guardando: boolean;
@@ -105,7 +106,10 @@ function FormularioMeta({
   sobreVerde?: boolean;
   onGuardar: (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => void;
   onCancelar: () => void;
+  /** Solo al editar una meta que ya existe: quita la meta (con confirmación de dos pasos). */
+  onEliminar?: () => void;
 }) {
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
   const [nombre, setNombre] = useState(inicial?.nombre ?? '');
   const [montoObjetivo, setMontoObjetivo] = useState(inicial?.montoObjetivo ? String(inicial.montoObjetivo) : '');
   const [fechaObjetivo, setFechaObjetivo] = useState(inicial?.fechaObjetivo ?? '');
@@ -172,6 +176,42 @@ function FormularioMeta({
           {guardando ? 'Guardando…' : textoBoton}
         </button>
       </div>
+      {onEliminar &&
+        (confirmandoBorrado ? (
+          <div className="flex flex-col gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--danger)_45%,transparent)] bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] p-3">
+            <p className={`text-[13px] leading-snug ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-primary)]'}`}>
+              ¿Eliminar esta meta? Se borra con todos sus aportes y no se puede deshacer.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmandoBorrado(false)}
+                disabled={guardando}
+                className={`flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] text-[14px] font-medium [touch-action:manipulation] ${sobreVerde ? 'text-[var(--bg)]' : 'text-[var(--text-secondary)]'}`}
+              >
+                No, conservarla
+              </button>
+              <button
+                type="button"
+                onClick={onEliminar}
+                disabled={guardando}
+                className="flex h-11 flex-1 items-center justify-center rounded-[var(--radius-button)] bg-[var(--danger)] text-[14px] font-semibold text-white disabled:opacity-60 [touch-action:manipulation]"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmandoBorrado(true)}
+            disabled={guardando}
+            className={`flex h-11 items-center justify-center gap-1.5 text-[14px] font-medium underline-offset-2 hover:underline [touch-action:manipulation] ${sobreVerde ? 'text-[var(--bg)] opacity-90' : 'text-[var(--danger)]'}`}
+          >
+            <Trash2 size={15} strokeWidth={2.2} aria-hidden="true" />
+            Eliminar meta
+          </button>
+        ))}
     </form>
   );
 }
@@ -194,12 +234,14 @@ function TarjetaMeta({
   pais,
   supabase,
   onActualizada,
+  onEliminada,
 }: {
   meta: MetaDB;
   indice: number;
   pais: string | null;
   supabase: ReturnType<typeof crearClienteNavegador>;
   onActualizada: (m: MetaDB) => void;
+  onEliminada: (id: string) => void;
 }) {
   const reducido = useReducedMotion();
   const [celebrar, setCelebrar] = useState(false);
@@ -255,6 +297,18 @@ function TarjetaMeta({
     }
   };
 
+  const borrar = async () => {
+    setGuardandoEdicion(true);
+    setError(null);
+    try {
+      await eliminarMeta(supabase, meta.id);
+      onEliminada(meta.id);
+    } catch {
+      setError('No pudimos eliminar la meta. Intenten de nuevo en un momento.');
+      setGuardandoEdicion(false);
+    }
+  };
+
   // 4 etapas visualmente DISTINTAS (defecto real reportado: el paso 2 y 3 usaban el mismo
   // ícono, no se notaba el crecimiento) — semilla → árbol joven → árbol lleno → fruto.
   const nodos = [
@@ -283,6 +337,7 @@ function TarjetaMeta({
           sobreVerde
           onGuardar={guardarEdicion}
           onCancelar={() => setEditando(false)}
+          onEliminar={borrar}
         />
       ) : (
         <>
@@ -459,14 +514,22 @@ export default function MetasPage() {
     };
   }, [supabase]);
 
+  const refrescarAportes = useCallback(() => {
+    if (!coupleId) return;
+    const ahora = new Date();
+    const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+    listarAportesDelMes(supabase, coupleId, prefijoMes).then(setAportes).catch(() => {});
+  }, [coupleId, supabase]);
+
+  const quitarDeLista = useCallback((id: string) => {
+    setMetas((prev) => prev.filter((x) => x.id !== id));
+    refrescarAportes();
+  }, [refrescarAportes]);
+
   const actualizarEnLista = useCallback((m: MetaDB) => {
     setMetas((prev) => prev.map((x) => (x.id === m.id ? m : x)));
-    if (coupleId) {
-      const ahora = new Date();
-      const prefijoMes = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
-      listarAportesDelMes(supabase, coupleId, prefijoMes).then(setAportes).catch(() => {});
-    }
-  }, [coupleId, supabase]);
+    refrescarAportes();
+  }, [refrescarAportes]);
 
   const crearMetaNueva = async (v: { nombre: string; montoObjetivo: number; fechaObjetivo: string | null }) => {
     if (!coupleId) return;
@@ -509,7 +572,7 @@ export default function MetasPage() {
       <GuiaPagina
         id="metas"
         items={[
-          { titulo: 'Metas de ahorro', texto: 'Algo que quieren lograr juntos, con su monto y, si quieren, una fecha. Cada uno puede aportar cuando pueda.' },
+          { titulo: 'Metas de ahorro', texto: 'Algo que quieren lograr juntos, con su monto y, si quieren, una fecha. Cada uno puede aportar cuando pueda. Tocando el nombre de la meta pueden cambiarla o eliminarla.' },
           { titulo: 'Aportes', texto: 'Cada aporte suma a la meta y queda registrado quién lo hizo. El ahorro no cuenta como gasto.' },
           { titulo: 'Viajes', texto: 'Un espacio aparte para un viaje, con su moneda y su presupuesto, sin mezclarlo con los gastos de la casa.' },
         ]}
@@ -526,7 +589,7 @@ export default function MetasPage() {
           <p className="text-[13px] text-[var(--text-tertiary)]">Un viaje, un proyecto, un ahorro para lo que sea — empiecen por ponerle nombre.</p>
         </div>
       ) : (
-        metas.map((m, i) => <TarjetaMeta key={m.id} meta={m} indice={i} pais={pais} supabase={supabase} onActualizada={actualizarEnLista} />)
+        metas.map((m, i) => <TarjetaMeta key={m.id} meta={m} indice={i} pais={pais} supabase={supabase} onActualizada={actualizarEnLista} onEliminada={quitarDeLista} />)
       )}
 
       {creandoMeta ? (

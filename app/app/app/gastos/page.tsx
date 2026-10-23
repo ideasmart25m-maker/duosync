@@ -10,7 +10,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Minus, Tag, Pencil, Trash2, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Inbox, Loader2, Camera, Sparkles, Check, Scale, Tag, Pencil, Trash2, Home } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import {
   obtenerCoupleId,
@@ -27,6 +27,7 @@ import {
   obtenerSaldoPareja,
   obtenerPresupuestoPareja,
   liquidarSaldo,
+  registrarAbono,
   type GastoDB,
   type SaldoPorMoneda,
 } from '@/lib/gastos';
@@ -38,6 +39,7 @@ import { AsistenteChat } from '@/components/app/AsistenteChat';
 import { EditorCategorias, NOMBRES_SERVICIOS } from '@/components/app/EditorCategorias';
 import { obtenerNombresPareja } from '@/lib/preguntas';
 import { InputMonto } from '@/components/ui/InputMonto';
+import { InputPorcentaje } from '@/components/ui/InputPorcentaje';
 import { AlertaPresupuesto } from '@/components/app/AlertaPresupuesto';
 import { evaluarPresupuesto } from '@/lib/presupuesto';
 import { GuiaPagina } from '@/components/app/GuiaPagina';
@@ -228,33 +230,17 @@ function FormularioGasto({
               <span className="font-semibold text-[var(--text-primary)]">{100 - reparto}%</span>
             </p>
             <div className="mt-2 flex items-center gap-3">
-              <button
-                type="button"
-                disabled={reparto <= 0}
-                onClick={() => {
-                  setReparto((r) => Math.max(0, r - 10));
+              <InputPorcentaje
+                valor={reparto}
+                onCambiar={(n) => {
+                  setReparto(n);
                   setRepartoTocado(true);
                 }}
-                aria-label="Menos para mí"
-                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface)] disabled:opacity-40 [touch-action:manipulation]"
-              >
-                <Minus size={14} strokeWidth={2.4} aria-hidden="true" />
-              </button>
+                etiqueta="Mi parte"
+              />
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_20%,transparent)]">
                 <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${reparto}%` }} />
               </div>
-              <button
-                type="button"
-                disabled={reparto >= 100}
-                onClick={() => {
-                  setReparto((r) => Math.min(100, r + 10));
-                  setRepartoTocado(true);
-                }}
-                aria-label="Más para mí"
-                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface)] disabled:opacity-40 [touch-action:manipulation]"
-              >
-                <Plus size={14} strokeWidth={2.4} aria-hidden="true" />
-              </button>
             </div>
           </div>
         )}
@@ -589,6 +575,39 @@ function GastosInner() {
     }
   };
 
+  // Abonos: el que debe va anotando lo que paga, y el saldo baja en ese valor.
+  const [abonoTexto, setAbonoTexto] = useState<Record<string, string>>({});
+  const [abonando, setAbonando] = useState<string | null | undefined>(undefined);
+  const [avisoAbono, setAvisoAbono] = useState<string | null>(null);
+  const abonar = async (moneda: string | null, saldoActual: number, formatear: (n: number) => string) => {
+    if (!coupleId || !userId) return;
+    const clave = moneda ?? 'casa';
+    const valor = Number(abonoTexto[clave] ?? '');
+    if (!valor || valor <= 0) return;
+    if (valor > Math.abs(saldoActual) + 0.5) {
+      setAvisoAbono(`El abono no puede ser mayor que lo que se debe (${formatear(Math.abs(saldoActual))}).`);
+      return;
+    }
+    setAbonando(moneda);
+    setAvisoAbono(null);
+    try {
+      await registrarAbono(supabase, valor, moneda);
+      const nuevos = await obtenerSaldoPareja(supabase, coupleId, userId);
+      setSaldos(nuevos);
+      setAbonoTexto((prev) => ({ ...prev, [clave]: '' }));
+      const queda = nuevos?.find((x) => x.moneda === moneda)?.saldo ?? 0;
+      setAvisoAbono(Math.round(Math.abs(queda)) === 0 ? 'Abono anotado. ¡Quedaron al día!' : `Abono anotado. Queda por pagar ${formatear(Math.abs(queda))}.`);
+    } catch (e) {
+      setAvisoAbono(
+        e instanceof Error && e.message === 'MAYOR_AL_SALDO'
+          ? 'El abono no puede ser mayor que lo que se debe.'
+          : 'No pudimos anotar el abono. Intenten de nuevo en un momento.'
+      );
+    } finally {
+      setAbonando(undefined);
+    }
+  };
+
   const liquidar = async (moneda: string | null) => {
     if (!coupleId || !userId) return;
     setLiquidandoMoneda(moneda);
@@ -728,7 +747,7 @@ function GastosInner() {
         items={[
           { titulo: 'Sus gastos del mes', texto: 'Anoten cada gasto en segundos (o con la foto de un recibo) y elijan en qué categoría va. Cambien de mes con las flechas.' },
           { titulo: 'Categorías y pagos fijos', texto: 'Con "Editar reparto y pagos que se repiten" definen cuánto pone cada uno y qué pagos llegan todos los meses.' },
-          { titulo: 'Cuentas entre ustedes', texto: 'Quién le debe a quién según lo que cada uno pagó. Cuando se ponen al día, tocan "Liquidar".' },
+          { titulo: 'Cuentas entre ustedes', texto: 'Quién le debe a quién según lo que cada uno pagó. Si quien debe no puede pagar todo, anota un abono y el saldo baja. Cuando se ponen al día del todo, tocan "Ya nos pusimos al día".' },
           { titulo: 'El asistente', texto: 'El botón del robot responde preguntas sobre sus gastos, por ejemplo cuánto les queda del presupuesto.' },
         ]}
       />
@@ -947,12 +966,38 @@ function GastosInner() {
                       <p className="mt-1 text-[15px] font-medium text-[var(--text-primary)]">Están al día — nadie le debe nada al otro.</p>
                     ) : (
                       <>
-                        <p className="mt-1 text-[32px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
+                        <p className="mt-1 text-[12px] font-medium text-[var(--text-secondary)]">Saldo pendiente</p>
+                        <p className="text-[32px] font-bold leading-tight [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
                           {formatear(Math.abs(s.saldo))}
                         </p>
                         <p className="text-[12px] text-[var(--text-secondary)]">
                           {s.saldo > 0 ? `${nombres.otro ?? 'La otra persona'} te debe esto` : `Le debes esto a ${nombres.otro ?? 'la otra persona'}`}
                         </p>
+                        {/* Abono: si no pueden pagar todo hoy, van anotando lo que se va pagando y el saldo baja. */}
+                        <form
+                          className="mt-3 flex items-center gap-2"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            abonar(s.moneda, s.saldo, formatear);
+                          }}
+                        >
+                          <InputMonto
+                            value={abonoTexto[s.moneda ?? 'casa'] ?? ''}
+                            onValueChange={(v) => setAbonoTexto((prev) => ({ ...prev, [s.moneda ?? 'casa']: v }))}
+                            placeholder="Abono"
+                            aria-label="Valor del abono"
+                            className="h-10 min-w-0 flex-1 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--text-tertiary)_25%,transparent)] bg-[var(--bg)] px-3 text-[14px] tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={abonando !== undefined || !(abonoTexto[s.moneda ?? 'casa'] ?? '')}
+                            className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-button)] bg-[var(--accent-2)] px-4 text-[13px] font-semibold text-[var(--bg)] disabled:opacity-50 [touch-action:manipulation]"
+                          >
+                            {abonando === s.moneda && <Loader2 size={14} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
+                            Abonar
+                          </button>
+                        </form>
+                        {avisoAbono && <p className="mt-1.5 text-[12px] font-medium text-[var(--text-secondary)]">{avisoAbono}</p>}
                         <button
                           type="button"
                           onClick={() => liquidar(s.moneda)}

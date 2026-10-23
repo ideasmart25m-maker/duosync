@@ -7,12 +7,13 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Plus, Bell, Trash2, Loader2, Scale, Info, Wallet, ChevronDown } from 'lucide-react';
+import { X, Plus, Bell, Trash2, Loader2, Scale, Info, Wallet, ChevronDown } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { iconoDeCategoria, colorDeCategoria, type CategoriaDB } from '@/lib/categorias';
 import { actualizarCategoria, eliminarCategoria } from '@/lib/gastos';
 import { formatoMoneda } from '@/lib/paises';
 import { InputMonto } from '@/components/ui/InputMonto';
+import { InputPorcentaje } from '@/components/ui/InputPorcentaje';
 
 export interface ParejaEditor {
   miUserId: string;
@@ -82,7 +83,7 @@ function GuiaCategorias() {
     {
       Icono: Scale,
       titulo: 'Reparto: cuánto pone cada uno',
-      texto: 'Es la parte de cada gasto de esa categoría que le toca a cada uno. 50% / 50% es por mitades; 70% / 30% si uno gana más. Se cambia con los botones + y −.',
+      texto: 'Es la parte de cada gasto de esa categoría que le toca a cada uno. 50% / 50% es por mitades; 70% / 30% si uno gana más. Escribe el porcentaje que quieras (57 %, 42 %…) o afínalo de a 1 con + y −.',
     },
     {
       Icono: Bell,
@@ -257,31 +258,12 @@ function FilaCategoria({
         <span className="flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
           <AyudaBreve
             etiqueta="reparto"
-            texto="El reparto es cuánto del gasto le toca a cada uno. Usen + y − para cambiar tu parte; la de la otra persona es lo que sobra hasta 100%."
+            texto="El reparto es cuánto del gasto le toca a cada uno. Escribe tu porcentaje (el que sea: 57 %, 42 %…) o afínalo de a 1 con + y −; la parte de la otra persona es lo que sobra hasta 100 %."
           />
           Reparto: <span className="font-semibold text-[var(--text-primary)]">{miParte}%</span> tú ·{' '}
           <span className="font-semibold text-[var(--text-primary)]">{100 - miParte}%</span> {nombreOtro}
         </span>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            disabled={miParte <= 0 || guardando}
-            onClick={() => cambiarMiParte(miParte - 10)}
-            aria-label="Bajar reparto"
-            className="flex size-7 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-40 [touch-action:manipulation]"
-          >
-            <Minus size={12} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            disabled={miParte >= 100 || guardando}
-            onClick={() => cambiarMiParte(miParte + 10)}
-            aria-label="Subir reparto"
-            className="flex size-7 items-center justify-center rounded-full bg-[var(--surface-2)] disabled:opacity-40 [touch-action:manipulation]"
-          >
-            <Plus size={12} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-        </div>
+        <InputPorcentaje valor={miParte} onCambiar={cambiarMiParte} disabled={guardando} />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-y-2 border-t border-[color-mix(in_oklab,var(--text-tertiary)_12%,transparent)] pt-3">

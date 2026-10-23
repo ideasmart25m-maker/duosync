@@ -16,7 +16,7 @@ interface Mensaje {
 
 export function AsistenteChat({ onCerrar }: { onCerrar: () => void }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
-    { rol: 'assistant', texto: 'Hola, pueden preguntarme sobre sus gastos de este mes — por ejemplo "¿cuánto llevamos gastado en mercado?".' },
+    { rol: 'assistant', texto: 'Hola, pueden preguntarme por sus gastos (por ejemplo "¿cuánto llevamos gastado en mercado?") o por cómo usar la app ("¿cómo anoto un abono?").' },
   ]);
   const [pregunta, setPregunta] = useState('');
   const [enviando, setEnviando] = useState(false);
