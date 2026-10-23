@@ -220,7 +220,10 @@ function PaywallInner() {
         </motion.button>
       </motion.div>
 
-      <div className="mt-auto pt-3">
+      <>
+        {/* El botón de comprar y la garantía quedan SIEMPRE a la vista, aunque el celular sea de pantalla corta
+            (con la barra del navegador un teléfono real muestra ~640px, no 812): el resto se desplaza por detrás. */}
+        <div className="sticky bottom-0 z-10 -mx-4 mt-auto bg-[var(--bg)] px-4 pb-2 pt-3 shadow-[0_-12px_14px_-6px_var(--bg)]">
         <motion.button
           type="button"
           whileTap={{ scale: 0.98 }}
@@ -246,6 +249,8 @@ function PaywallInner() {
             <p className="mt-0.5 font-semibold text-[var(--text-primary)]">Garantía de Cuentas Claras: 15 días para pedir su dinero.</p>
           </div>
         )}
+        </div>
+        <div>
         <motion.button
           type="button"
           whileTap={{ scale: 0.97 }}
@@ -261,7 +266,8 @@ function PaywallInner() {
             Pago seguro con Hotmart
           </span>
         </div>
-      </div>
+        </div>
+      </>
     </FunnelShell>
   );
 }
