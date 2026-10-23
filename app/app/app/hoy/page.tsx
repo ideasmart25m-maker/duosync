@@ -147,13 +147,13 @@ function PreguntaDelDia({
   };
 
   return (
-    <div id="pregunta-del-dia" className="scroll-mt-4 rounded-[var(--radius-card)] bg-[var(--accent-2)] p-5 text-[var(--bg)] shadow-[var(--shadow-hero)]">
+    <div id="pregunta-del-dia" className="scroll-mt-4 rounded-[var(--radius-card)] bg-[var(--accent-2)] p-4 text-[var(--bg)] shadow-[var(--shadow-hero)]">
       <p className="text-[12px] font-medium uppercase tracking-[0.08em] opacity-80">Pregunta para los dos</p>
 
       {cargando || !pregunta ? (
         <div className="mt-1 h-16 animate-pulse rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_15%,transparent)]" />
       ) : (
-        <p className="text-balance text-[24px] font-bold leading-snug [font-family:var(--font-display)]">{pregunta.texto}</p>
+        <p className="text-balance text-[22px] font-bold leading-snug [font-family:var(--font-display)]">{pregunta.texto}</p>
       )}
 
       {respuestaPropia === null && !ambosRespondieron && !cargando && pregunta && (
@@ -299,6 +299,7 @@ export default function HoyPage() {
   const [metaPrincipal, setMetaPrincipal] = useState<MetaDB | null>(null);
   const [cargandoMeta, setCargandoMeta] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [intentoCarga, setIntentoCarga] = useState(0);
   const [avisoVinculacion, setAvisoVinculacion] = useState<string | null>(null);
   const [ahorrado, setAhorrado] = useState(0);
   const [mostrarAhorro, setMostrarAhorro] = useState(true);
@@ -377,7 +378,7 @@ export default function HoyPage() {
         setCargandoMeta(false);
       }
     })();
-  }, [supabase]);
+  }, [supabase, intentoCarga]);
 
   const elegirFotoDePerfil = async (archivo: File | undefined) => {
     if (!archivo || !userId) return;
@@ -656,7 +657,15 @@ export default function HoyPage() {
           <div className="mb-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] p-3 text-[12px] text-[var(--danger)]">
             <p className="font-semibold">No pudimos cargar todos tus datos.</p>
             <p className="mt-0.5 break-words opacity-90">{errorCarga}</p>
-            <button type="button" onClick={() => window.location.reload()} className="mt-1.5 font-semibold underline [touch-action:manipulation]">
+            <button
+              type="button"
+              onClick={() => {
+                setErrorCarga(null);
+                setCargandoMeta(true);
+                setIntentoCarga((n) => n + 1);
+              }}
+              className="mt-1.5 flex min-h-11 items-center font-semibold underline [touch-action:manipulation]"
+            >
               Reintentar
             </button>
           </div>
@@ -701,89 +710,86 @@ export default function HoyPage() {
           <>
             {/* Presupuesto en su propio recuadro (fondo neutro) y el ahorro aparte, en verde — son
                 cosas distintas: el ahorro NO es un gasto y no debe confundirse con el saldo. */}
-            <div className="rounded-[var(--radius-button)] bg-[var(--surface-2)] p-3">
-            <button
-              type="button"
-              onClick={() => {
-                setBorradorPresupuesto(presupuesto ? String(presupuesto) : '');
-                setEditandoPresupuesto(true);
-              }}
-              className="flex items-center gap-1.5 [touch-action:manipulation]"
-            >
-              <p className="text-[12px] font-medium text-[var(--text-tertiary)]">Nuestro presupuesto mensual</p>
-              <PencilSimple size={12} strokeWidth={2.2} color="var(--text-tertiary)" aria-hidden="true" />
-            </button>
-
-            {presupuesto === null ? (
-              <p className="mt-2 text-[13px] text-[var(--text-tertiary)]">Aún no lo han definido — toquen arriba para ponerlo.</p>
-            ) : (
-              <>
-                {/* 20px (título), no 32px (display) — la pregunta de arriba es el dispositivo
-                    protagonista de esta pantalla (FICHA-ARTE.md), este monto es secundario. */}
-                <p className="mt-1 text-[20px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--text-primary)] [font-family:var(--font-display)]">
-                  {formatoMoneda(presupuesto, pais)}
-                </p>
-                <div className="mt-3 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-[15px]">
-                    <span className="text-[var(--text-secondary)]">Gastado este mes</span>
-                    <span
-                      className={`tabular-nums font-semibold ${gastado > presupuesto ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
-                    >
-                      {formatoMoneda(gastadoMostrado, pais)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[15px]">
-                    <span className="text-[var(--text-secondary)]">Saldo</span>
-                    <span className={`tabular-nums font-semibold ${(disponible ?? 0) < 0 ? 'text-[var(--danger)]' : 'text-[var(--accent)]'}`}>
-                      {formatoMoneda(disponible ?? 0, pais)}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-3 empty:hidden">
-                  <AlertaPresupuesto estado={evaluarPresupuesto(gastado, presupuesto)} formatear={(n) => formatoMoneda(n, pais)} />
-                </div>
-              </>
-            )}
-            </div>
-
-            <div className="mt-3">
-              <Link href="/app/gastos" className="flex min-h-11 w-fit items-center gap-1 text-[13px] font-semibold text-[var(--accent)]">
+            <div className="flex items-start justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setBorradorPresupuesto(presupuesto ? String(presupuesto) : '');
+                  setEditandoPresupuesto(true);
+                }}
+                className="-my-2 flex min-h-11 items-center gap-1.5 [touch-action:manipulation]"
+              >
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Nuestro presupuesto del mes</p>
+                <PencilSimple size={12} strokeWidth={2.2} color="var(--text-secondary)" aria-hidden="true" />
+              </button>
+              <Link href="/app/gastos" className="-my-2 flex min-h-11 shrink-0 items-center gap-1 text-[13px] font-semibold text-[var(--accent)]">
                 Ver todo
                 <ArrowRight size={12} strokeWidth={2.4} aria-hidden="true" />
               </Link>
             </div>
 
-            {ahorrado > 0 && mostrarAhorro && (
-              <div className="mt-3 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--accent-2)_10%,transparent)] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] font-semibold text-[var(--accent-2)]">Ahorro en metas</p>
-                  <button
-                    type="button"
-                    onClick={() => cambiarMostrarAhorro(false)}
-                    aria-label="Ocultar el ahorro de Inicio"
-                    className="-my-2 flex min-h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-[var(--accent-2)] underline [touch-action:manipulation]"
-                  >
-                    Ocultar
-                  </button>
-                </div>
-                <p className="mt-0.5 text-[20px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--accent-2)] [font-family:var(--font-display)]">
-                  {formatoMoneda(ahorrado, pais)}
+            {presupuesto === null ? (
+              <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Aún no lo han definido — toquen el lápiz para ponerlo.</p>
+            ) : (
+              <>
+                {/* Lo que importa de un vistazo: cuánto les queda. Es el número héroe de la tarjeta; lo demás
+                    (presupuesto y gastado) va como apoyo, una sola capa y una sola barra. */}
+                <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{(disponible ?? 0) < 0 ? 'Se pasaron por' : 'Les queda este mes'}</p>
+                <p
+                  className={`text-[32px] font-bold leading-tight [font-variant-numeric:lining-nums_proportional-nums] [font-family:var(--font-display)] ${(disponible ?? 0) < 0 ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
+                >
+                  {formatoMoneda(Math.abs(disponible ?? 0), pais)}
                 </p>
-                <p className="mt-0.5 text-[12px] text-[var(--text-secondary)]">No cuenta como gasto.</p>
-              </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)]">
+                  <motion.div
+                    className={`h-full rounded-full ${gastado > presupuesto ? 'bg-[var(--danger)]' : gastado / presupuesto >= 0.8 ? 'bg-[var(--cat-amber)]' : 'bg-[var(--accent-2)]'}`}
+                    initial={{ width: reducido ? `${Math.min(100, (gastado / presupuesto) * 100)}%` : 0 }}
+                    animate={{ width: `${Math.min(100, (gastado / presupuesto) * 100)}%` }}
+                    transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[13px] text-[var(--text-secondary)]">
+                  Gastado <span className="font-semibold tabular-nums text-[var(--text-primary)]">{formatoMoneda(gastadoMostrado, pais)}</span> de{' '}
+                  <span className="font-semibold tabular-nums text-[var(--text-primary)]">{formatoMoneda(presupuesto, pais)}</span>
+                </p>
+                <div className="mt-3 empty:hidden">
+                  <AlertaPresupuesto estado={evaluarPresupuesto(gastado, presupuesto)} formatear={(n) => formatoMoneda(n, pais)} />
+                </div>
+              </>
             )}
-            {ahorrado > 0 && !mostrarAhorro && (
-              <button
-                type="button"
-                onClick={() => cambiarMostrarAhorro(true)}
-                className="mt-3 text-[12px] font-semibold text-[var(--text-tertiary)] underline [touch-action:manipulation]"
-              >
-                Mostrar mi ahorro aquí
-              </button>
-            )}
+
           </>
         )}
       </motion.div>
+
+      {ahorrado > 0 && mostrarAhorro && (
+        <motion.div {...entrada(0.31)} className="rounded-[var(--radius-card)] bg-[color-mix(in_oklab,var(--accent-2)_10%,var(--surface))] p-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[13px] font-semibold text-[var(--accent-2)]">Ahorro en metas este mes</p>
+            <button
+              type="button"
+              onClick={() => cambiarMostrarAhorro(false)}
+              aria-label="Ocultar el ahorro de Inicio"
+              className="-my-2 flex min-h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+            >
+              Ocultar
+            </button>
+          </div>
+          <p className="mt-0.5 text-[20px] font-bold [font-variant-numeric:lining-nums_proportional-nums] text-[var(--accent-2)] [font-family:var(--font-display)]">
+            {formatoMoneda(ahorrado, pais)}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[var(--text-secondary)]">No cuenta como gasto.</p>
+        </motion.div>
+      )}
+      {ahorrado > 0 && !mostrarAhorro && (
+        <button
+          type="button"
+          onClick={() => cambiarMostrarAhorro(true)}
+          className="flex min-h-11 w-fit items-center text-[13px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+        >
+          Mostrar mi ahorro aquí
+        </button>
+      )}
 
       {cargandoMeta ? (
         <div className="h-[72px] animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-2)]" />

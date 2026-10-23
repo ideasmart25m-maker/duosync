@@ -1,14 +1,9 @@
-# VEREDICTO revisor-visual — Hoy (pantalla principal)
-Fecha: 2026-09-06 00:00
-Screenshot: docs/revisiones/hoy-375.png
+# VEREDICTO revisor-visual — Hoy (Inicio), ronda 4
+Fecha: 2026-10-23 12:00
+Screenshot: docs/revisiones/hoy-v5-a-375.png (y hoy-v5-b-375.png)
 Usabilidad: 29/40
-Craft: 13/20
+Craft: 15/20
 Copy (si vende): N-A
 Fidelidad (si hubo referencia): N-A
 Veredicto: NO LISTA
-Top defectos:
-1. Fondo del shell (layout.tsx, los 3 radiales) sigue leyéndose plano en el render real (tope y zona media casi idéntico tono blanco/gris que las cards) → subir más el contraste o cambiar de opacity-only a un tercer plano de superficie con tinte propio hasta que sea visible sin entrecerrar los ojos.
-2. Tarjeta "Meta" (fondo, bajo el velo del nav) sigue cortada; el ícono junto a "Viaje a Cartagena" se ve lavado/ilegible por el gradiente de desvanecido → subir esa tarjeta en el orden (reducir aún más la altura de la tarjeta "Gastado en" o el gap) o agregar una pista de scroll.
-3. Home completo: 7-8 elementos tappables de peso similar (avatar, "Ver todo", 3 categorías, "Responder", "Registrar gasto", tarjeta Meta) compiten por atención aunque el CTA coral sea el más grande → bajar el contraste visual de las acciones secundarias para que la única acción primaria domine sin ambigüedad.
-4. Código PreguntaDelDia (hoy/page.tsx): la insignia de racha (spring) y la revelación de respuestas no chequean `useReducedMotion` (solo el conteo del saldo y la barra de progreso lo hacen) → aplicar el mismo guard a todas las animaciones de la tarjeta hero.
-5. Código hoy/page.tsx: sigue sin atajo/default para el usuario recurrente (ej. recordar última categoría al tocar "Registrar gasto") → heurística 7 en 2/4, pendiente para una ronda de producto.
+Top defectos: 1) Barra inferior solo con íconos sin etiqueta, bajo contraste (decisión de la dueña) -> añadir etiqueta de 11px bajo cada ícono o al menos en el activo. 2) "Reintentar" hace window.location.reload() (hoy/page.tsx ~659) -> refetch local con estado de carga. 3) Héroe $261.000 (32px) queda bajo el pliegue; en el primer pantallazo el nivel dominante es la pregunta (22px) sin cifra de dinero -> decisión de la dueña sobre el orden, o mostrar el saldo en una línea en la cabecera. 4) Recuadro "Ahorro en metas" anidado dentro de la tarjeta de presupuesto y enlaces secundarios con estilos distintos ("Ver todo" coral sin subrayado vs "Ocultar" subrayado verde) -> sacar Ahorro a su propia fila/tarjeta y unificar enlace. 5) Dos tarjetas con titular grande + alerta ámbar + tres tarjetas más: >5 bloques y dos botones de acción en pantalla; Responder (outline) y Registrar gasto compiten -> mantener un solo CTA sólido por pliegue.
