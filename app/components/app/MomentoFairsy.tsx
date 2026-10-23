@@ -61,7 +61,7 @@ export function MomentoFairsy({
       {accion.destino && <CaretRight size={18} weight="bold" className="shrink-0 text-[var(--text-tertiary)]" aria-hidden="true" />}
     </>
   );
-  const claseAccion = 'flex items-center gap-3 rounded-[var(--radius-button)] bg-[var(--surface)] p-3 shadow-[var(--shadow-1)]';
+  const claseAccion = 'flex items-center gap-3 rounded-[var(--radius-button)] bg-[var(--surface)] p-2.5 shadow-[var(--shadow-1)]';
 
   return (
     <section

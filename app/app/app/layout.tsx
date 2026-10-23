@@ -104,7 +104,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 bottom-0 z-30"
-        style={{ height: '100px', background: 'linear-gradient(to top, var(--bg) 0%, var(--bg) 80%, transparent 100%)' }}
+        style={{ height: '112px', background: 'linear-gradient(to top, var(--bg) 0%, var(--bg) 80%, transparent 100%)' }}
       />
 
       {/* Menú flotante (pedido del usuario, referencia visual) — despegado de los bordes,
@@ -112,7 +112,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
           plana de ancho completo pegada al fondo que había antes. */}
       <nav
         aria-label="Navegación principal"
-        className="fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-[var(--surface)] p-2 shadow-[var(--shadow-2)]"
+        className="fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-0.5 rounded-[32px] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-2)]"
         style={{ bottom: 'max(16px, calc(env(safe-area-inset-bottom) + 8px))' }}
       >
         {DESTINOS.map((d) => {
@@ -121,7 +121,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
             <Link key={d.href} href={d.href} aria-label={d.label} aria-current={activo ? 'page' : undefined} className="[touch-action:manipulation]">
               <motion.span
                 whileTap={{ scale: 0.9 }}
-                className={`flex size-12 items-center justify-center rounded-full transition-colors duration-150 ${
+                className={`flex h-[52px] w-[68px] flex-col items-center justify-center gap-0.5 rounded-[26px] transition-colors duration-150 ${
                   activo ? 'bg-[var(--surface-2)] shadow-[var(--shadow-1)]' : ''
                 }`}
               >
@@ -129,9 +129,10 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
                 <img
                   src={d.icono}
                   alt=""
-                  className={`size-6 object-contain transition-opacity duration-150 ${activo ? 'opacity-100' : 'opacity-45'}`}
+                  className={`size-6 object-contain transition-opacity duration-150 ${activo ? 'opacity-100' : 'opacity-70'}`}
                   aria-hidden="true"
                 />
+                <span className={`text-[11px] leading-none ${activo ? 'font-semibold text-[var(--text-primary)]' : 'font-medium text-[var(--text-secondary)]'}`}>{d.label}</span>
               </motion.span>
             </Link>
           );

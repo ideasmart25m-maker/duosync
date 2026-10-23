@@ -236,7 +236,7 @@ function PreguntaDelDia({
                 type="submit"
                 whileTap={{ scale: 0.98 }}
                 disabled={enviando}
-                className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] border border-[color-mix(in_oklab,var(--bg)_70%,transparent)] bg-[color-mix(in_oklab,var(--bg)_10%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation] disabled:opacity-70"
+                className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_16%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation] disabled:opacity-70"
               >
                 {enviando && <CircleNotch size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
                 {enviando ? 'Enviando…' : 'Responder'}
@@ -452,13 +452,14 @@ export default function HoyPage() {
     // gap-4 (no gap-5): la tarjeta de Meta quedaba cortada de golpe contra el velo del nav sin
     // llegar a mostrar su título ni el % en la vista inicial sin scroll (defecto real detectado
     // por el revisor-visual) — este ajuste libera ~16px para que se note más de esa tarjeta.
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <motion.div {...entrada(0)} className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           {/* Antes repetía el nombre en las dos líneas ("Buenas tardes, Sofía" + "Mateo &
               Sofía") sin sumar información nueva — defecto real detectado por el revisor-visual.
               El saludo solo, los nombres quedan una única vez, en el título. */}
-          <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>
+          {/* Con presupuesto definido, la línea del dinero ocupa el lugar del saludo (más abajo), para no restarle altura al botón de registrar gasto. */}
+          {!(presupuesto !== null && disponible !== null) && <p className="text-[12px] font-medium text-[var(--text-tertiary)]">{saludo}</p>}
           <h1 className="flex min-w-0 items-center gap-1.5 text-[19px] font-semibold text-[var(--text-primary)] [font-family:var(--font-display)]">
             <span className="min-w-0 truncate">{nombreOtro ? `${nombrePropio} & ${nombreOtro}` : nombrePropio}</span>
             <button
@@ -474,6 +475,12 @@ export default function HoyPage() {
               <PencilSimple size={13} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </h1>
+          {/* Lo que más importa del dinero, a la vista desde el primer pantallazo sin cambiar el orden de las tarjetas. */}
+          {presupuesto !== null && disponible !== null && (
+            <p className={`mt-0.5 text-[13px] font-semibold tabular-nums ${disponible < 0 ? 'text-[var(--danger)]' : 'text-[var(--accent-2)]'}`}>
+              {disponible < 0 ? 'Se pasaron por' : 'Les quedan'} {formatoMoneda(Math.abs(disponible), pais)} este mes
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Link
