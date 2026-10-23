@@ -152,7 +152,7 @@ function PaywallInner() {
           </li>
           <li className="flex items-start gap-2">
             <CheckCustom />
-            Cuentas claras, sin pelear por dinero
+            Cuentas claras, sin discutir por dinero
           </li>
           <li className="flex items-start gap-2">
             <CheckCustom />
@@ -161,6 +161,10 @@ function PaywallInner() {
           <li className="flex items-start gap-2">
             <CheckCustom />
             Escaneen recibos con IA, sin teclear
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCustom />
+            Asistente de IA que responde sobre sus gastos
           </li>
         </ul>
       </motion.div>

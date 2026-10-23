@@ -49,9 +49,9 @@ export default function FairsyLanding() {
         id="problema"
         titulo="¿Les suena?"
         preguntas={[
-          { icon: Frown, textoMarked: '¿Sientes que eres el único que ordena las cuentas de la casa?', color: 'var(--accent-2)' },
+          { icon: Frown, textoMarked: '¿Sientes que eres el único o la única que ordena las cuentas de la casa?', color: 'var(--accent-2)' },
           { icon: HandCoins, textoMarked: '¿Discuten por dinero con frecuencia?', color: 'var(--accent-2)' },
-          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo?", color: 'var(--accent-2)' },
+          { icon: Receipt, textoMarked: "¿Te toca 'cobrarle' su parte y sentirte el malo o la mala?", color: 'var(--accent-2)' },
           { icon: CalendarClock, textoMarked: '¿Llegan a fin de mes sin saber en qué gastaron su dinero?', color: 'var(--accent-2)' },
         ]}
       />
@@ -60,7 +60,7 @@ export default function FairsyLanding() {
       <Agitacion
         frases={[
           'Cada mes que pasa así, el gasto sigue mal repartido y la cuenta pendiente crece entre los dos.',
-          'En un año, esa tensión se acumula y la meta de [acento]viajar juntos[/acento] sigue esperando.',
+          'En un año, esa tensión se acumula y [acento]sus metas[/acento] siguen esperando.',
           'Otra hoja de Excel no ayuda: [b]el problema no es el dinero, es que nadie lo ve igual[/b].',
         ]}
         contraste={{
@@ -124,6 +124,7 @@ export default function FairsyLanding() {
           features: [
             '[b]Historial ilimitado[/b] de gastos compartidos',
             '[b]Escaneo de recibos con IA[/b], sin teclear',
+            '[b]Asistente de IA[/b] que responde sobre sus gastos',
             '[b]Categorías propias[/b] e ilimitadas',
             '[b]Metas de ahorro[/b] en conjunto',
           ],
@@ -138,6 +139,7 @@ export default function FairsyLanding() {
           // salvo "Historial ilimitado", que el usuario pidió quitar de este recuadro).
           features: [
             '[b]Escaneo de recibos con IA[/b], sin teclear',
+            '[b]Asistente de IA[/b] que responde sobre sus gastos',
             '[b]Categorías propias[/b] e ilimitadas',
             '[b]Metas de ahorro[/b] en conjunto',
           ],
@@ -168,7 +170,7 @@ export default function FairsyLanding() {
           {
             pregunta: '¿Y si la otra persona deja de usarla a los pocos días?',
             respuestaMarked:
-              'La pregunta diaria y el registro de gastos toman segundos, y no necesitan estar los dos a la vez para mantener la racha.',
+              'Fairsy sigue funcionando con una sola persona: quien la use registra los gastos y ve el saldo y las metas. La otra persona puede sumarse cuando quiera con el Código de Conexión, y registrar un gasto toma solo segundos.',
           },
           {
             pregunta: '¿Funciona en iPhone y Android?',

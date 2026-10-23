@@ -16,7 +16,7 @@ const fontBody = Instrument_Sans({
 
 export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Fairsy', statusBarStyle: 'default' },
-  title: "Fairsy — Cuentas claras, sin pelear",
+  title: "Fairsy — Cuentas claras, sin discutir",
   description:
     "Fairsy ordena el gasto del hogar y la conexión diaria de los dos en un solo lugar, con un pago que cubre a los dos.",
 };

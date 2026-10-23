@@ -29,7 +29,7 @@ export const MENSAJES: MensajeDelDia[] = [
   { titulo: 'No tienen que resolverlo todo hoy.', detalle: 'Un pequeño paso también es progreso.' },
   { titulo: 'Cada aporte cuenta,', detalle: 'sin importar quién aporte más. Lo importante es avanzar juntos.' },
   { titulo: 'Las cuentas claras', detalle: 'cuidan la tranquilidad de los dos.' },
-  { titulo: 'Hablar de dinero no es pelear.', detalle: 'Es ponerse de acuerdo para estar mejor.' },
+  { titulo: 'Hablar de dinero no es discutir.', detalle: 'Es ponerse de acuerdo para estar mejor.' },
   { titulo: 'Un gasto pequeño anotado a tiempo', detalle: 'evita una discusión grande después.' },
   { titulo: 'No se trata de gastar menos,', detalle: 'sino de gastar en lo que de verdad les importa.' },
   { titulo: 'Lo que se ve, se cuida.', detalle: 'Mirar sus números juntos ya es una buena costumbre.' },
