@@ -60,8 +60,6 @@ function PaywallInner() {
 
   const nombrePlan = meta ? `Plan ${meta}` : 'plan';
   const fechaCobro = useMemo(() => fechaEnDias(7), []);
-  const siguienteLogin = (planElegido: string) =>
-    `/login?plan=${planElegido}&modo=${modo}&codigo=${encodeURIComponent(codigo)}&tk=${encodeURIComponent(tk)}`;
 
   // Mismo feedback de navegación que `elegir()` — antes "Cerrar"/"Ahora no" quedaban mudos
   // tras el tap mientras el CTA principal sí mostraba estado de carga (defecto real detectado
@@ -69,7 +67,7 @@ function PaywallInner() {
   const salir = () => {
     if (saliendo) return;
     setSaliendo(true);
-    router.push(siguienteLogin('free'));
+    router.push('/');
   };
   const elegir = () => {
     if (cargando) return;
@@ -262,7 +260,7 @@ function PaywallInner() {
           disabled={saliendo}
           className="flex h-11 w-full items-center justify-center text-[16px] font-medium text-[var(--text-secondary)] [touch-action:manipulation] disabled:opacity-60"
         >
-          Ahora no, seguir con la versión gratis
+          Ahora no, volver al inicio
         </motion.button>
         <div className="flex items-center justify-center text-[12px] text-[var(--text-secondary)]">
           <span className="flex items-center gap-1.5">

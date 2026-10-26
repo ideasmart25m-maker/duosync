@@ -108,14 +108,14 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-[var(--text-secondary)]">Tu plan</p>
           <p className="text-[17px] font-semibold text-[var(--text-primary)]">
-            {esPremium ? (fechaPrueba ? `Prueba gratis hasta el ${fechaPrueba}` : 'Plan Fairsy activo') : 'Plan gratis'}
+            {esPremium ? (fechaPrueba ? `Prueba gratis hasta el ${fechaPrueba}` : 'Plan Fairsy activo') : 'Sin plan activo'}
           </p>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--text-secondary)]">
             {esPremium
               ? fechaPrueba
                 ? 'Disfrutan todo Fairsy sin pagar. Si no les convence, cancelan desde su compra en Hotmart antes de esa fecha.'
                 : 'Los dos disfrutan todo Fairsy.'
-              : 'En el plan gratis tienen 3 escaneos de recibos y 3 preguntas al asistente en total. Con el plan completo, hasta 50 de cada uno cada mes. Pruébenlo 7 días gratis.'}
+              : 'Para usar Fairsy necesitan un plan activo; si es su primera vez, tienen 7 días gratis. Incluye hasta 50 escaneos de recibos y 50 preguntas al asistente cada mes.'}
           </p>
         </div>
       </div>
@@ -126,13 +126,13 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
             href={urlCheckout('anual')}
             className="flex min-h-12 items-center justify-center rounded-[var(--radius-button)] bg-[var(--accent)] px-4 text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation]"
           >
-            Probar 7 días gratis · US$35.94 al año
+            Activar plan anual · US$35.94 al año
           </a>
           <a
             href={urlCheckout('mensual')}
             className="flex min-h-11 items-center justify-center text-[14px] font-medium text-[var(--text-secondary)] underline underline-offset-4 [touch-action:manipulation]"
           >
-            Prefiero el plan mensual · US$5.99
+            Prefiero el plan mensual · US$5.99 al mes
           </a>
         </div>
       )}

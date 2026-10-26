@@ -8,6 +8,7 @@ import { crearClienteAdmin } from '@/lib/supabase/admin';
 export interface ParejaAdmin {
   coupleId: string;
   plan: string;
+  accesoManual: boolean;
   creadaEn: string;
   integrantes: { userId: string; email: string; nombre: string; role: string }[];
   ultimaActividad: string | null;
@@ -18,7 +19,7 @@ export interface ParejaAdmin {
 export async function listarParejas(): Promise<ParejaAdmin[]> {
   const admin = crearClienteAdmin();
 
-  const { data: couples } = await admin.from('couples').select('id, plan, created_at').order('created_at', { ascending: false });
+  const { data: couples } = await admin.from('couples').select('id, plan, acceso_manual, created_at').order('created_at', { ascending: false });
   const { data: membresias } = await admin.from('couple_members').select('couple_id, user_id');
   const { data: perfiles } = await admin.from('profiles').select('id, nombre, role');
 
@@ -49,6 +50,7 @@ export async function listarParejas(): Promise<ParejaAdmin[]> {
   return (couples ?? []).map((c) => ({
     coupleId: c.id,
     plan: c.plan,
+    accesoManual: !!c.acceso_manual,
     creadaEn: c.created_at,
     integrantes: (miembrosPorPareja.get(c.id) ?? []).map((uid) => ({
       userId: uid,

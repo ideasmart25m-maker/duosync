@@ -76,8 +76,9 @@ export const GUIA_DE_USO = `GUÍA DE USO DE FAIRSY
 - ENTRAR A LA APP: con "Continuar con Google" (un toque) o con el correo (llega un código de 8 números). La sesión
   queda abierta en el celular hasta que cierren sesión en Mi cuenta. Quien entró como invitado, sin correo, debe
   guardar su acceso en Mi cuenta ("Guardar mi acceso") antes de cerrar sesión; si no, pierde esa cuenta.
-- PLAN: gratis incluye 3 escaneos de recibo y 3 preguntas al asistente EN TOTAL; el plan completo incluye 50 de cada
-  uno al mes. El plan completo tiene 7 días gratis y un solo pago cubre a los dos. Se ve en Mi cuenta ("Tu plan").
+- PLAN: para usar la app hace falta un plan activo (7 días gratis de prueba, luego mensual o anual; un solo pago cubre a
+  los dos). Incluye hasta 50 escaneos de recibo y 50 preguntas al asistente al mes. Si el plan vence, hay 2 días de
+  gracia para renovar; después la app se bloquea (los datos quedan guardados) hasta reactivarlo. Se ve en Mi cuenta ("Tu plan").
   Si pagaron con otro correo, en "Tu plan" usan "Conectar mi compra". La suscripción se cancela desde el área de
   miembros de Hotmart.
 - INSTALAR: en Mi cuenta ("Instalar app") para tener Fairsy en la pantalla de inicio del celular.

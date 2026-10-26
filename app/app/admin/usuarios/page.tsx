@@ -1,6 +1,7 @@
 import { Users, TrendingUp } from 'lucide-react';
 import { listarParejas, obtenerResumenUsuarios, obtenerSerieUsuarios } from '@/lib/admin-datos';
 import { AgregarUsuario } from '@/components/admin/AgregarUsuario';
+import { AccesoManual } from '@/components/admin/AccesoManual';
 import { Tarjeta, GrillaTarjetas } from '@/components/admin/Tarjeta';
 import { TituloSeccion } from '@/components/admin/TituloSeccion';
 import { GraficoSerie } from '@/components/admin/GraficoSerie';
@@ -106,13 +107,7 @@ export default async function AdminUsuariosPage({ searchParams }: { searchParams
                     {p.integrantes.length === 1 && <span className="text-[12px] text-[var(--text-tertiary)]">Esperando que se una su pareja</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        p.plan === 'premium' ? 'bg-[color-mix(in_oklab,var(--accent)_15%,transparent)] text-[var(--accent)]' : 'bg-[var(--surface-2)] text-[var(--text-tertiary)]'
-                      }`}
-                    >
-                      {p.plan === 'premium' ? 'Premium' : 'Gratis'}
-                    </span>
+                    <AccesoManual coupleId={p.coupleId} inicial={p.accesoManual} planInicial={p.plan} />
                   </td>
                   <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{fechaCorta(p.creadaEn)}</td>
                   <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{p.ultimaActividad ? fechaCorta(p.ultimaActividad) : 'Sin actividad todavía'}</td>

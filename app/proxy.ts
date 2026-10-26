@@ -49,6 +49,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // BLOQUEO TOTAL: sin plan activo (prueba, suscripción o los 2 días de gracia) no se entra a la app interna.
+  // El plan del ESPACIO manda (un pago cubre a los dos), no el de cada persona. Quien todavía no tiene espacio
+  // (está terminando de crearlo) pasa. Los datos no se tocan: al reactivar, todo sigue igual.
+  if (user && (ruta.startsWith('/app/') || ruta === '/reactivar')) {
+    const { data: miembro } = await supabase.from('couple_members').select('couple_id, couples(plan)').eq('user_id', user.id).limit(1).maybeSingle();
+    const espacio = miembro?.couples as unknown as { plan: string } | { plan: string }[] | null | undefined;
+    const plan = Array.isArray(espacio) ? espacio[0]?.plan : espacio?.plan;
+    const activo = plan === 'premium';
+    if (ruta.startsWith('/app/') && miembro && !activo) return NextResponse.redirect(new URL('/reactivar', request.url));
+    if (ruta === '/reactivar' && (activo || !miembro)) return NextResponse.redirect(new URL('/app/hoy', request.url));
+  }
+
   // Panel de administración: primera capa de defensa (21-BACKOFFICE.md — "verificado en el
   // servidor, no solo ocultando la ruta"). Esto NO basta solo: el layout de /admin vuelve a
   // verificar el rol server-side, y RLS bloquea las tablas aunque alguien se saltara las dos
