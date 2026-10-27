@@ -44,6 +44,9 @@ export async function proxy(request: NextRequest) {
   // podía entrar sin haberse registrado (hallazgo crítico de la auditoría: no había
   // ninguna puerta real antes de estas pantallas). RLS ya protege los DATOS; esto
   // protege la RUTA, para no mostrar ni un layout vacío a quien no inició sesión.
+  // /reactivar es solo para quien ya entró con su cuenta.
+  if (!user && request.nextUrl.pathname === '/reactivar') return NextResponse.redirect(new URL('/login?plan=free', request.url));
+
   if (!user && request.nextUrl.pathname.startsWith('/app/')) {
     const loginUrl = new URL('/login?plan=free', request.url);
     return NextResponse.redirect(loginUrl);
