@@ -73,13 +73,28 @@ export default function ReactivarPage() {
           </div>
         )}
 
-        <p className="text-[13px] leading-snug text-[var(--text-secondary)]">
-          ¿Ya pagaron y todavía no entra? A veces el pago tarda unos segundos en llegar: esta pantalla lo revisa sola. Si pasan varios minutos, escriban a{' '}
-          <a href="mailto:soporte@fairsy.lat" className="font-semibold text-[var(--accent)] underline underline-offset-2">
-            soporte@fairsy.lat
-          </a>
-          .
-        </p>
+        <section aria-label="¿Ya pagaron?" className="rounded-[var(--radius-card)] bg-[var(--surface-2)] p-4">
+          <h2 className="text-[16px] font-semibold text-[var(--text-primary)]">¿Ya pagaron y todavía no entran?</h2>
+          <p className="mt-1 text-[14px] leading-snug text-[var(--text-secondary)]">Depende del correo que usaron al pagar en Hotmart:</p>
+          <ul className="mt-3 flex flex-col gap-3 text-[14px] leading-snug text-[var(--text-secondary)]">
+            <li>
+              <span className="font-semibold text-[var(--text-primary)]">Pagaron con el mismo correo con el que entran a Fairsy.</span> No tienen que hacer
+              nada: el pago puede tardar unos segundos en llegar y esta pantalla los deja entrar sola.
+            </li>
+            <li>
+              <span className="font-semibold text-[var(--text-primary)]">Pagaron con otro correo</span> (por ejemplo, el de la otra persona o uno distinto).
+              Toquen <span className="font-semibold text-[var(--text-primary)]">“Conectar mi compra”</span> más arriba, escriban el correo con el que pagaron y
+              les enviamos un código de 6 números a ese correo. Lo escriben ahí y listo: entran a su espacio.
+            </li>
+          </ul>
+          <p className="mt-3 text-[13px] leading-snug text-[var(--text-secondary)]">
+            ¿Pasaron varios minutos y nada? Escriban a{' '}
+            <a href="mailto:soporte@fairsy.lat" className="font-semibold text-[var(--accent)] underline underline-offset-2">
+              soporte@fairsy.lat
+            </a>{' '}
+            con el correo del pago y los ayudamos.
+          </p>
+        </section>
 
         <button
           type="button"

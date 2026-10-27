@@ -39,15 +39,27 @@ try {
   ok('suscripción activa tiene plan', (await plan()) === 'premium');
   await sub('cancelled', dias(-1));
   ok('cancelada y vencida hace 1 día: sigue dentro de los 2 días de gracia', (await plan()) === 'premium');
+  const g1 = await c.rpc('estado_acceso');
+  ok('el aviso de gracia se activa y trae la fecha límite', !g1.error && g1.data?.[0]?.en_gracia === true && !!g1.data?.[0]?.gracia_hasta);
   await sub('cancelled', dias(-1.9));
   ok('vencida hace 1,9 días: todavía en gracia', (await plan()) === 'premium');
   await sub('cancelled', dias(-2.1));
   ok('vencida hace más de 2 días: se bloquea (gratis)', (await plan()) === 'gratis');
+  const g2 = await c.rpc('estado_acceso');
+  ok('ya bloqueado: no hay aviso de gracia', !g2.error && g2.data?.[0]?.en_gracia === false);
+  await sub('active', dias(25));
+  const g3 = await c.rpc('estado_acceso');
+  ok('con plan vigente: no hay aviso de gracia', !g3.error && g3.data?.[0]?.en_gracia === false);
   await sub('refunded', dias(10));
   ok('reembolsada: se bloquea aunque quedara tiempo', (await plan()) === 'gratis');
   await sub('chargeback', dias(10));
   ok('contracargo: se bloquea', (await plan()) === 'gratis');
 
+  await sub('cancelled', dias(-1));
+  await admin.from('couples').update({ acceso_manual: true }).eq('id', cid);
+  const g4 = await c.rpc('estado_acceso');
+  ok('con acceso manual no hay aviso de gracia', !g4.error && g4.data?.[0]?.en_gracia === false);
+  await admin.from('couples').update({ acceso_manual: false }).eq('id', cid);
   await sub(null);
   await admin.from('couples').update({ acceso_manual: true }).eq('id', cid);
   ok('acceso manual del dueño: tiene plan sin suscripción', (await plan()) === 'premium');

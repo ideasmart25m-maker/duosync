@@ -152,6 +152,9 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
           <label htmlFor="correo-compra" className="text-[14px] font-medium text-[var(--text-primary)]">
             Correo con el que pagaste en Hotmart
           </label>
+          <p className="text-[13px] leading-snug text-[var(--text-secondary)]">
+            Es el correo que aparece en el recibo de la compra (no necesariamente el de tu cuenta de Fairsy). Te enviamos un código de 6 números a ese correo.
+          </p>
           <input
             id="correo-compra"
             type="email"

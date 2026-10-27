@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { SelectorPais } from '@/components/app/SelectorPais';
+import { AvisoGracia } from '@/components/app/AvisoGracia';
 
 // Set de íconos propio (pedido del usuario) en vez del set de Phosphor genérico — cada ícono
 // ya trae su propio color (naranja Inicio, verde azulado Gastos/Metas/Reportes), así que el
@@ -90,6 +91,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-28 pt-6"
         >
+          <AvisoGracia />
           {children}
         </motion.main>
       </AnimatePresence>
