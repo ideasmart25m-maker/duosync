@@ -61,7 +61,7 @@ export default function AppInternaLayout({ children }: { children: ReactNode }) 
     // (812px) la última tarjeta se CORTABA en vez de quedar scrolleable, y esa mala cortada se
     // veía como si "atravesara" el nav flotante (causa raíz real del defecto ya reportado 2 veces
     // por el revisor-visual, no resuelta del todo con el velo de desvanecido por sí solo).
-    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[var(--bg)] [font-family:var(--font-body)]">
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-[var(--bg)] [font-family:var(--font-body)]">
       {/* Profundidad de fondo — antes era un fill plano de un solo tono (defecto real
           detectado por el revisor-visual: DESIGN-CORE exige 3 niveles, nunca fill plano).
           2ª subida de intensidad (18/14%→28/22%): la anterior seguía "casi imperceptible" según

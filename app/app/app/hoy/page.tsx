@@ -650,7 +650,7 @@ export default function HoyPage() {
         {...entrada(0.21)}
         whileTap={{ scale: 0.98 }}
         href="/app/gastos?nuevo=1"
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[16px] font-semibold text-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_28%,transparent)] [touch-action:manipulation]"
+        className="sticky bottom-[92px] z-[35] flex h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[16px] font-semibold text-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_28%,transparent)] [touch-action:manipulation]"
       >
         <Plus size={20} strokeWidth={2.4} aria-hidden="true" />
         Registrar gasto
