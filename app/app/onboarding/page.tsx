@@ -81,7 +81,7 @@ export default function OnboardingPage() {
       <FunnelHeader
         onBack={paso > 0 && paso < 7 ? atras : undefined}
         progreso={paso < 7 ? pct(paso) : undefined}
-        contador={numeroPregunta[paso] ? `Pregunta ${numeroPregunta[paso]} de 5` : paso === 2 ? 'Vamos muy bien' : paso === 6 ? 'Último paso' : undefined}
+        contador={numeroPregunta[paso] ? `Pregunta ${numeroPregunta[paso]} de 5` : paso === 2 ? 'Vamos muy bien' : paso === 6 ? 'Casi listo' : undefined}
         salida={paso !== 7}
       />
       <AnimatePresence mode="wait">
@@ -280,7 +280,7 @@ function PasoPregunta({
         )}
       </div>
       <p className="mt-8 text-center text-[12px] text-[var(--text-tertiary)]">
-        Cada respuesta ajusta el plan que arman al final — no es un formulario, es su sistema.
+        Son 5 preguntas cortas: menos de un minuto.
       </p>
     </div>
   );
@@ -697,7 +697,7 @@ function PasoResultado({
         {/* "Sus 5 respuestas" — el objeto Respuestas tiene 5 campos (antes decía "6", un
             número que no cuadraba con nada del flujo — defecto real de integridad detectado
             por el revisor-visual: una cifra que no cierra resta confianza antes de pagar). */}
-        <p className="mt-2 text-center text-[16px] text-[var(--text-secondary)]">Hecho con sus 5 respuestas</p>
+        <p className="mt-2 text-center text-[16px] text-[var(--text-secondary)]">Armado con lo que nos contaron</p>
 
         <div className="mt-6 rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_25%,transparent)] bg-[color-mix(in_oklab,var(--accent)_5%,var(--surface))] p-5">
           <ul className="flex flex-col gap-3 text-[16px] text-[var(--text-primary)]">
@@ -722,7 +722,7 @@ function PasoResultado({
       </div>
 
       <div className="mt-auto pt-8">
-        <CtaFijo href={siguiente}>{modo === 'unirse' ? 'Entrar y unirme' : `Ver el Plan ${nombreMeta}`}</CtaFijo>
+        <CtaFijo href={siguiente}>{modo === 'unirse' ? 'Entrar y unirme' : 'Ver mi plan'}</CtaFijo>
       </div>
     </div>
   );

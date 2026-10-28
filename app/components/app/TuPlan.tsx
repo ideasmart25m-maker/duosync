@@ -16,10 +16,10 @@ interface EstadoPlan {
 type Paso = 'cerrado' | 'correo' | 'codigo' | 'listo';
 
 const MENSAJES: Record<string, string> = {
-  codigo_incorrecto: 'Ese código no es correcto. Revisa el último correo que te llegó.',
-  vencido: 'Ese código ya venció. Pide uno nuevo.',
-  demasiados_intentos: 'Ya fallaste muchas veces con este código. Pide uno nuevo en unos minutos.',
-  ya_conectada: 'Esa compra ya está conectada a otras dos cuentas. Escribe a soporte@fairsy.lat y lo resolvemos.',
+  codigo_incorrecto: 'Ese código no es correcto. Revisen el último correo que les llegó.',
+  vencido: 'Ese código ya venció. Pidan uno nuevo.',
+  demasiados_intentos: 'Fallaron muchas veces con este código. Pidan uno nuevo en unos minutos.',
+  ya_conectada: 'Esa compra ya está conectada a otras dos cuentas. Escriban a soporte@fairsy.lat y lo resolvemos.',
 };
 
 export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupleId: string }) {
@@ -54,15 +54,15 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
         body: JSON.stringify({ email }),
       });
       if (r.status === 429) {
-        setError('Ya pediste varios códigos. Espera una hora o escribe a soporte@fairsy.lat.');
+        setError('Ya pidieron varios códigos. Esperen una hora o escriban a soporte@fairsy.lat.');
       } else if (!r.ok) {
         const j = (await r.json().catch(() => null)) as { error?: string } | null;
-        setError(j?.error ?? 'No pudimos enviar el código. Intenta de nuevo.');
+        setError(j?.error ?? 'No pudimos enviar el código. Intenten de nuevo.');
       } else {
         setPaso('codigo');
       }
     } catch {
-      setError('Sin conexión. Revisa tu internet e intenta de nuevo.');
+      setError('Sin conexión. Revisen su internet e intenten de nuevo.');
     }
     setOcupado(false);
   };
@@ -88,7 +88,7 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
         setCodigo('');
       }
     } catch {
-      setError('Sin conexión. Revisa tu internet e intenta de nuevo.');
+      setError('Sin conexión. Revisen su internet e intenten de nuevo.');
     }
     setOcupado(false);
   };
@@ -108,14 +108,14 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-[var(--text-secondary)]">Tu plan</p>
           <p className="text-[17px] font-semibold text-[var(--text-primary)]">
-            {esPremium ? (fechaPrueba ? `Prueba gratis hasta el ${fechaPrueba}` : 'Plan Fairsy activo') : 'Sin plan activo'}
+            {esPremium ? (fechaPrueba ? `Prueba gratis hasta el ${fechaPrueba}` : 'Plan Fairsy activo') : 'Elijan su plan'}
           </p>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--text-secondary)]">
             {esPremium
               ? fechaPrueba
                 ? 'Disfrutan todo Fairsy sin pagar. Si no les convence, cancelan desde su compra en Hotmart antes de esa fecha.'
                 : 'Los dos disfrutan todo Fairsy.'
-              : 'Para usar Fairsy necesitan un plan activo; si es su primera vez, tienen 7 días gratis. Incluye hasta 50 escaneos de recibos y 50 preguntas al asistente cada mes.'}
+              : 'Elijan cómo continuar. El plan incluye hasta 50 escaneos de recibos y 50 preguntas al asistente cada mes, para los dos.'}
           </p>
         </div>
       </div>
@@ -143,17 +143,17 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
           onClick={() => setPaso('correo')}
           className="min-h-11 text-left text-[14px] font-medium text-[var(--accent-2)] underline underline-offset-4 [touch-action:manipulation]"
         >
-          ¿Ya pagaste con otro correo? Conectar mi compra
+          ¿Ya pagaron con otro correo? Conectar mi compra
         </button>
       )}
 
       {paso === 'correo' && (
         <div className="flex flex-col gap-2">
           <label htmlFor="correo-compra" className="text-[14px] font-medium text-[var(--text-primary)]">
-            Correo con el que pagaste en Hotmart
+            Correo con el que pagaron en Hotmart
           </label>
           <p className="text-[13px] leading-snug text-[var(--text-secondary)]">
-            Es el correo que aparece en el recibo de la compra (no necesariamente el de tu cuenta de Fairsy). Te enviamos un código de 6 números a ese correo.
+            Es el correo que aparece en el recibo de la compra (no necesariamente el de su cuenta de Fairsy). Les enviamos un código de 6 números a ese correo.
           </p>
           <input
             id="correo-compra"
@@ -180,7 +180,7 @@ export function TuPlan({ supabase, coupleId }: { supabase: SupabaseClient; coupl
       {paso === 'codigo' && (
         <div className="flex flex-col gap-2">
           <p className="text-[14px] leading-relaxed text-[var(--text-secondary)]">
-            Si hay una compra con <strong className="text-[var(--text-primary)]">{email}</strong>, te llegó un código de 6 números. Revisa también la carpeta de spam.
+            Si hay una compra con <strong className="text-[var(--text-primary)]">{email}</strong>, les llegó un código de 6 números. Revisen también la carpeta de spam.
           </p>
           <input
             type="text"

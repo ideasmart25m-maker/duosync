@@ -6,7 +6,7 @@
 import { TriangleAlert } from 'lucide-react';
 import type { EstadoPresupuesto } from '@/lib/presupuesto';
 
-export function AlertaPresupuesto({ estado, formatear }: { estado: EstadoPresupuesto; formatear: (n: number) => string }) {
+export function AlertaPresupuesto({ estado, formatear, sinRestante }: { estado: EstadoPresupuesto; formatear: (n: number) => string; sinRestante?: boolean }) {
   const { nivel, porcentaje, restante, excedido, pendientesFijos, pasaPorFijos, excedidoProyectado } = estado;
   if (nivel === 'sin' || (nivel === 'bien' && !pasaPorFijos)) return null;
 
@@ -21,7 +21,7 @@ export function AlertaPresupuesto({ estado, formatear }: { estado: EstadoPresupu
     detalle = `${pendientesTexto}. Si los pagan, se pasarían del presupuesto por ${formatear(excedidoProyectado)}. Hoy les quedan ${formatear(restante)}.`;
   } else {
     titulo = `Ya llevan el ${porcentaje}% del presupuesto`;
-    detalle = `Les quedan ${formatear(restante)} para el resto del mes.${pendientesTexto ? ` ${pendientesTexto}.` : ''}`;
+    detalle = `${sinRestante ? 'Conviene cuidar lo que falta del mes.' : `Les quedan ${formatear(restante)} para el resto del mes.`}${pendientesTexto ? ` ${pendientesTexto}.` : ''}`;
   }
 
   const peligro = nivel === 'pasado';

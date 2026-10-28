@@ -236,7 +236,7 @@ function PreguntaDelDia({
                 type="submit"
                 whileTap={{ scale: 0.98 }}
                 disabled={enviando}
-                className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_16%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation] disabled:opacity-70"
+                className="flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[color-mix(in_oklab,var(--bg)_26%,transparent)] text-[15px] font-semibold text-[var(--bg)] [touch-action:manipulation] disabled:opacity-70"
               >
                 {enviando && <CircleNotch size={16} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
                 {enviando ? 'Enviando…' : 'Responder'}
@@ -268,6 +268,7 @@ export default function HoyPage() {
   const [guardandoPresupuesto, setGuardandoPresupuesto] = useState(false);
   const [errorPresupuesto, setErrorPresupuesto] = useState<string | null>(null);
   const gastadoMostrado = useCountUp(gastado);
+  const disponibleMostrado = useCountUp(Math.abs(presupuesto !== null ? presupuesto - gastado : 0));
 
   // Identidad real de la pareja (pedido real del usuario, hallazgo de la auditoría 2026-09-08):
   // antes "Mateo & Sofía" y la racha eran datos de ejemplo fijos en el código.
@@ -506,11 +507,11 @@ export default function HoyPage() {
             ) : (
               nombrePropio[0]?.toUpperCase() ?? '?'
             )}
-            <span className="absolute inset-0 flex items-center justify-center bg-[color-mix(in_oklab,black_35%,transparent)] opacity-0 hover:opacity-100">
+            <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border border-[var(--bg)] bg-[var(--surface)] shadow-[var(--shadow-1)]">
               {subiendoAvatar ? (
-                <CircleNotch size={13} strokeWidth={2.4} className="animate-spin" color="var(--bg)" aria-hidden="true" />
+                <CircleNotch size={10} strokeWidth={2.4} className="animate-spin" color="var(--accent-2)" aria-hidden="true" />
               ) : (
-                <Camera size={13} strokeWidth={2.4} color="var(--bg)" aria-hidden="true" />
+                <Camera size={10} strokeWidth={2.4} color="var(--accent-2)" aria-hidden="true" />
               )}
             </span>
           </button>
@@ -741,11 +742,11 @@ export default function HoyPage() {
               <>
                 {/* Lo que importa de un vistazo: cuánto les queda. Es el número héroe de la tarjeta; lo demás
                     (presupuesto y gastado) va como apoyo, una sola capa y una sola barra. */}
-                <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{(disponible ?? 0) < 0 ? 'Se pasaron por' : 'Les queda este mes'}</p>
+                <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{(disponible ?? 0) < 0 ? 'Se pasaron por' : 'Les quedan este mes'}</p>
                 <p
                   className={`text-[32px] font-bold leading-tight [font-variant-numeric:lining-nums_proportional-nums] [font-family:var(--font-display)] ${(disponible ?? 0) < 0 ? 'text-[var(--danger)]' : 'text-[var(--text-primary)]'}`}
                 >
-                  {formatoMoneda(Math.abs(disponible ?? 0), pais)}
+                  {formatoMoneda(disponibleMostrado, pais)}
                 </p>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)]">
                   <motion.div
@@ -760,7 +761,7 @@ export default function HoyPage() {
                   <span className="font-semibold tabular-nums text-[var(--text-primary)]">{formatoMoneda(presupuesto, pais)}</span>
                 </p>
                 <div className="mt-3 empty:hidden">
-                  <AlertaPresupuesto estado={evaluarPresupuesto(gastado, presupuesto)} formatear={(n) => formatoMoneda(n, pais)} />
+                  <AlertaPresupuesto estado={evaluarPresupuesto(gastado, presupuesto)} formatear={(n) => formatoMoneda(n, pais)} sinRestante />
                 </div>
               </>
             )}
@@ -777,7 +778,7 @@ export default function HoyPage() {
               type="button"
               onClick={() => cambiarMostrarAhorro(false)}
               aria-label="Ocultar el ahorro de Inicio"
-              className="-my-2 flex min-h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-[var(--accent)] [touch-action:manipulation]"
+              className="-my-2 flex min-h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-[var(--text-secondary)] underline underline-offset-2 [touch-action:manipulation]"
             >
               Ocultar
             </button>

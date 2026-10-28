@@ -7,7 +7,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Lock, LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { obtenerCoupleId } from '@/lib/gastos';
 import { TuPlan } from '@/components/app/TuPlan';
@@ -49,15 +50,21 @@ export default function ReactivarPage() {
 
   return (
     <FunnelShell>
-      <div className="flex flex-1 flex-col gap-5 pb-6 pt-4">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-1 flex-col gap-5 pb-6 pt-4"
+      >
         <Image src="/logo-fairsy.png" alt="Fairsy" width={233} height={128} className="h-8 w-auto self-start" />
 
         <div>
-          <span className="flex size-12 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)]">
-            <Lock size={22} strokeWidth={2} color="var(--accent)" aria-hidden="true" />
+          <span className="flex -space-x-2" aria-hidden="true">
+            <span className="flex size-10 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent-2)] text-[14px] font-bold text-[var(--bg)]">M</span>
+            <span className="flex size-10 items-center justify-center rounded-full border-2 border-[var(--bg)] bg-[var(--accent)] text-[14px] font-bold text-[var(--bg)]">S</span>
           </span>
           <h1 className="mt-4 text-balance text-[28px] font-bold leading-[1.15] text-[var(--text-primary)] [font-family:var(--font-display)]">
-            Reactiven su plan para seguir
+            Reactiven su plan <span className="text-[var(--accent)]">para seguir</span>
           </h1>
           <p className="mt-2 text-[16px] leading-snug text-[var(--text-secondary)]">
             Su plan terminó, así que la app está en pausa. <span className="font-semibold text-[var(--text-primary)]">Sus gastos, metas y reportes siguen guardados</span>:
@@ -105,7 +112,7 @@ export default function ReactivarPage() {
           {saliendo ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <LogOut size={16} aria-hidden="true" />}
           Cerrar sesión
         </button>
-      </div>
+      </motion.div>
     </FunnelShell>
   );
 }

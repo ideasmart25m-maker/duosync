@@ -20,7 +20,7 @@ import { FooterLegal } from '@/components/landing/FooterLegal';
 import { StickyCtaMobile } from '@/components/landing/ui';
 
 const CTA_HREF = '/onboarding';
-const CTA_LABEL = 'Empieza a simplificar tus cuentas';
+const CTA_LABEL = 'Empezar mis 7 días gratis';
 
 export default function FairsyLanding() {
   return (
@@ -37,10 +37,10 @@ export default function FairsyLanding() {
         logo={<Image src="/logo-fairsy.png" alt="" width={233} height={128} priority className="h-7 w-auto" />}
         loginHref="/login"
         h1Marked="Cuentas claras entre los dos. [acento]Sin discutir[/acento], sin cobrarle a nadie."
-        subtitleMarked="Fairsy automatiza los gastos compartidos, [b]divide los pagos justo[/b] y evita discusiones por dinero"
+        subtitleMarked="Registran un gasto en 2 toques, [b]dividen el pago justo[/b] y los dos ven el mismo saldo, al instante"
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
-        socialProof={<span>Un pago cubre a los dos — hasta 60% más barato que otras apps para compartir gastos</span>}
+        socialProof={<span>Un solo pago para los dos: US$35.94 al año en total (o US$5.99 al mes)</span>}
         visual={<HeroVisual />}
       />
 
@@ -110,13 +110,13 @@ export default function FairsyLanding() {
           página (antes decía "Empezar mis 7 días gratis" aquí y "Vincular con mi pareja
           gratis" en el resto — dos etiquetas para la misma acción, defecto real detectado). */}
       <Oferta
-        tituloMarked="Empiecen gratis. Sigan por [acento]precio de un café[/acento]"
+        tituloMarked="Empiecen gratis. Sigan por [acento]el precio de un café[/acento]"
         trialDias={7}
         anual={{
           nombre: 'Anual',
-          badge: 'MÁS POPULAR',
+          badge: 'MEJOR PRECIO',
           precioMes: 'US$3.00',
-          totalAnual: 'Se cobra US$35.94/año al terminar la prueba, en tu moneda al valor del día',
+          totalAnual: 'Se cobra US$35.94/año al terminar la prueba, en su moneda al valor del día',
           ahorro: 'Ahorran el 50% vs. mensual',
           descomposicionDia: 'menos de US$0.10 al día',
           ctaLabel: CTA_LABEL,
@@ -160,7 +160,7 @@ export default function FairsyLanding() {
           {
             pregunta: '¿Nos van a cobrar a cada uno por separado?',
             respuestaMarked:
-              'No. Un solo pago cubre a los dos — por eso cuesta [b]la mitad o menos[/b] que otras apps para compartir gastos.',
+              'No. [b]Un solo pago cubre a los dos[/b]: no pagan cada uno por separado.',
           },
           {
             pregunta: '¿Es seguro poner nuestros gastos ahí?',
@@ -168,9 +168,14 @@ export default function FairsyLanding() {
               'Sí, es seguro porque no guardamos ni vinculamos sus cuentas bancarias ni tarjetas de crédito. Sus datos financieros [b]quedan bajo su control[/b].',
           },
           {
+            pregunta: '¿Me cobran hoy? ¿Necesito tarjeta?',
+            respuestaMarked:
+              'Hoy no se cobra nada: empiezan [b]7 días gratis[/b] y el primer cobro llega al terminar la prueba. Hotmart (la plataforma de pago) pide tarjeta o PayPal para activarla, y pueden cancelar antes sin pagar.',
+          },
+          {
             pregunta: '¿Y si la otra persona deja de usarla a los pocos días?',
             respuestaMarked:
-              'Fairsy sigue funcionando con una sola persona: quien la use registra los gastos y ve el saldo y las metas. La otra persona puede sumarse cuando quiera con el Código de Conexión, y registrar un gasto toma solo segundos.',
+              'Fairsy sigue funcionando con una sola persona: quien la use registra los gastos y ve el saldo y las metas. La otra se suma cuando quiera con el Código de Conexión.',
           },
           {
             pregunta: '¿Funciona en iPhone y Android?',
@@ -179,7 +184,7 @@ export default function FairsyLanding() {
           },
           {
             pregunta: '¿Qué pasa si quiero cancelar?',
-            respuestaMarked: 'Cancelan cuando quieran desde el área de miembros de Hotmart, sin llamadas ni trámites.',
+            respuestaMarked: 'Cancelan cuando quieran desde el área de miembros de Hotmart (la plataforma donde pagan), sin llamadas ni trámites.',
           },
           {
             pregunta: '¿Puedo usarla para gastos compartidos con cualquier persona (compañero de cuarto, familia, amigo)?',

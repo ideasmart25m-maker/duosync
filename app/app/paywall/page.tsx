@@ -167,10 +167,12 @@ function PaywallInner() {
         </ul>
       </motion.div>
 
-      <motion.div {...entrada(0.16)} className="mt-3 flex flex-col gap-2">
+      <motion.div {...entrada(0.16)} role="radiogroup" aria-label="Elige tu plan" className="mt-3 flex flex-col gap-2">
         <Hairline emphasis={plan === 'anual'} surface="surface" className="relative">
           <motion.button
             type="button"
+            role="radio"
+            aria-checked={plan === 'anual'}
             whileTap={{ scale: 0.98 }}
             onClick={() => setPlan('anual')}
             className={`w-full rounded-[var(--radius-button)] p-4 text-left shadow-[var(--shadow-1)] [touch-action:manipulation] transition-colors duration-150 ${
@@ -198,6 +200,8 @@ function PaywallInner() {
 
         <motion.button
           type="button"
+          role="radio"
+          aria-checked={plan === 'mensual'}
           whileTap={{ scale: 0.98 }}
           onClick={() => setPlan('mensual')}
           className={`rounded-[var(--radius-button)] border p-4 text-left shadow-[var(--shadow-1)] [touch-action:manipulation] transition-colors duration-150 ${
@@ -234,7 +238,7 @@ function PaywallInner() {
           className="flex h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-[var(--accent)] text-[16px] font-semibold text-[var(--bg)] shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_28%,transparent)] [touch-action:manipulation] disabled:opacity-80"
         >
           {cargando && <Loader2 size={18} strokeWidth={2.4} className="animate-spin" aria-hidden="true" />}
-          {cargando ? 'Abriendo su plan…' : `Empezar nuestro ${nombrePlan}`}
+          {cargando ? 'Abriendo su plan…' : 'Empezar mis 7 días gratis'}
         </motion.button>
         {errorNav ? (
           <p className="mt-2 text-center text-[12px] font-medium text-[var(--danger)]">
@@ -246,9 +250,13 @@ function PaywallInner() {
           // claridad). Explícito que el cobro llega DESPUÉS del trial, no antes.
           <div className="mt-2 text-center text-[12px] leading-snug">
             <p className="text-[var(--text-secondary)]">
-              Gratis 7 días; el cobro llega el {fechaCobro}, en su moneda al valor del día.
+              Gratis 7 días. El {fechaCobro} se cobra {plan === 'anual' ? 'US$35.94 (anual)' : 'US$5.99 (mensual)'}, en su moneda al valor del día. Cancelan antes y no pagan nada.
             </p>
             <p className="mt-0.5 font-semibold text-[var(--text-primary)]">Garantía de Cuentas Claras: 15 días para pedir su dinero.</p>
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-[12px] text-[var(--text-secondary)]">
+              <Lock size={13} strokeWidth={2} aria-hidden="true" />
+              Pago seguro con Hotmart
+            </p>
           </div>
         )}
         </div>
@@ -262,12 +270,6 @@ function PaywallInner() {
         >
           Ahora no, volver al inicio
         </motion.button>
-        <div className="flex items-center justify-center text-[12px] text-[var(--text-secondary)]">
-          <span className="flex items-center gap-1.5">
-            <Lock size={14} strokeWidth={2} aria-hidden="true" />
-            Pago seguro con Hotmart
-          </span>
-        </div>
         </div>
       </>
     </FunnelShell>
